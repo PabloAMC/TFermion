@@ -9,7 +9,7 @@ class Taylor_based_methods:
 
         self.tools = tools
 
-    def configuration_interaction(self, N, eta, alpha, gamma1, K0, K1, K2, epsilon_PEA = .4*eps_tot, epsilon_HS = .1*eps_tot, epsilon_S = .4*eps_tot, epsilon_H = .1*eps_tot):
+    def configuration_interaction(self, N, eta, alpha, gamma1, K0, K1, K2, epsilon_PEA, epsilon_HS, epsilon_S, epsilon_H, phi_max):
         t = 4.7/epsilon_PEA
         x_max = np.log(N * t/ epsilon_HS)
         
@@ -17,28 +17,32 @@ class Taylor_based_methods:
         Zq = eta
         
         '''
-        Warning, we have a circular definition here of delta, mu_M_zeta and r.,
-        In practice we have to find the smallest value of mu_M_zeta compatible with delta:,
-        mu_M_zeta \\leq f( epsilon_H / 3K*2 Gamma t mu_M_zeta), with f the np.max defining mu_M_zeta below,
-        Due to this complication we distribute the error uniformly accross all C-U which is not optimal,
+        Warning, we have a circular definition here of delta, mu_M_zeta and r.
+        In practice we have to find the smallest value of mu_M_zeta compatible with delta:
+        mu_M_zeta \\leq f( epsilon_H / 3K*2 Gamma t mu_M_zeta), with f the np.max defining mu_M_zeta below
+        Due to this complication we distribute the error uniformly accross all C-U which is not optimal
         '''
 
+        #TODO calculate r and K as satisfaction problem
         delta = epsilon_H/(3*np.log(r)*K) # delta is the error in calculating a single integral. There are 3K log(r) of them in the simulation,
-
         # This is an upper bound, not an equality!!!
-        mu_M_zeta = np.max([ 
+        mu_M_zeta <= np.max([ 
             672*np.pi**2/(alpha**3)*phi_max**4*x_max**5*(np.log(K2*phi_max**4*x_max**5/delta))**6,
             256*np.pi**2/(alpha**3)*Zq*phi_max**2*x_max**2*(np.log(K1*Zq*phi_max**2*x_max**2/delta))**3,
             32*gamma1**2**2/(alpha**3)*phi_max**2*x_max*(np.log(K0*phi_max**2*x_max/delta))**3
         ])
-        
         r = 2*Gamma*t*mu_M_zeta
         K = np.log2(r/epsilon_HS)/np.log2(np.log2(r/epsilon_HS))
+        # end circular definition
+
+
         epsilon_SS = epsilon_S / (2*K*2*3*np.log(r))
         Prepare_beta = (20+24*np.log2(1/epsilon_SS))*K
             
+        #TODO dphi_max = max value of the derivative
         mu = ( r/epsilon_H *2*(4*dphi_max + phi_max/x_max)*phi_max**3 * x_max**6 )**6
         n = np.log(mu)/3
+        #TODO order = get from Taylor (it requires the taylor error)
         Sample_w = ( 6*35*n**2*(order-1)*4*N + (189+35*(order-1))*n**2 )*K
 
         Q_val = 2*Sample_w
@@ -59,7 +63,7 @@ class Taylor_based_methods:
     # Remember that 
     # $$ K =  O\\left( \\frac{\\log(r/\\epsilon_{HS})}{\\log \\log(r/\\epsilon_{HS})} \\right)$$
     # Notice that the $\\Lambda$ parameters comes in the algorithm only implicitly, since we take the evolution time of a single segment to be $t_1 = \\ln 2/\\Lambda$ such that the first segment in Phase estimation has $r = \\frac{\\Lambda t_1}{\\ln 2} = 1$ as it should be. In general, we will need to implement $r \\approx \\frac{4.7}{\\epsilon_{PEA}}$. However, since $\\epsilon_{PEA}$ makes reference to $H$ and we are instead simulating $H \\ln 2/ \\Lambda$, we will have to calculate the eigenvalue to precision $\\epsilon \\ln 2/ \\Lambda$; so it is equivalently to fixing an initial time $t_1$ and running multiple segments in each of the $U$ operators in Phase Estimation.
-    def Taylor_naive(self, Lambd, Gamma, N, epsilon_PEA = .4*eps_tot, epsilon_HS = .2*eps_tot, epsilon_S = .4*eps_tot):
+    def Taylor_naive(self, Lambd, Gamma, N, epsilon_PEA, epsilon_HS, epsilon_S):
         
         r = 4.7*Lambd / (epsilon_PEA*np.log(2)) # The simulated time
         K_list = []
@@ -91,7 +95,7 @@ class Taylor_based_methods:
             
         return result
 
-    def Taylor_on_the_fly(self, Gamma, N, phi_max, dphi_max, zeta_max_i, epsilon_PEA = .4*eps_tot, epsilon_HS = .1*eps_tot, epsilon_S = .4*eps_tot, epsilon_H = .1*eps_tot, order = 10):
+    def Taylor_on_the_fly(self, Gamma, N, phi_max, dphi_max, zeta_max_i, epsilon_PEA, epsilon_HS, epsilon_S, epsilon_H, max_zeta_i, eps_tay):
         '''
         Error terms 
         eps_PEA: Phase estimation

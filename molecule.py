@@ -30,7 +30,3 @@ class Molecule:
     def build_grid(self):
         grid = Grid(dimensions = 3, length = 5, scale = 1.) # La complejidad
         plane_wave_H = plane_wave_hamiltonian(grid, self.molecule_geometry, True)
-
-        fermionic_hamiltonian = get_fermion_operator(molecule.get_molecular_hamiltonian())
-        plane_waves_hamiltonian = openfermion.get_diagonal_coulomb_hamiltonian(fermionic_hamiltonian)
-        plane_waves_hamiltonian

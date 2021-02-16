@@ -6,14 +6,15 @@ class QROM_methods:
         pass
 
     ## Linear T complexity (babbush2018encoding)
-    def linear_T(self, N, lambd, eps_PEA, eps_SS):
+    def linear_T(self, N, lambd, eps_PEA, eps_S, Ham_norm):
         '''To be used in plane wave basis'''
         t = 4.7/eps_PEA
         r = lambd*t
         
         mu = np.ceil(np.log(2*np.sqrt(2)*lambd/eps_PEA) + np.log(1 + eps_PEA/(8*lambd)) + np.log(1 - (Ham_norm/lambd)**2))
         
-        eps_SS = eps_S / (r*2*P)
+        # r*2* number preparations of rotation
+        eps_SS = eps_S / (r*2*2)
         
         S = 12*N+8*np.log(N)
         P = 6*N + 40*np.log(N)+ 24*np.log(1/eps_SS) + 10*mu
@@ -21,7 +22,7 @@ class QROM_methods:
         return r*(2*P + S)
 
     ## Sparsity and low rank factorization (berry2019qubitization)
-    def sparsity_low_rank(self, N, lambd, eps_PEA, eps_SS, L):
+    def sparsity_low_rank(self, N, lambd, eps_PEA, eps_S, L, Ham_norm):
         t = 4.7/eps_PEA
         r = lambd*t
         
@@ -36,7 +37,7 @@ class QROM_methods:
         kc = 2**closest_power(np.sqrt(d/M))
         ku = 2**closest_power(np.sqrt(d))
         
-        QROAM = 4*(np.ceil(d/kc)+4*M*(kc-1)+2*np.ceil(d/ku) + 4*k_u)
+        QROAM = 4*(np.ceil(d/kc)+4*M*(kc-1)+2*np.ceil(d/ku) + 4*ku)
         
         Select = (4*N + 4*np.log(N))*4 # The *4 because Toffoli -> T-gates
         

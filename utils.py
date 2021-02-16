@@ -2,6 +2,7 @@ import argparse
 import json
 import numpy as np
 import sympy
+from scipy import integrate
 
 class Utils():
 
@@ -39,6 +40,7 @@ class Utils():
     def taylor(self, function,x0,n):
         i = 0
         p = 0
+        x = sympy.Symbol('x')
         while i <= n:
             p = p + (function.diff(x,i).subs(x,x0))/(self.factorial(i))*(x-x0)**i
             i += 1
@@ -72,16 +74,24 @@ class Utils():
     def taylor_err(self, function, x0, n, z = None):
         if z == None:
             z = x0
+                
+        x = sympy.Symbol('x')
+
         #print('coefficient order',n, function.diff(x,n)/(factorial(n)))#.subs(x,z))
         a = (function.diff(x,n).subs(x,z))/(self.factorial(n))*(x-x0)**n
         #print('coefficient order',n, (function.diff(x,n).subs(x,z)/(factorial(n))*(x-x0)**n))
         #print('a',a)
         return a
 
+    def f(self, x, y):
+        return 1/(x**2 + y**2)
+    def I(self, N0):
+        return integrate.nquad(self.f, [[1, N0],[1, N0]])[0]
 
     def error_optimizer(self, eps_array):
         epsilon_PEA = eps_array[0]
         
         epsilon_S = eps_array[1]
         
+        #TODO eps_tot to calculate
         epsilon_HS = eps_tot - eps_array[0] - eps_array[1]

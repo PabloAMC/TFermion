@@ -31,7 +31,7 @@ class Interaction_picture:
         r = lambd_T*t # lambd_T is necessary to take tau = 1
         
         # Notice that K is a bit different than in other articles because each segment is now its own Taylor series, which has the consequence of larger error
-        K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS))  ) # We 
+        K = np.ceil( -1  + 2* np.log(2*r/eps_HS)/np.log(np.log(2*r/eps_HS))) # We 
         delta = eps_HS / t # Alternatively we can substitute t by r changing delta in the following line to 1/2. t represents L in the main text (see before eq 21 in the original article)
         tau = 1/np.ceil(2*lambd_T) # tau = t/ np.ceil(2 * lambd_T * t)
         M = np.max(16*tau/delta * (2*lambd_U_V + lambd_T), K**2)
@@ -53,13 +53,13 @@ class Interaction_picture:
                 epsilon_SS /= 10
                 
         # Cost
-        exp_U_V= 46*N*(np.log(1/eps_SS))**2+8*N + 8*N*np.log2(1/eps_SS)*np.log2(N) + 4*N*np.log(N)
+        exp_U_V= 46*N*(np.log(1/epsilon_SS))**2+8*N + 8*N*np.log2(1/epsilon_SS)*np.log2(N) + 4*N*np.log(N)
         COEF = rot_COEF * (10 + 12*np.log2(K))
-        U = 8*(np.log2(M) + np.log2(1/eps_SS))
+        U = 8*(np.log2(M) + np.log2(1/epsilon_SS))
         ADD = 4*np.log2(K)
         Comp = 8*np.log2(M)
-        FFFT = (2 + 4*np.log(1/eps_SS))*N*np.log2(N) - 4*np.log2(1/eps_SS)*N
-        Prep = 2**9*(1 + np.log2(N))+2**6*3*N*np.log2(1/eps_SS)
+        FFFT = (2 + 4*np.log(1/epsilon_SS))*N*np.log2(N) - 4*np.log2(1/epsilon_SS)*N
+        Prep = 2**9*(1 + np.log2(N))+2**6*3*N*np.log2(1/epsilon_SS)
         Select = 8*N
         REF = 16*(np.log2(Gamma) + 2*np.log(K+1)+ 2*np.log(M))
         
@@ -68,7 +68,7 @@ class Interaction_picture:
         return cost
 
     ## Sublinear scaling and interaction picture babbush2019quantum
-    def sublinear_scaling_interaction(self, N, eta, Gamma, lambd_T, lambd_U_V, eps_S, eps_HS, eps_PEA, eps_mu, eps_M_0):
+    def sublinear_scaling_interaction(self, N, eta, Gamma, lambd_T, lambd_U_V, eps_S, eps_HS, eps_PEA, eps_mu, eps_M_0, J):
         ''' 
         See the interaction_picture function for more background
         J represents the number of atoms
@@ -86,7 +86,7 @@ class Interaction_picture:
         r = lambd_U_V*t # lambd_T is necessary to take tau = 1
         
         # Notice that K is a bit different than in other articles because each segment is now its own Taylor series, which has the consequence of larger error
-        K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS))  ) # We 
+        K = np.ceil( -1  + 2* np.log(2*r/eps_HS)/np.log(np.log(2*r/eps_HS))) # We 
         delta = eps_HS / t # Alternatively we can substitute t by r changing delta in the following line to 1/2. t represents L in the main text (see before eq 21 in the original article)
         tau = 1/np.ceil(2*lambd_U_V) # tau = t/ np.ceil(2 * lambd_T * t)
         M = np.max(16*tau/delta * (lambd_U_V + 2*lambd_T), K**2)
@@ -94,16 +94,16 @@ class Interaction_picture:
         
         rot_exp_T = np.log2(eta) + 2*np.log2(N)
         rot_select_1 = 1/3*np.log2(N) + 2
-        rot_Subprepare  = 2 # Only the two rotations from Uniform in Subprepare
+        rot_Subprepare = 2 # Only the two rotations from Uniform in Subprepare
         rot_COEF = 2**(np.ceil(np.log2(K) + 1))
         
         num_rotations = (((2*np.log(M)*rot_exp_T + rot_select_1)*K + 2*rot_COEF)*3 + rot_exp_T )*r
         eps_SS = eps_S / num_rotations
         
         num_Subprepare = 2*3*K*3*r
-        eps_mus = eps_mu / num_Subp
+        eps_mus = eps_mu / num_Subprepare
         
-        Subprep = 4*J + 4*np.log(1/eps_mus) +8*np.log2(1/eps_SS)+  12*np.log2(J)
+        Subprep = 4*J + 4*np.log(1/eps_mus) + 8*np.log2(1/eps_SS) + 12*np.log2(J)
         n = 1/3*np.log2(N) + 1
         Prep  = 3*(79*n**2 +43*n*np.log2(M0) + 44*n)
         exp_T = rot_exp_T * 4*np.log(1/eps_SS)

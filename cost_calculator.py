@@ -11,6 +11,7 @@ class Cost_calculator:
 
         if method == 'qdrift':
             print('executing qdrift ...')
+            
         elif method == 'rand_ham':
             print('executing rand_ham ...')
 
