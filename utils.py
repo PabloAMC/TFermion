@@ -88,6 +88,19 @@ class Utils():
     def I(self, N0):
         return integrate.nquad(self.f, [[1, N0],[1, N0]])[0]
 
+    def bisection(self, symbol, expr, upper_bound = 1e10, lower_bound = 100):
+        top = upper_bound
+        bottom = lower_bound
+        while top-bottom > 1:
+            eval_r = 2 ** (np.log2(top)+np.log2(bottom)/2)
+            result_r = expr.evalf(subs={symbol: eval_r})
+            if result_r < eval_r:
+                top = eval_r
+            else:
+                bottom = eval_r
+        return eval_r
+
+
     def error_optimizer(self, eps_array):
         epsilon_PEA = eps_array[0]
         

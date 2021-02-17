@@ -13,7 +13,7 @@ class QROM_methods:
         
         mu = np.ceil(np.log(2*np.sqrt(2)*lambd/eps_PEA) + np.log(1 + eps_PEA/(8*lambd)) + np.log(1 - (Ham_norm/lambd)**2))
         
-        # r*2* number preparations of rotation
+        # The number of total rotations is r*2* number of rotations for each preparation P (in this case 2)
         eps_SS = eps_S / (r*2*2)
         
         S = 12*N+8*np.log(N)

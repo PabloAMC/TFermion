@@ -10,7 +10,7 @@ class Plane_waves_methods:
         self.tools = tools
 
     # Low depth quantum simulation of materials (babbush2018low) Trotter
-    def low_depth_trotter(self, N, Omega, eps_PEA, eps_HS, eps_S):
+    def low_depth_trotter(self, N, eta, Omega, eps_PEA, eps_HS, eps_S):
         
         #TODO eta = number of electrons
         t = 4.7/eps_PEA
@@ -67,7 +67,7 @@ class Plane_waves_methods:
         return result
 
     # Low depth quantum simulation of materials (babbush2018low) On-the fly
-    def low_depth_taylor_on_the_fly(self, N, lambd, Omega, eps_PEA, eps_HS, eps_S, eps_tay, Ham_norm, J):
+    def low_depth_taylor_on_the_fly(self, N, eta, lambd, Omega, eps_PEA, eps_HS, eps_S, eps_tay, Ham_norm, J, x_max):
         '''To be used in plane wave basis
         J: Number of atoms
         '''
@@ -82,7 +82,10 @@ class Plane_waves_methods:
             
         #TODO x_max = max value of one dimension
         x = sympy.Symbol('x')
-        order = self.tools.order_find(function = math.cos(x), x0 = 1, e = eps_tay, xeval = x_max)
+        K =  np.ceil(np.log2(r/eps_HS) / np.log2( np.log2 (r/eps_HS)))
+        number_sample = 2*K* 3* 2* int(np.ceil(np.log(r)))
+        eps_tay_s = eps_tay / number_sample
+        order = self.tools.order_find(function = math.cos(x), x0 = 1, e = eps_tay_s, xeval = x_max)
         sample_w = 70*np.log(N)**2 + 29* np.log(N) + (21+14)*order/2*np.log(N)**2 + 2*order*np.log(N) + J*(35*order/2 + 63 + 2*order/np.log(N))*np.log(N)**2
         kickback = 32*np.log(mu)
 

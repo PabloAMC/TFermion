@@ -9,7 +9,7 @@ class Taylor_based_methods:
 
         self.tools = tools
 
-    def configuration_interaction(self, N, eta, alpha, gamma1, K0, K1, K2, epsilon_PEA, epsilon_HS, epsilon_S, epsilon_H, phi_max):
+    def configuration_interaction(self, N, eta, alpha, gamma1, K0, K1, K2, epsilon_PEA, epsilon_HS, epsilon_S, epsilon_H, eps_tay, max_zeta_i, phi_max, dphi_max):
         t = 4.7/epsilon_PEA
         x_max = np.log(N * t/ epsilon_HS)
         
@@ -24,25 +24,38 @@ class Taylor_based_methods:
         '''
 
         #TODO calculate r and K as satisfaction problem
-        delta = epsilon_H/(3*np.log(r)*K) # delta is the error in calculating a single integral. There are 3K log(r) of them in the simulation,
-        # This is an upper bound, not an equality!!!
-        mu_M_zeta <= np.max([ 
+        r_sym = sympy.Symbol('r_sym')
+
+        def trial_definition(r):
+            K = np.log2(r/epsilon_HS)/np.log2(np.log2(r/epsilon_HS))
+            delta = epsilon_H/(3*np.log(r)*K) # delta is the error in calculating a single integral. There are 3K log(r) of them in the simulation,
+            mu_M_zeta = np.max([ 
             672*np.pi**2/(alpha**3)*phi_max**4*x_max**5*(np.log(K2*phi_max**4*x_max**5/delta))**6,
             256*np.pi**2/(alpha**3)*Zq*phi_max**2*x_max**2*(np.log(K1*Zq*phi_max**2*x_max**2/delta))**3,
             32*gamma1**2**2/(alpha**3)*phi_max**2*x_max*(np.log(K0*phi_max**2*x_max/delta))**3
-        ])
-        r = 2*Gamma*t*mu_M_zeta
+            ])
+            consequent_r = 2*Gamma*t*mu_M_zeta
+            return consequent_r
+
+        r = self.tools.bisection(r_sym, trial_definition(r_sym))
         K = np.log2(r/epsilon_HS)/np.log2(np.log2(r/epsilon_HS))
+
         # end circular definition
 
 
         epsilon_SS = epsilon_S / (2*K*2*3*np.log(r))
         Prepare_beta = (20+24*np.log2(1/epsilon_SS))*K
-            
-        #TODO dphi_max = max value of the derivative
+
         mu = ( r/epsilon_H *2*(4*dphi_max + phi_max/x_max)*phi_max**3 * x_max**6 )**6
         n = np.log(mu)/3
-        #TODO order = get from Taylor (it requires the taylor error)
+
+        x = sympy.Symbol('x')
+        K =  np.ceil(np.log2(r/epsilon_HS) / np.log2( np.log2 (r/epsilon_HS)))
+        number_sample = 2*K* 3* 2* int(np.ceil(np.log(r)))
+        eps_tay_s = eps_tay / number_sample
+        order = max(self.tools.order_find(function = math.sqrt(x), x0 = 1, e = eps_tay_s, xeval = x_max),
+                    self.tools.order_find(function = math.exp(max_zeta_i*(x)**2), x0 = 0, e = eps_tay_s, xeval = x_max))
+
         Sample_w = ( 6*35*n**2*(order-1)*4*N + (189+35*(order-1))*n**2 )*K
 
         Q_val = 2*Sample_w
@@ -50,8 +63,8 @@ class Taylor_based_methods:
         
         Select_H = Q_val + 2*Q_col
         Select_V = K*Select_H
-        
-        return np.log(r)*3*(2*Prepare_beta + Select_V)
+
+        return int(np.ceil(np.log(r)))*3*(2*Prepare_beta + Select_V)
 
     # Taylorization (babbush2016exponential)
     # Let us know calcula the cost of performing Phase Estimation. 
@@ -122,13 +135,14 @@ class Taylor_based_methods:
             K_list.append(K)
 
         epsilon_SS = epsilon_S /np.sum([3*2*(2*K) for K in K_list])
-        
+    
+        K = np.ceil(np.log2(r/epsilon_HS) / np.log2( np.log2 (r/epsilon_HS)))
         # We distribute the error between all C-U in phase estimation uniformly
-        eps_tay_m_j = eps_tay/((6+2)*np.max(K_list)*np.log(r)*3*2)
+        eps_tay_s = eps_tay/((6+2)*K*np.log(r)*3*2)
 
         x = sympy.Symbol('x')
-        order = max(self.tools.order_find(function = math.sqrt(x), x0 = 1, e = eps_tay_m_j, xeval = x_max),
-                    self.tools.order_find(function = math.exp(max_zeta_i*(x)**2), x0 = 0, e = eps_tay_m_j, xeval = x_max))
+        order = max(self.tools.order_find(function = math.sqrt(x), x0 = 1, e = eps_tay_s, xeval = x_max),
+                    self.tools.order_find(function = math.exp(max_zeta_i*(x)**2), x0 = 0, e = eps_tay_s, xeval = x_max))
         
         result = 0
         
