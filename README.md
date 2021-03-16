@@ -11,9 +11,13 @@ Things that need to be done
 Steps to install PSI4 + OpenFermion + OpenFermionPSI4 (from https://github.com/quantumlib/OpenFermion-Psi4/issues/44)
 
 conda create -n openfermion python=3.6
+
 conda activate openfermion
+
 conda install -c psi4 psi4 as done here
+
 pip install git+https://github.com/quantumlib/OpenFermion.git@master
+
 pip install git+https://github.com/quantumlib/OpenFermion-Psi4.git@master
 
 All this version are aligned.
