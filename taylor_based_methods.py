@@ -9,7 +9,7 @@ class Taylor_based_methods:
 
         self.tools = tools
 
-    def configuration_interaction(self, N, eta, alpha, gamma1, K0, K1, K2, epsilon_PEA, epsilon_HS, epsilon_S, epsilon_H, eps_tay, max_zeta_i, phi_max, dphi_max):
+    def configuration_interaction(self, N, eta, alpha, gamma1, K0, K1, K2, epsilon_PEA, epsilon_HS, epsilon_S, epsilon_H, eps_tay, zeta_max_i, phi_max, dphi_max):
         t = 4.7/epsilon_PEA
         x_max = np.log(N * t/ epsilon_HS)
         
@@ -54,7 +54,7 @@ class Taylor_based_methods:
         number_sample = 2*K* 3* 2* int(np.ceil(np.log(r)))
         eps_tay_s = eps_tay / number_sample
         order = max(self.tools.order_find(function = math.sqrt(x), x0 = 1, e = eps_tay_s, xeval = x_max),
-                    self.tools.order_find(function = math.exp(max_zeta_i*(x)**2), x0 = 0, e = eps_tay_s, xeval = x_max))
+                    self.tools.order_find(function = math.exp(zeta_max_i*(x)**2), x0 = 0, e = eps_tay_s, xeval = x_max))
 
         Sample_w = ( 6*35*n**2*(order-1)*4*N + (189+35*(order-1))*n**2 )*K
 
@@ -108,7 +108,7 @@ class Taylor_based_methods:
             
         return result
 
-    def taylor_on_the_fly(self, Gamma, N, phi_max, dphi_max, zeta_max_i, epsilon_PEA, epsilon_HS, epsilon_S, epsilon_H, max_zeta_i, eps_tay):
+    def taylor_on_the_fly(self, Gamma, N, phi_max, dphi_max, epsilon_PEA, epsilon_HS, epsilon_S, epsilon_H, zeta_max_i, eps_tay):
         '''
         Error terms 
         eps_PEA: Phase estimation
@@ -142,7 +142,7 @@ class Taylor_based_methods:
 
         x = sympy.Symbol('x')
         order = max(self.tools.order_find(function = math.sqrt(x), x0 = 1, e = eps_tay_s, xeval = x_max),
-                    self.tools.order_find(function = math.exp(max_zeta_i*(x)**2), x0 = 0, e = eps_tay_s, xeval = x_max))
+                    self.tools.order_find(function = math.exp(zeta_max_i*(x)**2), x0 = 0, e = eps_tay_s, xeval = x_max))
         
         result = 0
         

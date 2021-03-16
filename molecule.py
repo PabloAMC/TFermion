@@ -6,6 +6,7 @@ from openfermion.utils import Grid
 from openfermion.chem import geometry_from_pubchem, MolecularData
 from openfermion.hamiltonians import plane_wave_hamiltonian
 from openfermion.transforms  import  get_fermion_operator
+from openfermion.transforms import jordan_wigner
 
 class Molecule:
 
@@ -27,6 +28,19 @@ class Molecule:
 
     Taken from https://quantumai.google/openfermion/tutorials/intro_to_openfermion
     '''
+    def get_lambdas_from_hamiltonian(self):
+
+        fermion_operator = get_fermion_operator(self.molecule_psi4)
+
+        # Get qubit operator under Jordan-Wigner.
+        jw_hamiltonian = jordan_wigner(fermion_operator)
+        jw_hamiltonian.compress()
+        print('')
+        print(jw_hamiltonian)
+
+
+    #def get_orbitals(self):
+
     def build_grid(self):
         grid = Grid(dimensions = 3, length = 5, scale = 1.) # La complejidad
         plane_wave_H = plane_wave_hamiltonian(grid, self.molecule_geometry, True)

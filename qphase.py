@@ -33,14 +33,14 @@ tools = utils.Utils(config_path)
 
 args = tools.parse_arguments()
 
-print('\n#######################################################################')
-print('##                                QPHASE                               ##')
-print('##                                                                     ##')
-print('## Tool to calculate the cost of any molecule energy calculator method ##')
-print('#########################################################################\n')
+print('#################################################################################')
+print('##                                    QPHASE                                   ##')
+print('##                                                                             ##')
+print('## Tool to calculate the T gates cost of any molecule energy calculator method ##')
+print('#################################################################################\n')
 
 molecule = molecule.Molecule(args.molecule_name, tools)
 
 c_calculator = cost_calculator.Cost_calculator(molecule, tools)
-cost = c_calculator.calculate_cost(args.method)
-print('The cost to calculate the energy of', args.molecule_name,'with method', args.method, 'is', cost)
+c_calculator.calculate_cost(args.method)
+print('The cost to calculate the energy of', args.molecule_name,'with method', args.method, 'is', c_calculator.costs[args.method])

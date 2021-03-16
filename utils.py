@@ -24,15 +24,12 @@ class Utils():
 
     def parse_arguments(self):
 
-        parser = argparse.ArgumentParser(description="Tool that combines AI and QC to solve protein folding problem.\n Example: python main.py glycylglycine GG 5 minifold simulation -c")
+        parser = argparse.ArgumentParser(description="Tool to estimate the T gates cost of many quantum energy calculator methods.\n Example: python qphase.py methane qdrift")
 
         parser.add_argument("molecule_name", help="name of the molecule to analyze", type=str)
         parser.add_argument("method", help="method to calculate the energy of the molecule", type=str)
         
         self.args = parser.parse_args()
-
-        if self.args.id == None: self.args.id = -1
-        if self.args.cost == None: self.args.cost = -1
 
         return self.args
 
@@ -100,7 +97,7 @@ class Utils():
                 bottom = eval_r
         return eval_r
 
-
+    '''
     def error_optimizer(self, eps_array):
         epsilon_PEA = eps_array[0]
         
@@ -108,3 +105,4 @@ class Utils():
         
         #TODO eps_tot to calculate
         epsilon_HS = eps_tot - eps_array[0] - eps_array[1]
+    '''
