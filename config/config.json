@@ -1,4 +1,5 @@
 {
-    "basis": "sto-3g"
+    "basis": "sto-3g",
+    "gamma_threshold": 0
 }
 

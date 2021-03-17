@@ -19,18 +19,20 @@ class Cost_calculator:
 
             methods_trotter = trotter_based_methods.Trotter_based_methods()
 
-            #calculate necessary parameters
-            lambda_value = self.molecule.get_lambda_from_hamiltonian()
-            N = self.molecule.get_orbitals()
-            
-            if method == 'qdrift':
-                self.costs['qdrift'] = methods_trotter.calc_qdrift_resources(lambda_value, N, deltaE = 1e-4, P_failure = .1)
-        '''
-            elif method == 'rand_ham':
-                # Lambda_value = 
-                # Gamma = 
-                self.costs['rand_ham'] = methods_trotter.calc_rand_ham_resources(Lambda_value, lambda_value, Gamma, N, deltaE = 1e-4, P_failure = .1)
+            if method == 'qdrift': self.costs['qdrift'] = methods_trotter.calc_qdrift_resources(
+                                        self.molecule.lambda_value, 
+                                        self.molecule.N, 
+                                        deltaE = 1e-4, 
+                                        P_failure = .1)
 
+            elif method == 'rand_ham': self.costs['rand_ham'] = methods_trotter.calc_rand_ham_resources(
+                                            self.molecule.Lambda_value, 
+                                            self.molecule.lambda_value, 
+                                            self.molecule.gamma, 
+                                            self.molecule.N, 
+                                            deltaE = 1e-4, 
+                                            P_failure = .1)
+        '''
         elif method == 'taylor_naive' or method == 'taylor_on_the_fly' or method == 'configuration_interaction':
 
             methods_taylor = taylor_based_methods.Taylor_based_methods(self.tools)
