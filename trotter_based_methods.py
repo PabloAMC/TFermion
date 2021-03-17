@@ -38,13 +38,11 @@ class Trotter_based_methods:
         
         # Another sanity check. This should coincide
         eps_tot_2 = 4*(np.pi*2**m-1)**2/n
-        print(eps_tot,eps_tot_2)
         
         # error in individual rotations
         eps = (eps_tot/(2*np.pi*(2**m-1)))**2
 
         rost_cost_factor = 3*(10+12*np.log(1/eps))*np.log(N)
-        print('eps',eps)
         
         return rost_cost_factor*n
 
@@ -84,6 +82,5 @@ class Trotter_based_methods:
         eps = 1/4*(eps_tot/(np.pi*2**m*Lambda_A))**(3/2)
 
         rost_cost_factor = 3*(10+12*np.log(1/eps))*np.log(N)
-        print('eps',eps)
         
         return rost_cost_factor*n

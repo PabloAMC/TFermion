@@ -8,6 +8,8 @@ from openfermion.hamiltonians import plane_wave_hamiltonian
 from openfermion.transforms  import  get_fermion_operator
 from openfermion.transforms import jordan_wigner
 
+import numpy as np
+
 class Molecule:
 
     def __init__(self, name, tools):
@@ -28,18 +30,16 @@ class Molecule:
 
     Taken from https://quantumai.google/openfermion/tutorials/intro_to_openfermion
     '''
-    def get_lambdas_from_hamiltonian(self):
+    def get_lambda_from_hamiltonian(self):
 
-        fermion_operator = get_fermion_operator(self.molecule_psi4)
+        one_body_value = sum(sum(abs(self.molecule_psi4.one_body_integrals)))
 
-        # Get qubit operator under Jordan-Wigner.
-        jw_hamiltonian = jordan_wigner(fermion_operator)
-        jw_hamiltonian.compress()
-        print('')
-        print(jw_hamiltonian)
+        two_body_value = sum(sum(sum(sum(abs(self.molecule_psi4.two_body_integrals)))))
 
+        return one_body_value + two_body_value
 
-    #def get_orbitals(self):
+    def get_orbitals(self):
+        return len(self.molecule_psi4.one_body_integrals[0])
 
     def build_grid(self):
         grid = Grid(dimensions = 3, length = 5, scale = 1.) # La complejidad

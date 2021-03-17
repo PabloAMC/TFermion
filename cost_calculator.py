@@ -20,11 +20,11 @@ class Cost_calculator:
             methods_trotter = trotter_based_methods.Trotter_based_methods()
 
             #calculate necessary parameters
-            lambda_value = self.molecule.get_lambdas_from_hamiltonian()
+            lambda_value = self.molecule.get_lambda_from_hamiltonian()
             N = self.molecule.get_orbitals()
             
             if method == 'qdrift':
-                self.costs['q_drift'] = methods_trotter.calc_qdrift_resources(lambda_value, N, deltaE = 1e-4, P_failure = .1)
+                self.costs['qdrift'] = methods_trotter.calc_qdrift_resources(lambda_value, N, deltaE = 1e-4, P_failure = .1)
         '''
             elif method == 'rand_ham':
                 # Lambda_value = 
