@@ -15,20 +15,33 @@ from pyscf.mcscf import avas
 
 class Molecule:
 
-    def __init__(self, name, tools):
+    def __init__(self, name, tools, program = 'pyscf'):
 
         self.molecule_name = name
         self.tools = tools
+        self.program = program
 
         self.gamma_threshold = self.tools.config_variables['gamma_threshold']
-
         self.molecule_geometry = geometry_from_pubchem(self.molecule_name) #todo: do we prefer psi4 or pyscf? There are some functions in pyscf
-        self.molecule_data = MolecularData(self.molecule_geometry, self.tools.config_variables['basis'], multiplicity = 1)
-        self.molecule_psi4 = run_psi4(self.molecule_data,run_scf=True, run_mp2=True, run_fci=False)
+        
+        if program == 'psi4':
+            self.molecule_data = MolecularData(self.molecule_geometry, self.tools.config_variables['basis'], multiplicity = 1)
+            self.molecule_psi4 = run_psi4(self.molecule_data,run_scf=True, run_mp2=True, run_fci=False)
+            self.lambda_value, self.Lambda_value, self.N, self.Gamma = self.get_parameters(self.molecule_psi4)
 
-        self.lambda_value, self.Lambda_value, self.N, self.Gamma = self.get_parameters(self.molecule_psi4)
+        elif program == 'pyscf':# FOR PYSCF COMPUTATION
+            self.molecule_pyscf = gto.Mole()
+            self.molecule_pyscf = gto.M(
+                atom = self.molecule_geometry,
+                basis = self.tools.config_variables['basis'])
+            self.myhf = scf.RHF(self.molecule_pyscf) #.x2c() The x2c is relativistic. We are not so desperate :P
+            self.myhf.kernel() # WARNING: LARGE MOLECULES CAN TAKE IN THE ORDER OF HOURS TO COMPUTE THIS
+
+            self.lambda_value, self.Lambda_value, self.N, self.Gamma = self.get_parameters(self.molecule_pyscf)
 
     def get_parameters(self, molecule):
+        if self.program == 'pyscf':
+            raise NotImplementedError
 
         lambda_value_one_body, Lambda_value_one_body, N_one_body, gamma_one_body = self.get_parameters_from_row(self.molecule_psi4.one_body_integrals, 0, -1, 0, 0)
         lambda_value_two_body, Lambda_value_two_body, N_two_body, gamma_two_body = self.get_parameters_from_row(self.molecule_psi4.two_body_integrals, 0, -1, 0, 0)
@@ -41,11 +54,12 @@ class Molecule:
         grid = Grid(dimensions = 3, length = 5, scale = 1.) # La complejidad
         plane_wave_H = plane_wave_hamiltonian(grid, self.molecule_geometry, True)
 
-    # recursive method that iterates over all rows of a molecule to get the parameters:
-    # lambda_value is the sum all coefficients of the hamiltonian (sum of all terms)
-    # Lambda_value is the maximum value of all terms
-    # N is the number of orbitals
-    # gamma is the total number of elements (without counting values under some threshold)
+        # recursive method that iterates over all rows of a molecule to get the parameters:
+        # lambda_value is the sum all coefficients of the hamiltonian (sum of all terms)
+        # Lambda_value is the maximum value of all terms
+        # N is the number of orbitals
+        # gamma is the total number of elements (without counting values under some threshold)
+
     def get_parameters_from_row(self, row, lambda_value, Lambda_value, N, gamma):
 
         for r in row:
@@ -119,19 +133,12 @@ class Molecule:
         '''
 
         # Selecting the active space
-        # FOR PYSCF COMPUTATIONS
-        self.mol = gto.Mole()
-        self.mol = gto.M(
-            atom = self.molecule_geometry,
-            basis = self.tools.config_variables['basis'])
-        self.myhf = scf.RHF(mol) #.x2c() The x2c is relativistic. We are not so desperate :P
-        self.myhf.kernel() # WARNING: LARGE MOLECULES CAN TAKE IN THE ORDER OF HOURS TO COMPUTE THIS
 
-        norb, ne_act, orbs = avas.avas(myhf, ao_labels, canonicalize=False)
+        norb, ne_act, orbs = avas.avas(self.myhf, ao_labels, canonicalize=False)
         # norb is number of orbitals
         # ne_act is number of active electrons
         # orbs is the mo_coeff, that is, the change of basis matrix from atomic orbitals -> molecular orbitals
-        mo_ints = ao2mo.kernel(mol, orbs) # Molecular integrals h_{ijkl} appearing in the Hamiltonian
+        mo_ints = ao2mo.kernel(self.molecule_pyscf, orbs) # Molecular integrals h_{ijkl} appearing in the Hamiltonian
         #todo: unclear how to separate from here the active Hamiltonian, which is what we care about
 
     def low_rank_approximation(self):
@@ -139,8 +146,8 @@ class Molecule:
         Aim: get a low rank (rank-truncated) hamiltonian such that the error using say mp2 is smaller than chemical accuracy. Then use that Hamiltonian to compute the usual terms
         Perform low rank approximation using
         https://github.com/quantumlib/OpenFermion/blob/4781602e094699f0fe0844bcded8ef0d45653e81/src/openfermion/circuits/low_rank.py#L76
-        and see how precise that is using MP2 
-        https://github.com/psi4/psi4numpy
+        and see how precise that is using MP2: 
+        https://github.com/psi4/psi4numpy, https://github.com/pyscf/pyscf/blob/c9aa2be600d75a97410c3203abf35046af8ca615/pyscf/mp/mp2.py#L411
         See also a discussion on this topic: https://github.com/quantumlib/OpenFermion/issues/708
         Costumizing Hamiltonian: https://github.com/pyscf/pyscf-doc/blob/master/examples/scf/40-customizing_hamiltonian.py    
         '''
@@ -152,6 +159,8 @@ class Molecule:
         #Reshape into 4 indices matrix
         two_body_coefficients = eri_4fold.reshape(np.array([int(np.sqrt(eri_shape[0]))]*2 + [int(np.sqrt(eri_shape[1]))]*2))#todo: Is this the correct ordering???
 
+
+        # From here------------------------------------------------
         truncation_threshold = 1e-8
         
         lambda_ls, one_body_squares, one_body_correction, truncation_value = low_rank_two_body_decomposition(two_body_coefficients,
@@ -159,19 +168,26 @@ class Molecule:
                                                                                                             final_rank=None,
                                                                                                             spin_basis=True)
 
+        eri = np.einsum('l,pql,rsl->pqrs',lambda_ls, one_body_squares, one_body_squares) # Is order right? #todo: multiply by lambda_ls
+
         mol = gto.M()
-        n = 10
-        mol.nelectron = #todo 
+        mol.nelectron = self.molecule_pyscf.nelect
 
         mf = scf.RHF(mol)
 
-        mf.get_hcore = lambda *args: #todo this does not change, except the term that is added
-        mf.get_ovlp = lambda *args: #todo this should not change???
+        mf.get_hcore = lambda *args: self.myhf.get_hcore + one_body_correction #todo this does not change, except the term that is added
+        mf.get_ovlp = lambda *args: self.myhf.get_ovlp #todo this should not change???
         # ao2mo.restore(8, eri, n) to get 8-fold permutation symmetry of the integrals
         # ._eri only supports the two-electron integrals in 4-fold or 8-fold symmetry.
-        eri = #todo
+        
         mf._eri = ao2mo.restore(8, eri, mol.nelectron)
         mol.incore_anyway = True
+
+        #todo: frozen_orbitals
+        pt = mf.MP2().set(frozen = frozen_orbitals).run()
+        energy = pt.tot_energy
+        # Until here------------------------------------ Iterate to see how high can we put the threshold without damaging the energy estimates (error up to chemical precision)
+
 
 
         return
