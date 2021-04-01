@@ -1,7 +1,8 @@
 import openfermion
 
 from openfermionpsi4 import run_psi4
-from openfermionpyscf import run_pyscf, prepare_pyscf_molecule, compute_scf, compute_integrals
+from openfermionpyscf import run_pyscf
+from openfermionpyscf._run_pyscf import prepare_pyscf_molecule, compute_integrals, compute_scf
 
 from openfermion.utils import Grid
 from openfermion.chem import geometry_from_pubchem, MolecularData
@@ -82,9 +83,9 @@ class Molecule:
         Objects we use
         molecule_data: MolecularData https://quantumai.google/reference/python/openfermion/chem/MolecularData
         molecule_pyscf: PyscfMolecularData https://github.com/quantumlib/OpenFermion-PySCF/blob/8b8de945db41db2b39d588ff0396a93566855247/openfermionpyscf/_pyscf_molecular_data.py#L23
-        _ : A pyscf molecule instance https://github.com/pyscf/pyscf/blob/master/pyscf/gto/mole.py
-        scf: scf method https://github.com/pyscf/pyscf/blob/7be5e015b2b40181755c71d888449db936604660/pyscf/scf/__init__.py#L123
-        mcscf: mcscf method https://github.com/pyscf/pyscf/blob/7be5e015b2b40181755c71d888449db936604660/pyscf/mcscf/__init__.py#L193
+        pyscf_mol : A pyscf molecule instance https://github.com/pyscf/pyscf/blob/master/pyscf/gto/mole.py
+        pyscf_scf: scf method https://github.com/pyscf/pyscf/blob/7be5e015b2b40181755c71d888449db936604660/pyscf/scf/__init__.py#L123
+        pyscf_mcscf: mcscf method https://github.com/pyscf/pyscf/blob/7be5e015b2b40181755c71d888449db936604660/pyscf/mcscf/__init__.py#L193
         
         Returns:
         - occupied_indices
@@ -95,34 +96,35 @@ class Molecule:
 
         #todo: I don't like the idea of accessing private methods, but I see no other way
         # Selecting the active space
-        scf = self.molecule_pyscf._pyscf_data.get('scf', None) #similar to https://github.com/quantumlib/OpenFermion-PySCF/blob/8b8de945db41db2b39d588ff0396a93566855247/openfermionpyscf/_pyscf_molecular_data.py#L47
-        ncas, ne_act_cas, mo_coeff = avas.avas(scf, ao_labels, canonicalize=False)
+        pyscf_scf = self.molecule_pyscf._pyscf_data.get('scf', None) #similar to https://github.com/quantumlib/OpenFermion-PySCF/blob/8b8de945db41db2b39d588ff0396a93566855247/openfermionpyscf/_pyscf_molecular_data.py#L47
+        ncas, ne_act_cas, mo_coeff = avas.avas(pyscf_scf, ao_labels, canonicalize=False)
         #todo: avas should also return mocore.shape[1] and movir.shape[1]: https://github.com/pyscf/pyscf/blob/5796d1727808c4ab6444c9af1f8af1fad1bed450/pyscf/mcscf/avas.py#L165
-        scf.mo_coeff = mo_coeff
+        pyscf_scf.mo_coeff = mo_coeff
 
         #todo: should we modify the mo_coeff of the scf? If so should we modify them again after the mcscf calculation?
         # Correcting molecular coefficients 
         self.molecule_data.canonical_orbitals = mo_coeff.astype(float)
         self.molecule_pyscf._canonical_orbitals = mo_coeff.astype(float)
-        self.molecule_data._pyscf_data['scf'] = scf
+        self.molecule_data._pyscf_data['scf'] = pyscf_scf
 
         # Get two electron integrals
-        one_body_integrals, two_body_integrals = compute_integrals(self.molecule_pyscf, scf)
+        pyscf_mol = self.molecule_data._pyscf_data['mol']
+        one_body_integrals, two_body_integrals = compute_integrals(pyscf_mol, pyscf_scf)
         self.molecule_data.one_body_integrals = one_body_integrals
         self.molecule_data.two_body_integrals = two_body_integrals
 
-        self.molecule_data.overlap_integrals = scf.get_ovlp()
+        self.molecule_data.overlap_integrals = pyscf_scf.get_ovlp()
 
         # This does not give the natural orbitals. If those are wanted check https://github.com/pyscf/pyscf/blob/7be5e015b2b40181755c71d888449db936604660/pyscf/mcscf/__init__.py#L172
         # Complete Active Space Self Consistent Field (CASSCF), an option of Multi-Configuration Self Consistent Field (MCSCF) calculation. A more expensive alternative would be Complete Active Space Configuration Interaction (CASCI)
         #todo: check whether we want natural orbitals or not
-        mcscf = mcscf.CASSCF(scf, ncas, ne_act_cas).run(mo_coeff) #Inspired by the mini-example in avas documentation link above
+        pyscf_mcscf = mcscf.CASSCF(pyscf_scf, ncas, ne_act_cas).run(mo_coeff) #Inspired by the mini-example in avas documentation link above
 
-        self.molecule_data._pyscf_data['mcscf'] = mcscf
-        self.molecule_data.mcscf_energy = mcscf.e_tot
+        self.molecule_data._pyscf_data['mcscf'] = pyscf_mcscf
+        self.molecule_data.mcscf_energy = pyscf_mcscf.e_tot
 
-        self.molecule_data.orbital_energies = mcscf.mo_energy.astype(float)
-        self.molecule_data.molecule.canonical_orbitals = mcscf.mo_coeff.astype(float)
+        self.molecule_data.orbital_energies = pyscf_mcscf.mo_energy.astype(float)
+        self.molecule_data.canonical_orbitals = pyscf_mcscf.mo_coeff.astype(float)
 
         #todo: return also the active and occupied indices.
         return
