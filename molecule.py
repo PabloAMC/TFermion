@@ -1,3 +1,4 @@
+import itertools
 import openfermion
 
 from openfermionpsi4 import run_psi4
@@ -11,10 +12,13 @@ from openfermion.transforms  import  get_fermion_operator
 from openfermion.transforms import jordan_wigner
 from openfermion.circuits import low_rank_two_body_decomposition
 
-import numpy as np
-import time
 from pyscf import gto, scf, mcscf, fci, ao2mo
 from pyscf.mcscf import avas
+
+import numpy as np
+import copy
+import time
+import scipy 
 
 class Molecule:
 
@@ -79,6 +83,7 @@ class Molecule:
         Avas example taken from https://github.com/pyscf/pyscf-doc/blob/93f34be682adf516a692e28787c19f10cbb4b969/examples/mcscf/43-avas.py
         Avas documentation reference: https://github.com/pyscf/pyscf/blob/5796d1727808c4ab6444c9af1f8af1fad1bed450/pyscf/mcscf/avas.py
         Inspired by the function run_pyscf from OpenFermion-Pyscf https://github.com/quantumlib/OpenFermion-PySCF/blob/60ddc080226e89ea5a30c4a5238b1e5418e00440/openfermionpyscf/_run_pyscf.py#L100
+        Restricting the molecule to the active space: https://quantumai.google/reference/python/openfermion/chem/MolecularData#get_active_space_integrals
 
         Objects we use
         molecule_data: MolecularData https://quantumai.google/reference/python/openfermion/chem/MolecularData
@@ -96,10 +101,13 @@ class Molecule:
 
         #todo: I don't like the idea of accessing private methods, but I see no other way
         # Selecting the active space
-        pyscf_scf = self.molecule_pyscf._pyscf_data.get('scf', None) #similar to https://github.com/quantumlib/OpenFermion-PySCF/blob/8b8de945db41db2b39d588ff0396a93566855247/openfermionpyscf/_pyscf_molecular_data.py#L47
-        ncas, ne_act_cas, mo_coeff = avas.avas(pyscf_scf, ao_labels, canonicalize=False)
-        #todo: avas should also return mocore.shape[1] and movir.shape[1]: https://github.com/pyscf/pyscf/blob/5796d1727808c4ab6444c9af1f8af1fad1bed450/pyscf/mcscf/avas.py#L165
+        pyscf_scf = self.molecule_pyscf._pyscf_data['scf'] #similar to https://github.com/quantumlib/OpenFermion-PySCF/blob/8b8de945db41db2b39d588ff0396a93566855247/openfermionpyscf/_pyscf_molecular_data.py#L47
+        ncas, ne_act_cas, mo_coeff, (n_mocore, n_mocas, n_movir) = avas.avas(pyscf_scf, ao_labels, canonicalize=False)
+        # IMPORTANT: Line 191 from avas.py now reads. Modify it 
+        #    return ncas, nelecas, mo, (mocore.shape[1], mocas.shape[1], movir.shape[1])
+
         pyscf_scf.mo_coeff = mo_coeff
+        # mo_occ = pyscf_scf.mo_occ contains some information on the occupation
 
         #todo: should we modify the mo_coeff of the scf? If so should we modify them again after the mcscf calculation?
         # Correcting molecular coefficients 
@@ -127,7 +135,7 @@ class Molecule:
         self.molecule_data.canonical_orbitals = pyscf_mcscf.mo_coeff.astype(float)
 
         #todo: return also the active and occupied indices.
-        return
+        return (ne_act_cas, n_mocore, n_mocas, n_movir)
 
     def low_rank_approximation(self):
         '''
@@ -139,44 +147,75 @@ class Molecule:
         See also a discussion on this topic: https://github.com/quantumlib/OpenFermion/issues/708
         Costumizing Hamiltonian: https://github.com/pyscf/pyscf-doc/blob/master/examples/scf/40-customizing_hamiltonian.py    
         '''
+
+        CHEMICAL_ACCURACY = 0.0015 #according to http://greif.geo.berkeley.edu/~driver/conversions.html
+
         # Iterate to find the maximum truncation error that induces the smallest error
 
         # electronic repulsion integrals
-        eri_4fold = ao2mo.kernel(self.mol, self.myhf.mo_coeff, compact=False)
+        pyscf_scf = self.molecule_data._pyscf_data['scf']
+        pyscf_mol = self.molecule_data._pyscf_data['mol']
+        two_body_integrals = self.molecule_data.two_body_integrals
+        '''
+        print(pyscf_mol.unit)
+
+        #todo: the low_rank_two_body_decomposition requires two_electron_integrals to be 8-fold symmetric: https://github.com/quantumlib/OpenFermion/blob/4781602e094699f0fe0844bcded8ef0d45653e81/src/openfermion/circuits/low_rank.py#L89
+        eri_4fold = ao2mo.kernel(pyscf_mol, pyscf_scf.mo_coeff, compact=False)
         eri_shape = eri_4fold.shape
-        #Reshape into 4 indices matrix
-        two_body_coefficients = eri_4fold.reshape(np.array([int(np.sqrt(eri_shape[0]))]*2 + [int(np.sqrt(eri_shape[1]))]*2))#todo: Is this the correct ordering???
+        #Reshape into 4 indices matrix: from N^2 x N^2 --> N x N x N x N
+        two_electron_integrals = eri_4fold.reshape(np.array([int(np.sqrt(eri_shape[0]))]*4))
 
-
+        # See PQRS convention in OpenFermion.hamiltonians._molecular_data
+        # h[p,q,r,s] = (ps|qr)
+        two_electron_integrals = np.asarray(two_electron_integrals.transpose(0, 2, 3, 1), order='C')
+        '''
         # From here------------------------------------------------
-        truncation_threshold = 1e-8
+
+        def low_rank_truncation_mp2_energy(rank):
         
-        lambda_ls, one_body_squares, one_body_correction, truncation_value = low_rank_two_body_decomposition(two_body_coefficients,
-                                                                                                            truncation_threshold=trunctation_threshold,
-                                                                                                            final_rank=None,
-                                                                                                            spin_basis=True)
+            lambda_ls, one_body_squares, one_body_correction, truncation_value = low_rank_two_body_decomposition(two_body_integrals,
+                                                                                                                truncation_threshold=1e-8,
+                                                                                                                final_rank=rank,
+                                                                                                                spin_basis=False)
 
-        eri = np.einsum('l,pql,rsl->pqrs',lambda_ls, one_body_squares, one_body_squares) # Is order right? #todo: multiply by lambda_ls
+            eri = np.einsum('l,lpr,lqs->pqrs',lambda_ls, one_body_squares, one_body_squares)
 
-        mol = gto.M()
-        mol.nelectron = self.molecule_pyscf.nelect
+            # Integrals have type complex but they do not have imaginary part
+            eri = np.real_if_close(eri)
+            assert(np.isreal(eri).all())
 
-        mf = scf.RHF(mol)
+            mol = gto.M()
+            mol.nelectron = self.molecule_pyscf.n_electrons
 
-        mf.get_hcore = lambda *args: self.myhf.get_hcore + one_body_correction #todo this does not change, except the term that is added
-        mf.get_ovlp = lambda *args: self.myhf.get_ovlp #todo this should not change???
-        # ao2mo.restore(8, eri, n) to get 8-fold permutation symmetry of the integrals
-        # ._eri only supports the two-electron integrals in 4-fold or 8-fold symmetry.
-        
-        mf._eri = ao2mo.restore(8, eri, mol.nelectron)
-        mol.incore_anyway = True
+            mf = scf.RHF(mol)
 
-        #todo: frozen_orbitals
-        pt = mf.MP2().set(frozen = frozen_orbitals).run()
-        energy = pt.tot_energy
+            mf.get_hcore = lambda *args: pyscf_scf.get_hcore() + one_body_correction #todo this does not change, except the term that is added
+            mf.get_ovlp = lambda *args: pyscf_scf.get_ovlp() #todo this should not change???
+            # ao2mo.restore(8, eri, n) to get 8-fold permutation symmetry of the integrals
+            # ._eri only supports the two-electron integrals in 4-fold or 8-fold symmetry.
+            
+            mf._eri = eri # ao2mo.restore(8, eri, mol.nelectron)
+
+            mf.kernel()
+
+            mol.incore_anyway = True
+
+            #todo: frozen_orbitals
+            pt = mf.MP2().set().run() #frozen = frozen_orbitals
+            energy = pt.tot_energy
+            return energy
         # Until here------------------------------------ Iterate to see how high can we put the threshold without damaging the energy estimates (error up to chemical precision)
 
-        return
+        exact_E = low_rank_truncation_mp2_energy(rank = self.molecule_data.n_orbitals)
+
+        rank = scipy.optimize.newton(lambda rank: abs(low_rank_truncation_mp2_energy(rank) - exact_E) - CHEMICAL_ACCURACY, x0 = 1e-7)
+
+        lambda_ls, one_body_squares, one_body_correction, lambd = low_rank_two_body_decomposition(two_body_integrals,
+                                                                                                            truncation_threshold=1e-8,
+                                                                                                            final_rank=rank,
+                                                                                                            spin_basis=False)
+
+        return rank, lambda_ls, one_body_squares, one_body_correction, lambd
 
 
     def molecular_orbital_parameters(self):

@@ -7,4 +7,5 @@ tools = utils.Utils(config_path)
 
 molecule = Molecule(name = 'water', tools = tools)
 
-molecule.active_space(ao_labels=['O 2py'])
+molecule.low_rank_approximation()
+# ne_act_cas, n_mocore, n_mocas, n_movir = molecule.active_space(ao_labels=['O 2pz'])
