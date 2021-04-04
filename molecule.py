@@ -137,52 +137,75 @@ class Molecule:
         #todo: return also the active and occupied indices.
         return (ne_act_cas, n_mocore, n_mocas, n_movir)
 
-    def low_rank_approximation(self):
+    def low_rank_approximation(self, occupied_indices = None, active_indices = None, virtual_indices = None):
         '''
         Aim: get a low rank (rank-truncated) hamiltonian such that the error using say mp2 is smaller than chemical accuracy. Then use that Hamiltonian to compute the usual terms
+        
+        Basic strategy:
+            - Perform Low-Rank trucation
+            - Use Low-Rank truncated Hamiltonian to create pyscf_mol object (named mol)
+            - Compute Moller-Plesset (total) ground state energy of the pyscf_mol object, in the active space if provided
+            - Iterate the previous process using some numeric method such that the low-rank trucation does not significantly affect the energy computed by MP2 (Chemical accuracy)
+            - Use the threshold computed previously to perform the low-rank approximation in the CAS Hamiltonian (Hamiltonian restricted to active orbitals)
+            - TODO: prepare OpenFermion's Molecular Hamiltonian Operator from the CAS Hamiltonian
+
         Perform low rank approximation using
         https://github.com/quantumlib/OpenFermion/blob/4781602e094699f0fe0844bcded8ef0d45653e81/src/openfermion/circuits/low_rank.py#L76
-        and see how precise that is using MP2: 
-        https://github.com/psi4/psi4numpy, https://github.com/pyscf/pyscf/blob/c9aa2be600d75a97410c3203abf35046af8ca615/pyscf/mp/mp2.py#L411
-        See also a discussion on this topic: https://github.com/quantumlib/OpenFermion/issues/708
+        How precise it is using MP2: 
+        https://github.com/pyscf/pyscf/blob/c9aa2be600d75a97410c3203abf35046af8ca615/pyscf/mp/mp2.py#L411 (also https://github.com/psi4/psi4numpy)
         Costumizing Hamiltonian: https://github.com/pyscf/pyscf-doc/blob/master/examples/scf/40-customizing_hamiltonian.py    
+        See also a discussion on this topic: https://github.com/quantumlib/OpenFermion/issues/708
+        
+        To get active space Hamiltonian in OpenFermion use https://quantumai.google/reference/python/openfermion/chem/MolecularData#get_active_space_integrals
+        To restrict Moller-Plesset 2nd order calculation to the Chosen Active Space, https://github.com/pyscf/pyscf/blob/5796d1727808c4ab6444c9af1f8af1fad1bed450/pyscf/mp/mp2.py#L411
+            see also https://github.com/pyscf/pyscf/blob/5796d1727808c4ab6444c9af1f8af1fad1bed450/pyscf/mp/__init__.py#L25
+        
+        Probably beyond our interest: (if we wanted to create a pyscf_mol object with the truncated Hamiltonian, which we have skipped over)
+        To select get the ao_labels: https://github.com/pyscf/pyscf/blob/5796d1727808c4ab6444c9af1f8af1fad1bed450/pyscf/gto/mole.py#L1526
+        To get the overlap matrix https://github.com/pyscf/pyscf/blob/5796d1727808c4ab6444c9af1f8af1fad1bed450/pyscf/mcscf/avas.py#L128
         '''
 
         CHEMICAL_ACCURACY = 0.0015 #according to http://greif.geo.berkeley.edu/~driver/conversions.html
 
-        # Iterate to find the maximum truncation error that induces the smallest error
-
-        # electronic repulsion integrals
         pyscf_scf = self.molecule_data._pyscf_data['scf']
         pyscf_mol = self.molecule_data._pyscf_data['mol']
-        two_body_integrals = self.molecule_data.two_body_integrals
-        '''
-        print(pyscf_mol.unit)
+        two_body_integrals = self.molecule_data.two_body_integrals         # electronic repulsion integrals
 
-        #todo: the low_rank_two_body_decomposition requires two_electron_integrals to be 8-fold symmetric: https://github.com/quantumlib/OpenFermion/blob/4781602e094699f0fe0844bcded8ef0d45653e81/src/openfermion/circuits/low_rank.py#L89
-        eri_4fold = ao2mo.kernel(pyscf_mol, pyscf_scf.mo_coeff, compact=False)
-        eri_shape = eri_4fold.shape
-        #Reshape into 4 indices matrix: from N^2 x N^2 --> N x N x N x N
-        two_electron_integrals = eri_4fold.reshape(np.array([int(np.sqrt(eri_shape[0]))]*4))
+        if occupied_indices is not None or active_indices is not None:
+            core_constant, new_one_body_integrals, new_two_body_integrals = self.molecule_data.get_active_space_integrals(occupied_indices = occupied_indices, active_indices = active_indices)
+        else:
+            new_two_body_integrals = two_body_integrals
 
-        # See PQRS convention in OpenFermion.hamiltonians._molecular_data
-        # h[p,q,r,s] = (ps|qr)
-        two_electron_integrals = np.asarray(two_electron_integrals.transpose(0, 2, 3, 1), order='C')
-        '''
         # From here------------------------------------------------
 
-        def low_rank_truncation_mp2_energy(rank):
+        def low_rank_truncation_mp2_energy(threshold):
         
+            print('<i> Trucation threshold =', threshold)
+
             lambda_ls, one_body_squares, one_body_correction, truncation_value = low_rank_two_body_decomposition(two_body_integrals,
-                                                                                                                truncation_threshold=1e-8,
-                                                                                                                final_rank=rank,
-                                                                                                                spin_basis=False)
+                                                                                                    truncation_threshold=threshold,
+                                                                                                    final_rank=None,
+                                                                                                    spin_basis=False)
+
+            print('<i> Rank =', len(lambda_ls))
 
             eri = np.einsum('l,lpr,lqs->pqrs',lambda_ls, one_body_squares, one_body_squares)
 
             # Integrals have type complex but they do not have imaginary part
             eri = np.real_if_close(eri)
             assert(np.isreal(eri).all())
+
+            #Converting from spin orbitals to spatial orbitals
+            n_spin_orbitals = eri.shape[0]
+            n_spatial_orbitals = n_spin_orbitals//2
+            '''
+            Example of the sumation that comes now
+            a = np.arange(64)
+            a = a.reshape(8,8) -> want to reshape to (4,4) summing by blocks of 2
+            a = a.reshape(4,2,4,2).sum(axis = (1,3))
+            '''
+            one_body_correction = one_body_correction.reshape(n_spatial_orbitals,2,n_spatial_orbitals,2).sum(axis=(1,3))
+            eri = eri.reshape(n_spatial_orbitals,2,n_spatial_orbitals,2,n_spatial_orbitals,2,n_spatial_orbitals,2).sum(axis = (1,3,5,7))
 
             mol = gto.M()
             mol.nelectron = self.molecule_pyscf.n_electrons
@@ -200,23 +223,27 @@ class Molecule:
 
             mol.incore_anyway = True
 
-            #todo: frozen_orbitals
-            pt = mf.MP2().set().run() #frozen = frozen_orbitals
-            energy = pt.tot_energy
+            #todo: frozen_orbitals frozen=None, mo_coeff=None, mo_occ=None)
+            # If there is an active space we want to work with in the Moller Plesset energy calculation, we can do it here
+            pt = mf.MP2().set(frozen_orbitals = occupied_indices + virtual_indices).run()
+
+            energy = pt.e_tot
             return energy
+
         # Until here------------------------------------ Iterate to see how high can we put the threshold without damaging the energy estimates (error up to chemical precision)
+        exact_E = low_rank_truncation_mp2_energy(threshold = 0)
+        threshold = scipy.optimize.newton(lambda threshold: abs(low_rank_truncation_mp2_energy(threshold) - exact_E) - CHEMICAL_ACCURACY, x0 = 1e-8)
 
-        exact_E = low_rank_truncation_mp2_energy(rank = self.molecule_data.n_orbitals)
-
-        rank = scipy.optimize.newton(lambda rank: abs(low_rank_truncation_mp2_energy(rank) - exact_E) - CHEMICAL_ACCURACY, x0 = 1e-7)
-
-        lambda_ls, one_body_squares, one_body_correction, lambd = low_rank_two_body_decomposition(two_body_integrals,
-                                                                                                            truncation_threshold=1e-8,
-                                                                                                            final_rank=rank,
+        lambda_ls, one_body_squares, one_body_correction, truncation_value = low_rank_two_body_decomposition(new_two_body_integrals,
+                                                                                                            truncation_threshold=threshold,
+                                                                                                            final_rank=None,
                                                                                                             spin_basis=False)
 
-        return rank, lambda_ls, one_body_squares, one_body_correction, lambd
+        final_rank = len(lambda_ls)
 
+
+        return final_rank, lambda_ls, one_body_squares, one_body_correction, truncation_value, core_constant, new_one_body_integrals
+        #todo: how do we feed one_body_squares and (one_body_correction + new_one_body_integrals) into molecular_hamiltonian? -> Needed to compute basic parameters
 
     def molecular_orbital_parameters(self):
         '''
