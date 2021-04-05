@@ -36,6 +36,7 @@ class Molecule:
         #From OpenFermion
         self.molecule_data = MolecularData(self.molecule_geometry, self.tools.config_variables['basis'], multiplicity = 1)
 
+        #todo: add possibility of boundary conditions https://sunqm.github.io/pyscf/tutorial.html#initializing-a-crystal
         if program == 'psi4': 
             self.molecule_psi4 = run_psi4(self.molecule_data,run_scf=True, run_mp2=False, run_fci=False)
 
@@ -173,6 +174,7 @@ class Molecule:
         To create a molecular_hamiltonian (MolecularOperator class) https://github.com/quantumlib/OpenFermion/blob/40f4dd293d3ac7759e39b0d4c061b391e9663246/src/openfermion/chem/molecular_data.py#L878
 
         Probably beyond our interest: (if we wanted to create a pyscf_mol object with the truncated Hamiltonian, which we have skipped over)
+        One can truncate the basis using something similar to https://github.com/pyscf/pyscf/blob/9c8b06d481623b50ccdca9f88d833de7320ac3cd/examples/gto/04-input_basis.py#L98
         To select get the ao_labels: https://github.com/pyscf/pyscf/blob/5796d1727808c4ab6444c9af1f8af1fad1bed450/pyscf/gto/mole.py#L1526
         To get the overlap matrix https://github.com/pyscf/pyscf/blob/5796d1727808c4ab6444c9af1f8af1fad1bed450/pyscf/mcscf/avas.py#L128
         '''
@@ -203,6 +205,7 @@ class Molecule:
 
             print('<i> Rank =', len(lambda_ls))
 
+            # Electronic Repulsion Integrals
             eri = np.einsum('l,lpr,lqs->pqrs',lambda_ls, one_body_squares, one_body_squares)
 
             # Integrals have type complex but they do not have imaginary part
@@ -221,6 +224,7 @@ class Molecule:
             one_body_correction = one_body_correction.reshape(n_spatial_orbitals,2,n_spatial_orbitals,2).sum(axis=(1,3))
             eri = eri.reshape(n_spatial_orbitals,2,n_spatial_orbitals,2,n_spatial_orbitals,2,n_spatial_orbitals,2).sum(axis = (1,3,5,7))
 
+            #todo: add possibility of boundary conditions https://sunqm.github.io/pyscf/tutorial.html#initializing-a-crystal
             mol = gto.M()
             mol.nelectron = self.molecule_pyscf.n_electrons
 
@@ -272,34 +276,31 @@ class Molecule:
         '''
         Aim: caluclate phi_max and dphi_max
         - To calculate the ao basis. Bibliography https://onlinelibrary.wiley.com/doi/pdf/10.1002/wcms.1123?casa_token=M0hDMDgf0VkAAAAA:qOQVt0GDe2TD7WzAsoHCq0kLzNgAQFjssF57dydp1rsr4ExjZ1MEP75eD4tkjpATrpkd81qnWjJmrA
-        https://github.com/pyscf/pyscf-doc/blob/93f34be682adf516a692e28787c19f10cbb4b969/examples/gto/11-basis_info.py
-        Some useful methods from mol class (can be found using dir(mol))
-        'bas_ctr_coeff',
-        'bas_exp',
-        'bas_kappa'
-        To use them use, for example, check the documentation with help(mol.bas_ctr_coeff)
+
+        - COMPUTE MO VALUES AND THEIR DERIVATIVES IN THE SPACE: https://github.com/pyscf/pyscf/blob/master/examples/gto/24-ao_value_on_grid.py (It's totally awesome that this exists)
 
         - For conversion of ao to mo
         https://github.com/pyscf/pyscf/tree/5796d1727808c4ab6444c9af1f8af1fad1bed450/pyscf/ao2mo
         https://github.com/pyscf/pyscf-doc/tree/93f34be682adf516a692e28787c19f10cbb4b969/examples/ao2mo
         
-        General Integral transformation module
-        ======================================
-        Simple usage::
-            >>> from pyscf import gto, scf, ao2mo
-            >>> mol = gto.M(atom='H 0 0 0; F 0 0 1')
-            >>> mf = scf.RHF(mol).run() # mf.mo_coeff contains the basis change matrix from ao to mo
-            >>> mo_ints = ao2mo.kernel(mol, mf.mo_coeff) # Molecular integrals (not interested directly con them)
-
-        - For active space, use something like
-            >>> mf = scf.ROHF(mol)
-            >>> mf.kernel()
-            >>> from pyscf.mcscf import avas
-            >>> norb, ne_act, orbs = avas.avas(mf, ao_labels, canonicalize=False)
-
-            and orbs will have the coefficients of the molecular orbitals
-
+        Procedure
+        We evaluate the molecular orbital functions and their derivatives in random points and return the highest value
         '''
-        return
+        #todo: how to choose the coordinates to fit the molecule well? -> Use geometry from the molecule
+        coords = np.random.random((100,3)) # todo: dumb, to be substituted
 
+        pyscf_scf = self.molecule_data._pyscf_data['scf']
+        pyscf_mol = self.molecule_data._pyscf_data['mol']
 
+        # deriv=1: orbital value + gradients 
+        ao_p = pyscf_mol.eval_gto('GTOval_sph_deriv1', coords)  # (4,Ngrids,n) array
+        ao = ao_p[0]
+        ao_grad = ao_p[1:4]  # x, y, z
+
+        mo = ao.dot(pyscf_scf.mo_coeff)
+        mo_grad = [x.dot(pyscf_scf.mo_coeff) for x in ao_grad]
+
+        phi_max = np.max(mo)
+        dphi_max = np.max(mo_grad)
+
+        return phi_max, dphi_max
