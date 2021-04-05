@@ -143,6 +143,15 @@ class Molecule:
         '''
         Aim: get a low rank (rank-truncated) hamiltonian such that the error using say mp2 is smaller than chemical accuracy. Then use that Hamiltonian to compute the usual terms
         
+        Args: 
+        occupied_indices: list = []
+        active_indices: list = []
+        virtual_indices: list = []
+
+        Returns:
+        molecular_hamiltonian: MolecularOperator # Truncated Hamiltonian
+        final_rank: int # Rank of the truncated Hamiltonian
+
         Basic strategy:
             - Perform Low-Rank trucation
             - Use Low-Rank truncated Hamiltonian to create pyscf_mol object (named mol)
@@ -168,7 +177,7 @@ class Molecule:
         To get the overlap matrix https://github.com/pyscf/pyscf/blob/5796d1727808c4ab6444c9af1f8af1fad1bed450/pyscf/mcscf/avas.py#L128
         '''
 
-        CHEMICAL_ACCURACY = 0.0015 #according to http://greif.geo.berkeley.edu/~driver/conversions.html
+        CHEMICAL_ACCURACY = 0.0015 #in Hartrees, according to http://greif.geo.berkeley.edu/~driver/conversions.html
 
         pyscf_scf = self.molecule_data._pyscf_data['scf']
         pyscf_mol = self.molecule_data._pyscf_data['mol']
@@ -217,7 +226,7 @@ class Molecule:
 
             mf = scf.RHF(mol)
 
-            mf.get_hcore = lambda *args: pyscf_scf.get_hcore() + one_body_correction #todo this does not change, except the term that is added
+            mf.get_hcore = lambda *args: pyscf_scf.get_hcore() + one_body_correction # this does not change, except the term that is added
             mf.get_ovlp = lambda *args: pyscf_scf.get_ovlp() #todo this should not change???
             # ao2mo.restore(8, eri, n) to get 8-fold permutation symmetry of the integrals
             # ._eri only supports the two-electron integrals in 4-fold or 8-fold symmetry.
@@ -228,7 +237,6 @@ class Molecule:
 
             mol.incore_anyway = True
 
-            #todo: frozen_orbitals frozen=None, mo_coeff=None, mo_occ=None)
             # If there is an active space we want to work with in the Moller Plesset energy calculation, we can do it here
             pt = mf.MP2().set(frozen_orbitals = occupied_indices + virtual_indices).run()
 
@@ -253,13 +261,12 @@ class Molecule:
         one_body_coefficients, _ = spinorb_from_spatial(new_one_body_integrals, new_two_body_integrals)
         one_body_coefficients = one_body_correction + one_body_coefficients
 
-        # Cast to InteractionOperator class and return.
-        full_molecular_hamiltonian = self.molecule_data.get_molecular_hamiltonian()
+        constant = new_core_constant+self.molecule_data.nuclear_repulsion
 
-        molecular_hamiltonian = reps.InteractionOperator(new_core_constant+full_molecular_hamiltonian[()], one_body_coefficients, 1 / 2 * two_body_coefficients)
+        #todo: the 1/2 term in front of the two_body_coefficients should be there? -> Check the definition of get_molecular_hamiltonian https://github.com/quantumlib/OpenFermion/blob/40f4dd293d3ac7759e39b0d4c061b391e9663246/src/openfermion/chem/molecular_data.py#L878
+        molecular_hamiltonian = reps.InteractionOperator(constant, one_body_coefficients, 1/2 * two_body_coefficients)
 
-        return molecular_hamiltonian
-        #todo: how do we feed one_body_squares and (one_body_correction + new_one_body_integrals) into molecular_hamiltonian? -> Needed to compute basic parameters
+        return molecular_hamiltonian, final_rank
 
     def molecular_orbital_parameters(self):
         '''
