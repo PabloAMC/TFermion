@@ -6,7 +6,9 @@ from openfermionpyscf import run_pyscf
 from openfermionpyscf._run_pyscf import prepare_pyscf_molecule, compute_integrals, compute_scf
 
 from openfermion.utils import Grid
+import openfermion.ops.representations as reps
 from openfermion.chem import geometry_from_pubchem, MolecularData
+from openfermion.chem.molecular_data import spinorb_from_spatial
 from openfermion.hamiltonians import plane_wave_hamiltonian
 from openfermion.transforms  import  get_fermion_operator
 from openfermion.transforms import jordan_wigner
@@ -137,7 +139,7 @@ class Molecule:
         #todo: return also the active and occupied indices.
         return (ne_act_cas, n_mocore, n_mocas, n_movir)
 
-    def low_rank_approximation(self, occupied_indices = None, active_indices = None, virtual_indices = None):
+    def low_rank_approximation(self, occupied_indices = [], active_indices = [], virtual_indices = []):
         '''
         Aim: get a low rank (rank-truncated) hamiltonian such that the error using say mp2 is smaller than chemical accuracy. Then use that Hamiltonian to compute the usual terms
         
@@ -159,7 +161,8 @@ class Molecule:
         To get active space Hamiltonian in OpenFermion use https://quantumai.google/reference/python/openfermion/chem/MolecularData#get_active_space_integrals
         To restrict Moller-Plesset 2nd order calculation to the Chosen Active Space, https://github.com/pyscf/pyscf/blob/5796d1727808c4ab6444c9af1f8af1fad1bed450/pyscf/mp/mp2.py#L411
             see also https://github.com/pyscf/pyscf/blob/5796d1727808c4ab6444c9af1f8af1fad1bed450/pyscf/mp/__init__.py#L25
-        
+        To create a molecular_hamiltonian (MolecularOperator class) https://github.com/quantumlib/OpenFermion/blob/40f4dd293d3ac7759e39b0d4c061b391e9663246/src/openfermion/chem/molecular_data.py#L878
+
         Probably beyond our interest: (if we wanted to create a pyscf_mol object with the truncated Hamiltonian, which we have skipped over)
         To select get the ao_labels: https://github.com/pyscf/pyscf/blob/5796d1727808c4ab6444c9af1f8af1fad1bed450/pyscf/gto/mole.py#L1526
         To get the overlap matrix https://github.com/pyscf/pyscf/blob/5796d1727808c4ab6444c9af1f8af1fad1bed450/pyscf/mcscf/avas.py#L128
@@ -171,10 +174,12 @@ class Molecule:
         pyscf_mol = self.molecule_data._pyscf_data['mol']
         two_body_integrals = self.molecule_data.two_body_integrals         # electronic repulsion integrals
 
-        if occupied_indices is not None or active_indices is not None:
-            core_constant, new_one_body_integrals, new_two_body_integrals = self.molecule_data.get_active_space_integrals(occupied_indices = occupied_indices, active_indices = active_indices)
+        if occupied_indices or virtual_indices:
+            new_core_constant, new_one_body_integrals, new_two_body_integrals = self.molecule_data.get_active_space_integrals(occupied_indices = occupied_indices, active_indices = active_indices)
         else:
+            new_core_constant = 0
             new_two_body_integrals = two_body_integrals
+            new_one_body_integrals = self.molecule_data.one_body_integrals
 
         # From here------------------------------------------------
 
@@ -232,6 +237,8 @@ class Molecule:
 
         # Until here------------------------------------ Iterate to see how high can we put the threshold without damaging the energy estimates (error up to chemical precision)
         exact_E = low_rank_truncation_mp2_energy(threshold = 0)
+
+        #todo: how to choose the precision here? In some examples tried (with full active space) there is no truncation
         threshold = scipy.optimize.newton(lambda threshold: abs(low_rank_truncation_mp2_energy(threshold) - exact_E) - CHEMICAL_ACCURACY, x0 = 1e-8)
 
         lambda_ls, one_body_squares, one_body_correction, truncation_value = low_rank_two_body_decomposition(new_two_body_integrals,
@@ -241,8 +248,17 @@ class Molecule:
 
         final_rank = len(lambda_ls)
 
+        two_body_coefficients = np.einsum('l,lpr,lqs->pqrs',lambda_ls, one_body_squares, one_body_squares)
 
-        return final_rank, lambda_ls, one_body_squares, one_body_correction, truncation_value, core_constant, new_one_body_integrals
+        one_body_coefficients, _ = spinorb_from_spatial(new_one_body_integrals, new_two_body_integrals)
+        one_body_coefficients = one_body_correction + one_body_coefficients
+
+        # Cast to InteractionOperator class and return.
+        full_molecular_hamiltonian = self.molecule_data.get_molecular_hamiltonian()
+
+        molecular_hamiltonian = reps.InteractionOperator(new_core_constant+full_molecular_hamiltonian[()], one_body_coefficients, 1 / 2 * two_body_coefficients)
+
+        return molecular_hamiltonian
         #todo: how do we feed one_body_squares and (one_body_correction + new_one_body_integrals) into molecular_hamiltonian? -> Needed to compute basic parameters
 
     def molecular_orbital_parameters(self):
