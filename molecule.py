@@ -159,7 +159,7 @@ class Molecule:
             - Compute Moller-Plesset (total) ground state energy of the pyscf_mol object, in the active space if provided
             - Iterate the previous process using some numeric method such that the low-rank trucation does not significantly affect the energy computed by MP2 (Chemical accuracy)
             - Use the threshold computed previously to perform the low-rank approximation in the CAS Hamiltonian (Hamiltonian restricted to active orbitals)
-            - TODO: prepare OpenFermion's Molecular Hamiltonian Operator from the CAS Hamiltonian
+            - Prepare OpenFermion's Molecular Hamiltonian Operator from the CAS Hamiltonian
 
         Perform low rank approximation using
         https://github.com/quantumlib/OpenFermion/blob/4781602e094699f0fe0844bcded8ef0d45653e81/src/openfermion/circuits/low_rank.py#L76
@@ -204,9 +204,11 @@ class Molecule:
                                                                                                     spin_basis=False)
 
             print('<i> Rank =', len(lambda_ls))
+            for i in range(len(lambda_ls)):
+                print(one_body_squares[i,:,:])
 
-            # Electronic Repulsion Integrals
-            eri = np.einsum('l,lpr,lqs->pqrs',lambda_ls, one_body_squares, one_body_squares)
+            # Electronic Repulsion Integral
+            eri = np.einsum('l,lpq,lrs->pqrs',lambda_ls, one_body_squares, one_body_squares)
 
             # Integrals have type complex but they do not have imaginary part
             eri = np.real_if_close(eri)
@@ -223,6 +225,9 @@ class Molecule:
             '''
             one_body_correction = one_body_correction.reshape(n_spatial_orbitals,2,n_spatial_orbitals,2).sum(axis=(1,3))
             eri = eri.reshape(n_spatial_orbitals,2,n_spatial_orbitals,2,n_spatial_orbitals,2,n_spatial_orbitals,2).sum(axis = (1,3,5,7))
+
+            #todo: we can check symmetry using numpy transpose
+            print('<i>', np.array_equal(eri, np.transpose(eri, (3,2,1,0))) and np.array_equal(eri, np.transpose(eri, (0,1,3,2))))
 
             #todo: add possibility of boundary conditions https://sunqm.github.io/pyscf/tutorial.html#initializing-a-crystal
             mol = gto.M()
