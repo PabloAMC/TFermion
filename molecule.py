@@ -16,11 +16,26 @@ from openfermion.circuits import low_rank_two_body_decomposition
 
 from pyscf import gto, scf, mcscf, fci, ao2mo
 from pyscf.mcscf import avas
+from pyscf.lib.parameters import BOHR
 
 import numpy as np
 import copy
 import time
 import scipy 
+
+'''
+The active space selection method avas is not supported with periodic boundary conditions.
+Similarly, the low rank approximation of the Hamiltonian is not possible in that case since 
+low_rank_two_body_decomposition requires the two body integrals of the Hamiltonian, which are not
+available for Cell objects from Pyscf. This means that periodic materials cannot be modelled accurately.
+Nevertheless, some important links for the periodic boundary condition (not used) are:
+
+1. Crystal cell structure: https://sunqm.github.io/pyscf/modules/pbc/gto.html#pbc-gto
+                see also:  https://github.com/pyscf/pyscf/blob/1de8c145abb3e1a7392df9118e8062e6fe6bde00/pyscf/pbc/gto/cell.py#L1010
+
+2. Costumizing the kpts Hamiltonian (for periodic boundary conditions): https://github.com/pyscf/pyscf-doc/blob/master/examples/pbc/40-customize_kpts_hamiltonian.py
+3. Hartree Fock algorithm for that Hamiltonian: https://github.com/pyscf/pyscf/blob/master/pyscf/pbc/scf/khf.py
+'''
 
 class Molecule:
 
@@ -102,7 +117,6 @@ class Molecule:
         Also modifies self.molecule_data and self.molecule_pyscf in place.
         '''
 
-        #todo: I don't like the idea of accessing private methods, but I see no other way
         # Selecting the active space
         pyscf_scf = self.molecule_pyscf._pyscf_data['scf'] #similar to https://github.com/quantumlib/OpenFermion-PySCF/blob/8b8de945db41db2b39d588ff0396a93566855247/openfermionpyscf/_pyscf_molecular_data.py#L47
         ncas, ne_act_cas, mo_coeff, (n_mocore, n_mocas, n_movir) = avas.avas(pyscf_scf, ao_labels, canonicalize=False)
@@ -112,7 +126,6 @@ class Molecule:
         pyscf_scf.mo_coeff = mo_coeff
         # mo_occ = pyscf_scf.mo_occ contains some information on the occupation
 
-        #todo: should we modify the mo_coeff of the scf? If so should we modify them again after the mcscf calculation?
         # Correcting molecular coefficients 
         self.molecule_data.canonical_orbitals = mo_coeff.astype(float)
         self.molecule_pyscf._canonical_orbitals = mo_coeff.astype(float)
@@ -137,7 +150,6 @@ class Molecule:
         self.molecule_data.orbital_energies = pyscf_mcscf.mo_energy.astype(float)
         self.molecule_data.canonical_orbitals = pyscf_mcscf.mo_coeff.astype(float)
 
-        #todo: return also the active and occupied indices.
         return (ne_act_cas, n_mocore, n_mocas, n_movir)
 
     def low_rank_approximation(self, occupied_indices = [], active_indices = [], virtual_indices = []):
@@ -204,11 +216,9 @@ class Molecule:
                                                                                                     spin_basis=False)
 
             print('<i> Rank =', len(lambda_ls))
-            for i in range(len(lambda_ls)):
-                print(one_body_squares[i,:,:])
 
-            # Electronic Repulsion Integral
-            eri = np.einsum('l,lpq,lrs->pqrs',lambda_ls, one_body_squares, one_body_squares)
+            # Electronic Repulsion Integral #todo: does not get the right symmetry
+            eri = np.einsum('l,lpq,lrs->pqrs',lambda_ls, (one_body_squares + np.transpose(one_body_squares, (0,2,1)))/2, (one_body_squares + np.transpose(one_body_squares, (0,2,1)))/2)
 
             # Integrals have type complex but they do not have imaginary part
             eri = np.real_if_close(eri)
@@ -225,18 +235,17 @@ class Molecule:
             '''
             one_body_correction = one_body_correction.reshape(n_spatial_orbitals,2,n_spatial_orbitals,2).sum(axis=(1,3))
             eri = eri.reshape(n_spatial_orbitals,2,n_spatial_orbitals,2,n_spatial_orbitals,2,n_spatial_orbitals,2).sum(axis = (1,3,5,7))
+            
+            # Checking some of the symmetries
+            assert(np.isclose(eri, np.transpose(eri, (3,2,1,0)), rtol = 1).all() and np.isclose(eri, np.transpose(eri, (2,3,0,1)), rtol = 1).all())
 
-            #todo: we can check symmetry using numpy transpose
-            print('<i>', np.array_equal(eri, np.transpose(eri, (3,2,1,0))) and np.array_equal(eri, np.transpose(eri, (0,1,3,2))))
-
-            #todo: add possibility of boundary conditions https://sunqm.github.io/pyscf/tutorial.html#initializing-a-crystal
             mol = gto.M()
             mol.nelectron = self.molecule_pyscf.n_electrons
 
             mf = scf.RHF(mol)
 
             mf.get_hcore = lambda *args: pyscf_scf.get_hcore() + one_body_correction # this does not change, except the term that is added
-            mf.get_ovlp = lambda *args: pyscf_scf.get_ovlp() #todo this should not change???
+            mf.get_ovlp = lambda *args: pyscf_scf.get_ovlp()
             # ao2mo.restore(8, eri, n) to get 8-fold permutation symmetry of the integrals
             # ._eri only supports the two-electron integrals in 4-fold or 8-fold symmetry.
             
@@ -247,7 +256,10 @@ class Molecule:
             mol.incore_anyway = True
 
             # If there is an active space we want to work with in the Moller Plesset energy calculation, we can do it here
-            pt = mf.MP2().set(frozen_orbitals = occupied_indices + virtual_indices).run()
+            if occupied_indices and virtual_indices:
+                pt = mf.MP2().set(frozen = occupied_indices + virtual_indices).run()
+            else:
+                pt = mf.MP2().set().run()
 
             energy = pt.e_tot
             return energy
@@ -255,8 +267,12 @@ class Molecule:
         # Until here------------------------------------ Iterate to see how high can we put the threshold without damaging the energy estimates (error up to chemical precision)
         exact_E = low_rank_truncation_mp2_energy(threshold = 0)
 
-        #todo: how to choose the precision here? In some examples tried (with full active space) there is no truncation
-        threshold = scipy.optimize.newton(lambda threshold: abs(low_rank_truncation_mp2_energy(threshold) - exact_E) - CHEMICAL_ACCURACY, x0 = 1e-8)
+        nconstraint = scipy.optimize.NonlinearConstraint(fun = lambda threshold: low_rank_truncation_mp2_energy(threshold) - exact_E, lb = -CHEMICAL_ACCURACY, ub = +CHEMICAL_ACCURACY, keep_feasible = True)
+        lconstraint = scipy.optimize.LinearConstraint(A = np.array([1]), lb = 1e-10, ub = 1, keep_feasible = True)
+        result = scipy.optimize.minimize(fun = lambda threshold: 1e-2/(threshold+1e-4), x0 = 1e-4, constraints = [nconstraint, lconstraint], tol = .01*CHEMICAL_ACCURACY, options = {'maxiter': 50}, method='COBYLA') # Works with COBYLA, but not with SLSQP (misses the boundaries) or trust-constr (oscillates)
+        threshold = float(result['x'])
+        approximate_E = low_rank_truncation_mp2_energy(threshold = threshold)
+        print('<i> MP2 energy error in the truncation', approximate_E-exact_E)
 
         lambda_ls, one_body_squares, one_body_correction, truncation_value = low_rank_two_body_decomposition(new_two_body_integrals,
                                                                                                             truncation_threshold=threshold,
@@ -291,11 +307,16 @@ class Molecule:
         Procedure
         We evaluate the molecular orbital functions and their derivatives in random points and return the highest value
         '''
-        #todo: how to choose the coordinates to fit the molecule well? -> Use geometry from the molecule
-        coords = np.random.random((100,3)) # todo: dumb, to be substituted
 
         pyscf_scf = self.molecule_data._pyscf_data['scf']
         pyscf_mol = self.molecule_data._pyscf_data['mol']
+
+        #todo: how to choose the coordinates to fit the molecule well? -> Use geometry from the molecule
+        #coords = np.random.random((100,3)) # todo: dumb, to be substituted
+
+        coords = np.empty((0, 3))
+        for _, at_coord in pyscf_mol.geometry:
+            coord = np.vstack((coord, np.array(at_coord) + 10 * BOHR * np.random.random((50,3)))) # Random coords around the atomic positions
 
         # deriv=1: orbital value + gradients 
         ao_p = pyscf_mol.eval_gto('GTOval_sph_deriv1', coords)  # (4,Ngrids,n) array
