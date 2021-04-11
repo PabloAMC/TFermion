@@ -28,7 +28,8 @@ class Utils():
 
         parser.add_argument("molecule_name", help="name of the molecule to analyze", type=str)
         parser.add_argument("method", help="method to calculate the energy of the molecule", type=str)
-        
+        parser.add_argument("ao_labels", help="atomic orbital labels for the avas method to select the active space. Example: ['Fe 3d', 'C 2pz']", type=list)
+
         self.args = parser.parse_args()
 
         return self.args
