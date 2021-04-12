@@ -41,6 +41,15 @@ print('#########################################################################
 
 molecule = molecule.Molecule(args.molecule_name, tools)
 
+molecule.active_space(args.ao_labels)
+
+#todo:active space
+
+
+#todo: get_basic_paramters
+
+#todo: if method requires it, low_rank_approximation
+
 c_calculator = cost_calculator.Cost_calculator(molecule, tools)
 c_calculator.calculate_cost(args.method)
 print('The cost to calculate the energy of', args.molecule_name,'with method', args.method, 'is', c_calculator.costs[args.method])
