@@ -49,7 +49,7 @@ class Molecule:
 
         self.gamma_threshold = self.tools.config_variables['gamma_threshold']
         self.molecule_geometry = geometry_from_pubchem(self.molecule_name) #todo: do we prefer psi4 or pyscf? There are some functions in pyscf
-        
+
         #From OpenFermion
         self.molecule_data = MolecularData(self.molecule_geometry, self.tools.config_variables['basis'], multiplicity = 1)
 
@@ -58,9 +58,15 @@ class Molecule:
             self.molecule_psi4 = run_psi4(self.molecule_data,run_scf=True, run_mp2=False, run_fci=False)
 
         elif program == 'pyscf':
-            self.molecule_pyscf = run_pyscf(self.molecule_data,run_scf=True, run_mp2=False, run_fci=False)
-        
+            self.molecule_pyscf = run_pyscf(self.molecule_data,run_scf=True, run_mp2=True, run_fci=False)
+            print('<i> HF energy, MP2 energy', self.molecule_pyscf.hf_energy, self.molecule_pyscf.mp2_energy)
         self.N = self.molecule_data.n_orbitals * 2 # The 2 is due to orbitals -> spin orbitals
+
+        self.occupied_indices = []
+        self.active_indices = range(self.molecule_data.n_orbitals) # This is the default
+        self.virtual_indices = []
+
+        #self.build_grid()
         self.get_basic_parameters()
         '''            
         self.molecule_pyscf = gto.Mole()
@@ -71,12 +77,47 @@ class Molecule:
         self.myhf.kernel() # WARNING: LARGE MOLECULES CAN TAKE IN THE ORDER OF HOURS TO COMPUTE THIS
         '''
 
-    def get_basic_parameters(self, threshold = 0, occupied_indices = None, active_indices = None):
+    def get_basic_parameters(self, threshold = 0, molecular_hamiltonian = None):
 
-        molecular_hamiltonian = self.molecule_data.get_molecular_hamiltonian(occupied_indices=occupied_indices, active_indices=active_indices)
+        if molecular_hamiltonian is None:
+            molecular_hamiltonian = self.molecule_data.get_molecular_hamiltonian(occupied_indices=self.occupied_indices, active_indices=self.active_indices)
         fermion_operator = openfermion.get_fermion_operator(molecular_hamiltonian)
         JW_op = openfermion.transforms.jordan_wigner(fermion_operator)
         #BK_op = openfermion.transforms.bravyi_kitaev(fermion_operator) #Results seem to be the same no matter what transform one uses
+        '''
+        DC_operator = openfermion.get_diagonal_coulomb_hamiltonian(fermion_operator)
+        self.H_norm_bound = np.sum(np.abs(DC_operator.one_body)) + np.sum(np.abs(DC_operator.two_body))
+        sparse_mat = openfermion.get_sparse_operator(JW_op)
+        dense_operator = sparse_mat.todense()
+        fro = np.linalg.norm(dense_operator, ord = 'fro')
+        print('<i> Frobenius', fro)
+        a = len(dense_operator[0])
+        v = np.zeros((a, 1))
+        for j in range(a):
+            v[j] = np.sqrt(np.sum(np.multiply(dense_operator[j,:],dense_operator[j,:])))
+        n = np.max(v)
+        print('<i> n',n)
+        #max_eigenvalue, _ = scipy.sparse.linalg.eigsh(sparse_mat, k=1, which="LM")
+        #print('<i> max eigenvalue', max_eigenvalue)
+        eig = openfermion.linalg.eigenspectrum(JW_op)
+        print('<i> Eigenspectrum', eig)
+        '''
+
+        # TEMPORARILY: TO SEE IF WE CAN IMPROVE IT
+        self.H_norm = self.molecule_pyscf.mp2_energy + (self.molecule_pyscf.mp2_energy - self.molecule_pyscf.hf_energy)
+        
+        d = JW_op.terms
+        del d[()]
+        l = abs(np.array(list(d.values())))
+        self.lambd = sum(l)
+        self.Lambda = max(l)
+        self.Gamma = np.count_nonzero(l >= threshold)
+
+    def build_grid(self, plane_wave: bool = True, threshold = 0):
+        grid = Grid(dimensions = 3, length = 3, scale = 1.) # La complejidad
+
+        h_plane_wave = plane_wave_hamiltonian(grid, self.molecule_geometry, plane_wave = plane_wave, include_constant=False)
+        JW_op = openfermion.transforms.jordan_wigner(h_plane_wave)
 
         d = JW_op.terms
         del d[()]
@@ -85,10 +126,7 @@ class Molecule:
         self.Lambda = max(l)
         self.Gamma = np.count_nonzero(l >= threshold)
 
-    def build_grid(self):
-        grid = Grid(dimensions = 3, length = 5, scale = 1.) # La complejidad
-        plane_wave_H = plane_wave_hamiltonian(grid, self.molecule_geometry, True)
-
+        return
         # recursive method that iterates over all rows of a molecule to get the parameters:
         # lambda_value is the sum all coefficients of the hamiltonian (sum of all terms)
         # Lambda_value is the maximum value of all terms
@@ -152,7 +190,11 @@ class Molecule:
         self.molecule_data.orbital_energies = pyscf_mcscf.mo_energy.astype(float)
         self.molecule_data.canonical_orbitals = pyscf_mcscf.mo_coeff.astype(float)
 
-        return (ne_act_cas, n_mocore, n_mocas, n_movir)
+        self.occupied_indices = list(range(n_mocore))
+        self.active_indices = list(range(n_mocore, n_mocas))
+        self.virtual_indices = list(range(n_mocas, n_movir))
+
+        return ne_act_cas
 
     def sparsify(self, occupied_indices, virtual_indices):
 
@@ -214,7 +256,7 @@ class Molecule:
         return molecular_hamiltonian, threshold
 
 
-    def low_rank_approximation(self, occupied_indices = [], active_indices = [], virtual_indices = [], sparsify = False):
+    def low_rank_approximation(self, sparsify = False):
         '''
         Aim: get a low rank (rank-truncated) hamiltonian such that the error using say mp2 is smaller than chemical accuracy. Then use that Hamiltonian to compute the usual terms
         
@@ -258,6 +300,10 @@ class Molecule:
         To select get the ao_labels: https://github.com/pyscf/pyscf/blob/5796d1727808c4ab6444c9af1f8af1fad1bed450/pyscf/gto/mole.py#L1526
         To get the overlap matrix https://github.com/pyscf/pyscf/blob/5796d1727808c4ab6444c9af1f8af1fad1bed450/pyscf/mcscf/avas.py#L128
         '''
+
+        occupied_indices = self.occupied_indices
+        active_indices = self.active_indices 
+        virtual_indices = self.virtual_indices
 
         pyscf_scf = self.molecule_data._pyscf_data['scf']
         pyscf_mol = self.molecule_data._pyscf_data['mol']

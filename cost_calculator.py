@@ -12,7 +12,7 @@ class Cost_calculator:
         self.tools = tools
         self.costs = {}
 
-    def calculate_cost(self, method): 
+    def calculate_cost(self, method, ao_labels = None): 
 
 
         if method == 'qdrift' or method == 'rand_ham':
@@ -62,7 +62,10 @@ class Cost_calculator:
             if method == 'linear_t':
                 self.costs['linear_t'] = methods_qrom.linear_T(N, lambda_value, eps_PEA, eps_S, Ham_norm)
             elif method == 'sparsity_low_rank':
-                self.costs['sparsity_low_rank'] = methods_qrom.sparsity_low_rank(N, lambda_value, eps_PEA, eps_S, L, Ham_norm)
+                #todo: how to select the sparsify option here appropriately
+                molecular_hamiltonian, final_rank = self.molecule.low_rank_approximation(occupied_indices = self.molecule.occupied_indices, active_indices = self.molecule.active_indices, virtual_indices = self.molecule.virtual_indices, sparsify = True)
+                molecule.get_basic_parameters(molecular_hamiltonian = molecular_hamiltonian)
+                self.costs['sparsity_low_rank'] = methods_qrom.sparsity_low_rank(N = self.molecule.N, lambda_value = self.molecule.lambd, eps_PEA, eps_S, L = final_rank, Ham_norm)
         
         elif method == 'interaction_picture' or method == 'sublinear_scaling':
 
