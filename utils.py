@@ -98,12 +98,5 @@ class Utils():
                 bottom = eval_r
         return eval_r
 
-    '''
-    def error_optimizer(self, eps_array):
-        epsilon_PEA = eps_array[0]
-        
-        epsilon_S = eps_array[1]
-        
-        #TODO eps_tot to calculate
-        epsilon_HS = eps_tot - eps_array[0] - eps_array[1]
-    '''
+    def sum_constraint(x):
+        return sum(x)
