@@ -56,7 +56,7 @@ class Cost_calculator:
             if method == 'taylor_naive':
                 self.costs['taylor_naive'] = methods_taylor.taylor_naive(
                                                 self.molecule.Lambda_value,
-                                                self.molecule.Lambda_value,
+                                                self.molecule.Gamma,
                                                 self.molecule.N,
                                                 errors['epsilon_PEA'],
                                                 errors['epsilon_HS'],
@@ -64,13 +64,22 @@ class Cost_calculator:
 
             '''
             elif method == 'taylor_on_the_fly':
-                self.costs['taylor_on_the_fly'] = methods_taylor.taylor_on_the_fly(Gamma, N, phi_max, dphi_max, epsilon_PEA, epsilon_HS, epsilon_S, epsilon_H, zeta_max_i, epsilon_tay)
+                zeta_max_i = self.molecule.calculate_zeta_i_max()
+                self.costs['taylor_on_the_fly'] = methods_taylor.taylor_on_the_fly(Gamma, N, phi_max, dphi_max, epsilon_PEA, epsilon_HS, epsilon_S, epsilon_H, zeta_max_i = zeta_max_i, epsilon_tay)
             elif method == 'configuration_interaction':
-                self.costs['configuration_interaction'] = methods_taylor.configuration_interaction(N, eta, alpha, gamma1, K0, K1, K2, epsilon_PEA, epsilon_HS, epsilon_S, epsilon_H, epsilon_tay, zeta_max_i, phi_max, dphi_max)
+                phi_max, dphi_max = self.molecule.molecular_orbital_parameters()
+                # alpha, gamma1 are used to calculate K0, K1, K2 (see eq D14 in overleaf)
+                self.costs['configuration_interaction'] = methods_taylor.configuration_interaction(N, eta, alpha, gamma1, K0, K1, K2, epsilon_PEA, epsilon_HS, epsilon_S, epsilon_H, epsilon_tay, zeta_max_i, phi_max = phi_max, dphi_max = dphi_max)
 
         elif method == 'low_depth_trotter' or method == 'low_depth_taylor' or method == 'low_depth_taylor_on_the_fly':
 
             methods_plane_waves = plane_waves_methods.Plane_waves_methods(self.tools)
+
+            # This methods are plane waves, so instead of calling self.molecule.get_basic_parameters() one should call self.molecule.build_grid()
+            # grid_length is the only parameter of build_grid. Should be calculated such that the number of basis functions
+            #   is ~= 100*self.molecule_data.n_orbitals*2. grid_length ~= int(np.cbrt(100*self.molecule.molecule_data.n_orbitals * 2))
+            # Omega is returned by self.molecule.build_grid()
+            # J = len(self.molecule.geometry) #is the number of atoms in the molecule
 
             if method == 'low_depth_trotter':
                 self.costs['low_depth_trotter'] = methods_plane_waves.low_depth_trotter(N, eta, Omega, epsilon_PEA, epsilon_HS, epsilon_S)
