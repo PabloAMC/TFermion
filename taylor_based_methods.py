@@ -118,7 +118,7 @@ class Taylor_based_methods:
             Prepare_beta_2 = (10+12*np.log2(1/epsilon_SS))*K*2**(np.ceil(np.log2(Gamma)+1))
             Prepare_beta = Prepare_beta_1 + Prepare_beta_2
             
-            result += 3*(2*Prepare_beta + Select_V)
+            result += 3*(2*Prepare_beta + Select_V)*t_j
             
         return result
 
@@ -177,7 +177,7 @@ class Taylor_based_methods:
             Prepare_beta_2 = ( 6*35*n**2*(order-1)*4*N + (252+70*(order-1))*n**2 )*K
 
             Prepare_beta = Prepare_beta_1 + Prepare_beta_2
-            
-            result += 3*(2*Prepare_beta + Select_V)
-            
+
+            result += 3*(2*Prepare_beta + Select_V)*t_j
+
         return result
