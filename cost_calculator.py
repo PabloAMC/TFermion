@@ -68,7 +68,7 @@ class Cost_calculator:
                 self.costs['taylor_on_the_fly'] = methods_taylor.taylor_on_the_fly(Gamma, N, phi_max, dphi_max, epsilon_PEA, epsilon_HS, epsilon_S, epsilon_H, zeta_max_i = zeta_max_i, epsilon_tay)
             elif method == 'configuration_interaction':
                 phi_max, dphi_max = self.molecule.molecular_orbital_parameters()
-                # alpha, gamma1 are used to calculate K0, K1, K2 (see eq D14 in overleaf)
+                # alpha, gamma1, gamma2 are used to calculate K0, K1, K2 (see eq D14 in overleaf)
                 self.costs['configuration_interaction'] = methods_taylor.configuration_interaction(N, eta, alpha, gamma1, K0, K1, K2, epsilon_PEA, epsilon_HS, epsilon_S, epsilon_H, epsilon_tay, zeta_max_i, phi_max = phi_max, dphi_max = dphi_max)
 
         elif method == 'low_depth_trotter' or method == 'low_depth_taylor' or method == 'low_depth_taylor_on_the_fly':
@@ -86,6 +86,7 @@ class Cost_calculator:
             elif method == 'low_depth_taylor':
                 self.costs['low_depth_taylor'] = methods_plane_waves.low_depth_taylor(N, lambda_value, Lambda_value, epsilon_PEA, epsilon_HS, epsilon_S, Ham_norm)
             elif method == 'low_depth_taylor_on_the_fly':
+                # find x_max from cell volume assuming a perfect cube centered on 0
                 self.costs['low_depth_taylor_on_the_fly'] = methods_plane_waves.low_depth_taylor_on_the_fly(N, eta, lambda_value, Omega, epsilon_PEA, epsilon_HS, epsilon_S, epsilon_tay, Ham_norm, J, x_max)
 
         elif method == 'linear_t' or method == 'sparsity_low_rank':
