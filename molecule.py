@@ -69,7 +69,7 @@ class Molecule:
         self.active_indices = None #range(self.molecule_data.n_orbitals) # This is the default
         self.virtual_indices = []
 
-        self.build_grid()
+        #self.build_grid()
         #self.get_basic_parameters()
 
     def get_basic_parameters(self, threshold = 0, molecular_hamiltonian = None):
@@ -481,17 +481,23 @@ class Molecule:
 
     def molecular_orbital_parameters(self):
         '''
-        Aim: caluclate phi_max and dphi_max
-        - To calculate the ao basis. Bibliography https://onlinelibrary.wiley.com/doi/pdf/10.1002/wcms.1123?casa_token=M0hDMDgf0VkAAAAA:qOQVt0GDe2TD7WzAsoHCq0kLzNgAQFjssF57dydp1rsr4ExjZ1MEP75eD4tkjpATrpkd81qnWjJmrA
+        Returns:
+        phi_max: max value reached by molecular orbitals (mo) (Used in Taylor naive and Configuration Interaction paper)
+        dphi_max: maximum "directional" derivative of molecular orbitals (Used in Taylor naive and Configuration Interaction paper)
+        grad_max: maximum norm of gradient (used in Configuration Interaction article)
+        hess_max: maximum norm of the hessian (used in Configuration Intearction article)
+
 
         - COMPUTE MO VALUES AND THEIR DERIVATIVES IN THE SPACE: https://github.com/pyscf/pyscf/blob/master/examples/gto/24-ao_value_on_grid.py (It's totally awesome that this exists)
-
-        - For conversion of ao to mo
-        https://github.com/pyscf/pyscf/tree/5796d1727808c4ab6444c9af1f8af1fad1bed450/pyscf/ao2mo
-        https://github.com/pyscf/pyscf-doc/tree/93f34be682adf516a692e28787c19f10cbb4b969/examples/ao2mo
         
         Procedure
         We evaluate the molecular orbital functions and their derivatives in random points and return the highest value
+
+        Other relevant bibliography
+        - To calculate the ao basis. Bibliography https://onlinelibrary.wiley.com/doi/pdf/10.1002/wcms.1123?casa_token=M0hDMDgf0VkAAAAA:qOQVt0GDe2TD7WzAsoHCq0kLzNgAQFjssF57dydp1rsr4ExjZ1MEP75eD4tkjpATrpkd81qnWjJmrA
+        - For conversion of ao to mo
+        https://github.com/pyscf/pyscf/tree/5796d1727808c4ab6444c9af1f8af1fad1bed450/pyscf/ao2mo
+        https://github.com/pyscf/pyscf-doc/tree/93f34be682adf516a692e28787c19f10cbb4b969/examples/ao2mo
         '''
 
         pyscf_scf = self.molecule_data._pyscf_data['scf']
@@ -500,22 +506,47 @@ class Molecule:
         #todo: how to choose the coordinates to fit the molecule well? -> Use geometry from the molecule
         #coords = np.random.random((100,3)) # todo: dumb, to be substituted
 
-        coords = np.empty((0, 3))
-        for _, at_coord in pyscf_mol.geometry:
+        coord = np.empty((0, 3))
+        for _, at_coord in self.molecule_data.geometry:
             coord = np.vstack((coord, np.array(at_coord) + 10 * BOHR * np.random.random((50,3)))) # Random coords around the atomic positions
 
-        # deriv=1: orbital value + gradients 
-        ao_p = pyscf_mol.eval_gto('GTOval_sph_deriv1', coords)  # (4,Ngrids,n) array
+        # deriv=2: value + gradients + second order derivatives
+        ao_p = pyscf_mol.eval_gto('GTOval_sph_deriv2', coord) # (10,Ngrids,n_mo) array
+
         ao = ao_p[0]
         ao_grad = ao_p[1:4]  # x, y, z
+        ao_hess = ao_p[4:10] # xx, xy, xz, yy, yz, zz
 
         mo = ao.dot(pyscf_scf.mo_coeff)
-        mo_grad = [x.dot(pyscf_scf.mo_coeff) for x in ao_grad]
+        mo_grad = np.apply_along_axis(func1d =  lambda x: x.dot(pyscf_scf.mo_coeff), axis = 2, arr = ao_grad)
+        #mo_grad = [x.dot(pyscf_scf.mo_coeff) for x in ao_grad]
+        mo_hess = np.apply_along_axis(func1d =  lambda x: x.dot(pyscf_scf.mo_coeff), axis = 2, arr = ao_hess)
+        #mo_hess = [x.dot(pyscf_scf.mo_coeff) for x in ao_hess]
 
-        phi_max = np.max(mo)
-        dphi_max = np.max(mo_grad)
+        def hessian_vector_norm(vec):
+            assert(len(vec) == 6)
+            A = np.zeros((3,3))
 
-        return phi_max, dphi_max
+            A[0,0] = vec[0]
+            A[0,1], A[1,0] = vec[1], vec[1]
+            A[0,2], A[2,0] = vec[2], vec[2]
+            A[1,1] = vec[3]
+            A[1,2], A[2,1] = vec[4], vec[4]
+            A[2,2] = vec[5]
+
+            return np.linalg.norm(A, ord = 2)
+
+        phi_max = np.max(np.abs(mo))
+        dphi_max = np.max(np.abs(mo_grad))
+
+        mo_grads_norms = np.apply_along_axis(func1d = np.linalg.norm, axis = 0, arr = mo_grad)
+        mo_hess_norms = np.apply_along_axis(func1d = hessian_vector_norm, axis = 0, arr = mo_hess)
+
+        grad_max = np.max(mo_grads_norms)
+        hess_max = np.max(mo_hess_norms)
+
+        return phi_max, dphi_max, grad_max, hess_max
+
 
     def calculate_zeta_i_max(self):
         '''Returns the charge of the larger atom in the molecule'''
