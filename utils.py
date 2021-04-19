@@ -1,8 +1,11 @@
 import argparse
 import json
+from molecule import CHEMICAL_ACCURACY
 import numpy as np
+import random as rnd
 import sympy
 from scipy import integrate
+from scipy.optimize import NonlinearConstraint, LinearConstraint
 
 class Utils():
 
@@ -98,5 +101,38 @@ class Utils():
                 bottom = eval_r
         return eval_r
 
-    def sum_constraint(x):
+    def sum_constraint(self, x):
         return sum(x)
+
+    # It is necessary to generate two constraints: one linear (each value should be in the range greather than 0 and chemical_accuracy) and one non linear (errors sum should be in the range 0 and chemical accuracy)
+    def generate_constraints(self, number_errors):
+
+        
+        # In the linear constraint it is necessary to define the shape of the constraint. For example, if there is three errors:
+        # 0 > 1*e_1 + 0*e_2 + 0*e_3 > CHEMICAL ACCURACY     [  1,  0,  0] [e_1]
+        # 0 > 0*e_1 + 1*e_2 + 0*e_3 > CHEMICAL ACCURACY     [  0,  1,  0] [e_2]
+        # 0 > 0*e_1 + 0*e_2 + 1*e_3 > CHEMICAL ACCURACY     [  0,  0,  1] [e_3]
+        
+        shape_linear_constraint = []
+        for index in range(number_errors):
+            row_linear_constraint = []
+
+            for index_row in range(number_errors):
+                row_linear_constraint.append(1) if index_row == index else row_linear_constraint.append(0)
+
+            shape_linear_constraint.append(row_linear_constraint)
+
+        min_values_linear_constraint = [1e-10 for _ in range(number_errors)]
+        max_values_linear_constraint = [CHEMICAL_ACCURACY for _ in range(number_errors)]
+
+        linear_constraint = LinearConstraint(A=shape_linear_constraint, lb=min_values_linear_constraint, ub=max_values_linear_constraint)
+        nonlinear_constraint = NonlinearConstraint(fun=self.sum_constraint, lb=0, ub=CHEMICAL_ACCURACY)
+
+        return linear_constraint, nonlinear_constraint
+
+    def generate_initial_error_values(self, number_errors):
+
+        maximum_value = CHEMICAL_ACCURACY/number_errors
+        minimum_value = maximum_value/2
+
+        return [rnd.uniform(minimum_value, maximum_value) for _ in range(number_errors)]

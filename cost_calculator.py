@@ -4,7 +4,7 @@ import plane_waves_methods
 import qrom_methods
 import interaction_picture
 import numpy as np
-from scipy.optimize import minimize, NonlinearConstraint
+from scipy.optimize import minimize
 
 class Cost_calculator:
 
@@ -30,7 +30,7 @@ class Cost_calculator:
             elif method == 'rand_ham': self.costs['rand_ham'] = methods_trotter.calc_rand_ham_resources(
                                             self.molecule.Lambda_value, 
                                             self.molecule.lambda_value, 
-                                            self.molecule.gamma, 
+                                            self.molecule.Gamma,
                                             self.molecule.N, 
                                             deltaE = 1e-4, 
                                             P_failure = .1)
@@ -39,32 +39,19 @@ class Cost_calculator:
 
             methods_taylor = taylor_based_methods.Taylor_based_methods(self.tools)
 
-            errors = 3 # epsilon_PEA, epsilon_HS, epsilon_S
-            constraint = NonlinearConstraint(fun=self.tools.sum_constraint, lb=0, ub=0.015)
-            bounds = [(0, 0.015) for _ in range(errors)]
-
-            res = minimize(
-                methods_taylor.taylor_naive,
-                x0=np.zeros(errors),
-                args=(self.molecule.Lambda_value, self.molecule.Gamma, self.N,),
-                constraints=constraint,
-                bounds=bounds
-            )
-
-            errors = {"epsilon_PEA": res.x[0], "epsilon_HS": res.x[1], "epsilon_S": res.x[2]}
+            # generate values for errors epsilon_PEA, epsilon_HS, epsilon_S
+            optimized_errors = self.calculate_optimized_errors(3, methods_taylor.taylor_naive, (self.molecule.Lambda_value, self.molecule.Gamma, self.molecule.N))
 
             if method == 'taylor_naive':
                 self.costs['taylor_naive'] = methods_taylor.taylor_naive(
-                                                self.molecule.Lambda_value,
-                                                self.molecule.Lambda_value,
-                                                self.molecule.N,
-                                                errors['epsilon_PEA'],
-                                                errors['epsilon_HS'],
-                                                errors['epsilon_S'])
+                    optimized_errors.x,
+                    self.molecule.Lambda_value,
+                    self.molecule.Gamma,
+                    self.molecule.N)
 
             '''
             elif method == 'taylor_on_the_fly':
-                self.costs['taylor_on_the_fly'] = methods_taylor.taylor_on_the_fly(Gamma, N, phi_max, dphi_max, epsilon_PEA, epsilon_HS, epsilon_S, epsilon_H, zeta_max_i, epsilon_tay)
+                self.costs['taylor_on_the_fly'] = methods_taylor.taylor_on_the_fly(self.molecule.Gamma, N, phi_max, dphi_max, epsilon_PEA, epsilon_HS, epsilon_S, epsilon_H, zeta_max_i, epsilon_tay)
             elif method == 'configuration_interaction':
                 self.costs['configuration_interaction'] = methods_taylor.configuration_interaction(N, eta, alpha, gamma1, K0, K1, K2, epsilon_PEA, epsilon_HS, epsilon_S, epsilon_H, epsilon_tay, zeta_max_i, phi_max, dphi_max)
 
@@ -96,7 +83,23 @@ class Cost_calculator:
             methods_interaction_picture = interaction_picture.Interaction_picture()
 
             if method == 'interaction_picture':
-                self.costs['interaction_picture'] = methods_interaction_picture.interaction_picture(N, Gamma, lambda_value_T, lambda_value_U_V, epsilon_S, epsilon_HS, epsilon_PEA)
+                self.costs['interaction_picture'] = methods_interaction_picture.interaction_picture(N, self.molecule.Gamma, lambda_value_T, lambda_value_U_V, epsilon_S, epsilon_HS, epsilon_PEA)
             elif method == 'sublinear_scaling':
-                self.costs['sublinear_scaling'] = methods_interaction_picture.sublinear_scaling_interaction(N, eta, Gamma, lambda_value_T, lambda_value_U_V, epsilon_S, epsilon_HS, epsilon_PEA, epsilon_mu, epsilon_M_0, J)
+                self.costs['sublinear_scaling'] = methods_interaction_picture.sublinear_scaling_interaction(N, eta, self.molecule.Gamma, lambda_value_T, lambda_value_U_V, epsilon_S, epsilon_HS, epsilon_PEA, epsilon_mu, epsilon_M_0, J)
                 '''
+
+    def calculate_optimized_errors(self, number_errors, cost_method, arguments):
+
+        constraints = self.tools.generate_constraints(number_errors)
+        initial_values = self.tools.generate_initial_error_values(number_errors)
+
+        print(initial_values)
+        optimized_errors = minimize(
+            fun=cost_method,
+            x0=initial_values,
+            method=self.tools.config_variables['optimization_method'],
+            constraints=constraints,
+            args=arguments,
+        )
+
+        return optimized_errors

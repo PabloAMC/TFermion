@@ -76,8 +76,16 @@ class Taylor_based_methods:
     # Remember that 
     # $$ K =  O\\left( \\frac{\\log(r/\\epsilon_{HS})}{\\log \\log(r/\\epsilon_{HS})} \\right)$$
     # Notice that the $\\Lambda$ parameters comes in the algorithm only implicitly, since we take the evolution time of a single segment to be $t_1 = \\ln 2/\\Lambda$ such that the first segment in Phase estimation has $r = \\frac{\\Lambda t_1}{\\ln 2} = 1$ as it should be. In general, we will need to implement $r \\approx \\frac{4.7}{\\epsilon_{PEA}}$. However, since $\\epsilon_{PEA}$ makes reference to $H$ and we are instead simulating $H \\ln 2/ \\Lambda$, we will have to calculate the eigenvalue to precision $\\epsilon \\ln 2/ \\Lambda$; so it is equivalently to fixing an initial time $t_1$ and running multiple segments in each of the $U$ operators in Phase Estimation.
-    def taylor_naive(self, Lambd, Gamma, N, epsilon_PEA, epsilon_HS, epsilon_S):
-        
+    def taylor_naive(self, x, Lambd, Gamma, N):
+
+        # workaround to ensure that the optimizer never check negative values of errors
+        # if any error is lower or equal to 0, the cost is penalized to a maximum value
+        if not all(x_i > 0 for x_i in x): return self.tools.config_variables['maximum_cost']
+
+        epsilon_PEA = x[0]
+        epsilon_HS = x[1]
+        epsilon_S = x[2]
+
         r = 4.7*Lambd / (epsilon_PEA*np.log(2)) # The simulated time
         K_list = []
         
@@ -105,7 +113,7 @@ class Taylor_based_methods:
             Prepare_beta = Prepare_beta_1 + Prepare_beta_2
             
             result += 3*(2*Prepare_beta + Select_V)
-            
+
         return result
 
     def taylor_on_the_fly(self, Gamma, N, phi_max, dphi_max, epsilon_PEA, epsilon_HS, epsilon_S, epsilon_H, zeta_max_i, eps_tay):

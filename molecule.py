@@ -109,8 +109,8 @@ class Molecule:
         d = JW_op.terms
         del d[()]
         l = abs(np.array(list(d.values())))
-        self.lambd = sum(l)
-        self.Lambda = max(l)
+        self.lambda_value = sum(l)
+        self.Lambda_value = max(l)
         self.Gamma = np.count_nonzero(l >= threshold)
 
     def build_grid(self, plane_wave: bool = True, threshold = 0):
@@ -122,8 +122,8 @@ class Molecule:
         d = JW_op.terms
         del d[()]
         l = abs(np.array(list(d.values())))
-        self.lambd = sum(l)
-        self.Lambda = max(l)
+        self.lambda_value = sum(l)
+        self.Lambda_value = max(l)
         self.Gamma = np.count_nonzero(l >= threshold)
 
         return
