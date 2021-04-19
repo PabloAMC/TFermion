@@ -115,7 +115,8 @@ class Taylor_based_methods:
             epsilon_HS_mj = epsilon_HS / r * t_j
         
             K = np.ceil(np.log2(t_j/epsilon_HS_mj) / np.log2( np.log2 (t_j/epsilon_HS_mj)))
-            Select_V = 8*N*np.ceil(np.log2(Gamma) +1)*K*(K+1)*(2*K+1)/3 + 16*N*K*(K+1)
+            Select_H = 16*(np.ceil(np.log2(Gamma) +1)+3)* 2**4 *N
+            Select_V = Select_H * K
 
             Prepare_beta_1 = (20+24*np.log2(1/epsilon_SS))*K
             Prepare_beta_2 = (10+12*np.log2(1/epsilon_SS))*K*2**(np.ceil(np.log2(Gamma)+1))
