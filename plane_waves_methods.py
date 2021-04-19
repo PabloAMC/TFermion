@@ -62,7 +62,7 @@ class Plane_waves_methods:
             prepare_beta = K*(6*N+40*np.log(N)+16*np.log(1/epsilon_SS) + 10*mu)
             select_V = K*(12*N+8*np.log(N))
             
-            result += 3*(2*prepare_beta + select_V)
+            result += 3*(2*prepare_beta + select_V)*t_j
         
         return result
 
@@ -105,7 +105,7 @@ class Plane_waves_methods:
             select_H = (12*N + 8*np.log(N))
             select_V = K*select_H
             
-            result += 3*(2*prepare_beta + select_V)
+            result += 3*(2*prepare_beta + select_V)*t_j
         
         return result
 

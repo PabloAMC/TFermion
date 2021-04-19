@@ -1,5 +1,6 @@
 import itertools
 import openfermion
+import copy
 
 from openfermionpsi4 import run_psi4
 from openfermionpyscf import run_pyscf
@@ -9,14 +10,15 @@ from openfermion.utils import Grid
 import openfermion.ops.representations as reps
 from openfermion.chem import geometry_from_pubchem, MolecularData
 from openfermion.chem.molecular_data import spinorb_from_spatial
-from openfermion.hamiltonians import plane_wave_hamiltonian
-from openfermion.transforms  import  get_fermion_operator
-from openfermion.transforms import jordan_wigner
+from openfermion.hamiltonians import plane_wave_hamiltonian, jordan_wigner_dual_basis_hamiltonian
+from openfermion.transforms  import  get_fermion_operator, get_diagonal_coulomb_hamiltonian, jordan_wigner
 from openfermion.circuits import low_rank_two_body_decomposition
+
 
 from pyscf import gto, scf, mcscf, fci, ao2mo
 from pyscf.mcscf import avas
 from pyscf.lib.parameters import BOHR
+
 
 import numpy as np
 import copy
@@ -38,6 +40,8 @@ Nevertheless, some important links for the periodic boundary condition (not used
 '''
 
 CHEMICAL_ACCURACY = 0.0015 #in Hartrees, according to http://greif.geo.berkeley.edu/~driver/conversions.html
+H_NORM_LAMBDA_RATIO = .75
+wigner_seitz_radius = 5. # Chosen as in https://quantumai.google/openfermion/tutorials/circuits_2_diagonal_coulomb_trotter, but may not make sense
 
 class Molecule:
 
@@ -48,85 +52,97 @@ class Molecule:
         self.program = program
 
         self.gamma_threshold = self.tools.config_variables['gamma_threshold']
-        self.molecule_geometry = geometry_from_pubchem(self.molecule_name) #todo: do we prefer psi4 or pyscf? There are some functions in pyscf
+        self.molecule_geometry = geometry_from_pubchem(self.molecule_name) # We prefer pyscf because of functionality.
 
         #From OpenFermion
         self.molecule_data = MolecularData(self.molecule_geometry, self.tools.config_variables['basis'], multiplicity = 1)
 
-        #todo: add possibility of boundary conditions https://sunqm.github.io/pyscf/tutorial.html#initializing-a-crystal
+        #Add possibility of boundary conditions https://sunqm.github.io/pyscf/tutorial.html#initializing-a-crystal -> Seems quite complicated and not straightforward
         if program == 'psi4': 
-            self.molecule_psi4 = run_psi4(self.molecule_data,run_scf=True, run_mp2=False, run_fci=False)
+            self.molecule_psi4 = run_psi4(self.molecule_data,run_scf=True, run_mp2=True, run_fci=False)
 
         elif program == 'pyscf':
-            self.molecule_pyscf = run_pyscf(self.molecule_data,run_scf=True, run_mp2=True, run_fci=False)
-            print('<i> HF energy, MP2 energy', self.molecule_pyscf.hf_energy, self.molecule_pyscf.mp2_energy)
-        self.N = self.molecule_data.n_orbitals * 2 # The 2 is due to orbitals -> spin orbitals
+            self.molecule_pyscf = run_pyscf(self.molecule_data,run_scf=True, run_mp2=True, run_ccsd=True)
+            print('<i> HF energy, MP2 energy, CCSD energy', self.molecule_pyscf.hf_energy, self.molecule_pyscf.mp2_energy, self.molecule_pyscf.ccsd_energy)
 
-        self.occupied_indices = []
-        self.active_indices = range(self.molecule_data.n_orbitals) # This is the default
+        self.occupied_indices = None
+        self.active_indices = None #range(self.molecule_data.n_orbitals) # This is the default
         self.virtual_indices = []
 
         #self.build_grid()
-        self.get_basic_parameters()
-        '''            
-        self.molecule_pyscf = gto.Mole()
-        self.molecule_pyscf = gto.M(
-            atom = self.molecule_geometry,
-            basis = self.tools.config_variables['basis'])
-        self.myhf = scf.RHF(self.molecule_pyscf) #.x2c() The x2c is relativistic. We are not so desperate :P
-        self.myhf.kernel() # WARNING: LARGE MOLECULES CAN TAKE IN THE ORDER OF HOURS TO COMPUTE THIS
-        '''
+        #self.get_basic_parameters()
 
     def get_basic_parameters(self, threshold = 0, molecular_hamiltonian = None):
 
+        self.N  = self.molecule_data.n_orbitals * 2 # The 2 is due to orbitals -> spin orbitals
+        self.eta = self.molecule_data.n_electrons
+
         if molecular_hamiltonian is None:
             molecular_hamiltonian = self.molecule_data.get_molecular_hamiltonian(occupied_indices=self.occupied_indices, active_indices=self.active_indices)
-        fermion_operator = openfermion.get_fermion_operator(molecular_hamiltonian)
-        JW_op = openfermion.transforms.jordan_wigner(fermion_operator)
+        fermion_operator = get_fermion_operator(molecular_hamiltonian)
+        JW_op = jordan_wigner(fermion_operator)
         #BK_op = openfermion.transforms.bravyi_kitaev(fermion_operator) #Results seem to be the same no matter what transform one uses
-        '''
-        DC_operator = openfermion.get_diagonal_coulomb_hamiltonian(fermion_operator)
-        self.H_norm_bound = np.sum(np.abs(DC_operator.one_body)) + np.sum(np.abs(DC_operator.two_body))
-        sparse_mat = openfermion.get_sparse_operator(JW_op)
-        dense_operator = sparse_mat.todense()
-        fro = np.linalg.norm(dense_operator, ord = 'fro')
-        print('<i> Frobenius', fro)
-        a = len(dense_operator[0])
-        v = np.zeros((a, 1))
-        for j in range(a):
-            v[j] = np.sqrt(np.sum(np.multiply(dense_operator[j,:],dense_operator[j,:])))
-        n = np.max(v)
-        print('<i> n',n)
-        #max_eigenvalue, _ = scipy.sparse.linalg.eigsh(sparse_mat, k=1, which="LM")
-        #print('<i> max eigenvalue', max_eigenvalue)
-        eig = openfermion.linalg.eigenspectrum(JW_op)
-        print('<i> Eigenspectrum', eig)
-        '''
-
-        # TEMPORARILY: TO SEE IF WE CAN IMPROVE IT
-        self.H_norm = self.molecule_pyscf.mp2_energy + (self.molecule_pyscf.mp2_energy - self.molecule_pyscf.hf_energy)
         
-        d = JW_op.terms
-        del d[()]
+        #sparse_mat = openfermion.get_sparse_operator(JW_op)
+        #dense_operator = sparse_mat.todense()
+        #max_eig, _ = scipy.sparse.linalg.eigsh(sparse_mat, k=1, which="LM")       
+
+        if self.molecule_pyscf.ccsd_energy:
+            self.H_norm = abs(self.molecule_data.nuclear_repulsion + self.molecule_pyscf.ccsd_energy + (self.molecule_pyscf.ccsd_energy - self.molecule_pyscf.hf_energy))
+        elif self.molecule_pyscf.mp2_energy:
+            self.H_norm = abs(self.molecule_pyscf.mp2_energy + (self.molecule_pyscf.mp2_energy - self.molecule_pyscf.hf_energy))
+        else:
+            self.H_norm = abs(self.molecule_pyscf.hf_energy)
+
+        d = copy.copy(JW_op.terms)
+
         l = abs(np.array(list(d.values())))
         self.lambda_value = sum(l)
         self.Lambda_value = max(l)
         self.Gamma = np.count_nonzero(l >= threshold)
 
-    def build_grid(self, plane_wave: bool = True, threshold = 0):
-        grid = Grid(dimensions = 3, length = 3, scale = 1.) # La complejidad
+        print('<i> ||H||/lambda', self.H_norm/self.lambd)
+        self.H_norm_lambda_ratio = max(H_NORM_LAMBDA_RATIO,self.H_norm/self.lambd)
 
-        h_plane_wave = plane_wave_hamiltonian(grid, self.molecule_geometry, plane_wave = plane_wave, include_constant=False)
-        JW_op = openfermion.transforms.jordan_wigner(h_plane_wave)
+    def build_grid(self, grid_length: int = 7):
+        '''
+        non_periodic: If True, impose periodic boundary conditions
+        '''
 
-        d = JW_op.terms
-        del d[()]
+        self.N = grid_length**3*2
+        self.eta = self.molecule_data.n_electrons
+
+        # Figure out length scale based on Wigner-Seitz radius and construct a basis grid.
+        # Wigner_seitz_radius  https://en.wikipedia.org/wiki/Wigner%E2%80%93Seitz_radius
+
+        length_scale = openfermion.wigner_seitz_length_scale(wigner_seitz_radius = wigner_seitz_radius, n_particles = self.eta, dimension = 3)
+
+        grid = Grid(dimensions = 3, length = grid_length, scale = length_scale) # Complexity is determined by lenght
+
+        #h_plane_wave = plane_wave_hamiltonian(grid, self.molecule_geometry, plane_wave = False, include_constant=False, non_periodic = non_periodic, spinless = True)
+        #DC_op = get_diagonal_coulomb_hamiltonian(h_plane_wave, n_qubits=None, ignore_incompatible_terms=False)
+
+        JW_op = jordan_wigner_dual_basis_hamiltonian(grid, self.molecule_geometry, spinless = True)
+        
+        if self.molecule_pyscf.ccsd_energy:
+            self.H_norm = abs(self.molecule_data.nuclear_repulsion + self.molecule_pyscf.ccsd_energy + (self.molecule_pyscf.ccsd_energy - self.molecule_pyscf.hf_energy))
+        elif self.molecule_pyscf.mp2_energy:
+            self.H_norm = abs(self.molecule_pyscf.mp2_energy + (self.molecule_pyscf.mp2_energy - self.molecule_pyscf.hf_energy))
+        else:
+            self.H_norm = abs(self.molecule_pyscf.hf_energy)
+
+        d = copy.copy(JW_op.terms)
+
         l = abs(np.array(list(d.values())))
+
         self.lambda_value = sum(l)
         self.Lambda_value = max(l)
-        self.Gamma = np.count_nonzero(l >= threshold)
+        self.Gamma = np.count_nonzero(l >= 0)
 
-        return
+        self.H_norm_lambda_ratio = max(H_NORM_LAMBDA_RATIO,self.H_norm/self.lambd)
+
+        return grid.volume
+
         # recursive method that iterates over all rows of a molecule to get the parameters:
         # lambda_value is the sum all coefficients of the hamiltonian (sum of all terms)
         # Lambda_value is the maximum value of all terms
@@ -254,7 +270,6 @@ class Molecule:
         molecular_hamiltonian = reps.InteractionOperator(constant, one_body_coefficients, 1/2 * two_body_coefficients)
 
         return molecular_hamiltonian, threshold
-
 
     def low_rank_approximation(self, sparsify = False):
         '''
@@ -465,17 +480,23 @@ class Molecule:
 
     def molecular_orbital_parameters(self):
         '''
-        Aim: caluclate phi_max and dphi_max
-        - To calculate the ao basis. Bibliography https://onlinelibrary.wiley.com/doi/pdf/10.1002/wcms.1123?casa_token=M0hDMDgf0VkAAAAA:qOQVt0GDe2TD7WzAsoHCq0kLzNgAQFjssF57dydp1rsr4ExjZ1MEP75eD4tkjpATrpkd81qnWjJmrA
+        Returns:
+        phi_max: max value reached by molecular orbitals (mo) (Used in Taylor naive and Configuration Interaction paper)
+        dphi_max: maximum "directional" derivative of molecular orbitals (Used in Taylor naive and Configuration Interaction paper)
+        grad_max: maximum norm of gradient (used in Configuration Interaction article)
+        hess_max: maximum norm of the hessian (used in Configuration Intearction article)
+
 
         - COMPUTE MO VALUES AND THEIR DERIVATIVES IN THE SPACE: https://github.com/pyscf/pyscf/blob/master/examples/gto/24-ao_value_on_grid.py (It's totally awesome that this exists)
-
-        - For conversion of ao to mo
-        https://github.com/pyscf/pyscf/tree/5796d1727808c4ab6444c9af1f8af1fad1bed450/pyscf/ao2mo
-        https://github.com/pyscf/pyscf-doc/tree/93f34be682adf516a692e28787c19f10cbb4b969/examples/ao2mo
         
         Procedure
         We evaluate the molecular orbital functions and their derivatives in random points and return the highest value
+
+        Other relevant bibliography
+        - To calculate the ao basis. Bibliography https://onlinelibrary.wiley.com/doi/pdf/10.1002/wcms.1123?casa_token=M0hDMDgf0VkAAAAA:qOQVt0GDe2TD7WzAsoHCq0kLzNgAQFjssF57dydp1rsr4ExjZ1MEP75eD4tkjpATrpkd81qnWjJmrA
+        - For conversion of ao to mo
+        https://github.com/pyscf/pyscf/tree/5796d1727808c4ab6444c9af1f8af1fad1bed450/pyscf/ao2mo
+        https://github.com/pyscf/pyscf-doc/tree/93f34be682adf516a692e28787c19f10cbb4b969/examples/ao2mo
         '''
 
         pyscf_scf = self.molecule_data._pyscf_data['scf']
@@ -484,19 +505,53 @@ class Molecule:
         #todo: how to choose the coordinates to fit the molecule well? -> Use geometry from the molecule
         #coords = np.random.random((100,3)) # todo: dumb, to be substituted
 
-        coords = np.empty((0, 3))
-        for _, at_coord in pyscf_mol.geometry:
+        coord = np.empty((0, 3))
+        for _, at_coord in self.molecule_data.geometry:
             coord = np.vstack((coord, np.array(at_coord) + 10 * BOHR * np.random.random((50,3)))) # Random coords around the atomic positions
 
-        # deriv=1: orbital value + gradients 
-        ao_p = pyscf_mol.eval_gto('GTOval_sph_deriv1', coords)  # (4,Ngrids,n) array
+        # deriv=2: value + gradients + second order derivatives
+        ao_p = pyscf_mol.eval_gto('GTOval_sph_deriv2', coord) # (10,Ngrids,n_mo) array
+
         ao = ao_p[0]
         ao_grad = ao_p[1:4]  # x, y, z
+        ao_hess = ao_p[4:10] # xx, xy, xz, yy, yz, zz
 
         mo = ao.dot(pyscf_scf.mo_coeff)
-        mo_grad = [x.dot(pyscf_scf.mo_coeff) for x in ao_grad]
+        mo_grad = np.apply_along_axis(func1d =  lambda x: x.dot(pyscf_scf.mo_coeff), axis = 2, arr = ao_grad)
+        #mo_grad = [x.dot(pyscf_scf.mo_coeff) for x in ao_grad]
+        mo_hess = np.apply_along_axis(func1d =  lambda x: x.dot(pyscf_scf.mo_coeff), axis = 2, arr = ao_hess)
+        #mo_hess = [x.dot(pyscf_scf.mo_coeff) for x in ao_hess]
 
-        phi_max = np.max(mo)
-        dphi_max = np.max(mo_grad)
+        def hessian_vector_norm(vec):
+            assert(len(vec) == 6)
+            A = np.zeros((3,3))
 
-        return phi_max, dphi_max
+            A[0,0] = vec[0]
+            A[0,1], A[1,0] = vec[1], vec[1]
+            A[0,2], A[2,0] = vec[2], vec[2]
+            A[1,1] = vec[3]
+            A[1,2], A[2,1] = vec[4], vec[4]
+            A[2,2] = vec[5]
+
+            return np.linalg.norm(A, ord = 2)
+
+        phi_max = np.max(np.abs(mo))
+        dphi_max = np.max(np.abs(mo_grad))
+
+        mo_grads_norms = np.apply_along_axis(func1d = np.linalg.norm, axis = 0, arr = mo_grad)
+        mo_hess_norms = np.apply_along_axis(func1d = hessian_vector_norm, axis = 0, arr = mo_hess)
+
+        grad_max = np.max(mo_grads_norms)
+        hess_max = np.max(mo_hess_norms)
+
+        return phi_max, dphi_max, grad_max, hess_max
+
+
+    def calculate_zeta_i_max(self):
+        '''Returns the charge of the larger atom in the molecule'''
+        zeta_i_max = 0
+
+        for item in self.molecule_geometry:
+            zeta_i = max(zeta_i_max, MolecularData.periodic_table.index(item[0]))
+
+        return zeta_i

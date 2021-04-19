@@ -49,21 +49,31 @@ class Cost_calculator:
                     self.molecule.Gamma,
                     self.molecule.N)
 
-            '''
+        '''
             elif method == 'taylor_on_the_fly':
-                self.costs['taylor_on_the_fly'] = methods_taylor.taylor_on_the_fly(self.molecule.Gamma, N, phi_max, dphi_max, epsilon_PEA, epsilon_HS, epsilon_S, epsilon_H, zeta_max_i, epsilon_tay)
+                zeta_max_i = self.molecule.calculate_zeta_i_max()
+                self.costs['taylor_on_the_fly'] = methods_taylor.taylor_on_the_fly(Gamma, N, phi_max, dphi_max, epsilon_PEA, epsilon_HS, epsilon_S, epsilon_H, zeta_max_i = zeta_max_i, epsilon_tay)
             elif method == 'configuration_interaction':
-                self.costs['configuration_interaction'] = methods_taylor.configuration_interaction(N, eta, alpha, gamma1, K0, K1, K2, epsilon_PEA, epsilon_HS, epsilon_S, epsilon_H, epsilon_tay, zeta_max_i, phi_max, dphi_max)
+                phi_max, dphi_max = self.molecule.molecular_orbital_parameters()
+                # alpha, gamma1, gamma2 are used to calculate K0, K1, K2 (see eq D14 in overleaf)
+                self.costs['configuration_interaction'] = methods_taylor.configuration_interaction(N, eta, alpha, gamma1, K0, K1, K2, epsilon_PEA, epsilon_HS, epsilon_S, epsilon_H, epsilon_tay, zeta_max_i, phi_max = phi_max, dphi_max = dphi_max)
 
         elif method == 'low_depth_trotter' or method == 'low_depth_taylor' or method == 'low_depth_taylor_on_the_fly':
 
             methods_plane_waves = plane_waves_methods.Plane_waves_methods(self.tools)
+
+            # This methods are plane waves, so instead of calling self.molecule.get_basic_parameters() one should call self.molecule.build_grid()
+            # grid_length is the only parameter of build_grid. Should be calculated such that the number of basis functions
+            #   is ~= 100*self.molecule_data.n_orbitals*2. grid_length ~= int(np.cbrt(100*self.molecule.molecule_data.n_orbitals * 2))
+            # Omega is returned by self.molecule.build_grid()
+            # J = len(self.molecule.geometry) #is the number of atoms in the molecule
 
             if method == 'low_depth_trotter':
                 self.costs['low_depth_trotter'] = methods_plane_waves.low_depth_trotter(N, eta, Omega, epsilon_PEA, epsilon_HS, epsilon_S)
             elif method == 'low_depth_taylor':
                 self.costs['low_depth_taylor'] = methods_plane_waves.low_depth_taylor(N, lambda_value, Lambda_value, epsilon_PEA, epsilon_HS, epsilon_S, Ham_norm)
             elif method == 'low_depth_taylor_on_the_fly':
+                # find x_max from cell volume assuming a perfect cube centered on 0
                 self.costs['low_depth_taylor_on_the_fly'] = methods_plane_waves.low_depth_taylor_on_the_fly(N, eta, lambda_value, Omega, epsilon_PEA, epsilon_HS, epsilon_S, epsilon_tay, Ham_norm, J, x_max)
 
         elif method == 'linear_t' or method == 'sparsity_low_rank':
@@ -86,7 +96,7 @@ class Cost_calculator:
                 self.costs['interaction_picture'] = methods_interaction_picture.interaction_picture(N, self.molecule.Gamma, lambda_value_T, lambda_value_U_V, epsilon_S, epsilon_HS, epsilon_PEA)
             elif method == 'sublinear_scaling':
                 self.costs['sublinear_scaling'] = methods_interaction_picture.sublinear_scaling_interaction(N, eta, self.molecule.Gamma, lambda_value_T, lambda_value_U_V, epsilon_S, epsilon_HS, epsilon_PEA, epsilon_mu, epsilon_M_0, J)
-                '''
+        '''
 
     def calculate_optimized_errors(self, number_errors, cost_method, arguments):
 
