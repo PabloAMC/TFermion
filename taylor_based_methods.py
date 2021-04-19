@@ -96,35 +96,21 @@ class Taylor_based_methods:
     def taylor_naive(self, lambd, Gamma, N, epsilon_PEA, epsilon_HS, epsilon_S):
         
         r = 4.7*lambd / (epsilon_PEA*np.log(2)) # The simulated time
-        K_list = []
-        
-        for m_j in range(0, int(np.ceil(np.log(r)))):
-            
-            t_j = 2**m_j
-            epsilon_HS_mj = epsilon_HS / r * 2**m_j
-        
-            K = np.ceil(np.log2(t_j/epsilon_HS_mj) / np.log2( np.log2 (t_j/epsilon_HS_mj)))
-            K_list.append(K)
-            
-        result = 0
-        epsilon_SS = epsilon_S /(np.sum([3*2*(K*2**(np.ceil(np.log2(Gamma)+1)) + 2*K) for K in K_list]))
-            
-        for m_j in range(0, int(np.ceil(np.log(r)))):
-            
-            t_j = 2**m_j
-            epsilon_HS_mj = epsilon_HS / r * t_j
-        
-            K = np.ceil(np.log2(t_j/epsilon_HS_mj) / np.log2( np.log2 (t_j/epsilon_HS_mj)))
-            Select_H = 16*(np.ceil(np.log2(Gamma) +1)+3)* 2**4 *N
-            Select_V = Select_H * K
 
-            Prepare_beta_1 = (20+24*np.log2(1/epsilon_SS))*K
-            Prepare_beta_2 = (10+12*np.log2(1/epsilon_SS))*K*2**(np.ceil(np.log2(Gamma)+1))
-            Prepare_beta = Prepare_beta_1 + Prepare_beta_2
-            
-            result += 3*(2*Prepare_beta + Select_V)*t_j
-            
-        return result
+        epsilon_HS_mj = epsilon_HS / r
+    
+        K = np.ceil(np.log2(1/epsilon_HS_mj) / np.log2( np.log2 (1/epsilon_HS_mj)))
+        epsilon_SS = epsilon_S /(3*2*(K*2**(np.ceil(np.log2(Gamma)+1)) + 2*K)*r )
+
+        Select_H = 16*(np.ceil(np.log2(Gamma) +1)+3)* 2**4 *N
+        Select_V = Select_H * K
+
+        Prepare_beta_1 = (20+24*np.log2(1/epsilon_SS))*K
+        Prepare_beta_2 = (10+12*np.log2(1/epsilon_SS))*K*2**(np.ceil(np.log2(Gamma)+1))
+        Prepare_beta = Prepare_beta_1 + Prepare_beta_2
+        
+        return 3*(2*Prepare_beta + Select_V)*r
+
 
     def taylor_on_the_fly(self, Gamma, N, phi_max, dphi_max, epsilon_PEA, epsilon_HS, epsilon_S, epsilon_H, zeta_max_i, eps_tay):
         '''
