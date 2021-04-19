@@ -37,12 +37,12 @@ class Taylor_based_methods:
             r = 2*Gamma*t*mu_M_zeta
             K = np.log2(r/epsilon_HS)/np.log2(np.log2(r/epsilon_HS))
             delta = epsilon_H/(3*r*K)   # delta is the error in calculating a single integral. There are 3K*r of them in the simulation, 
-                                                # as r segments are simulated, for a total time of t #todo: this is probably wrong and need 3K r ??
+                                        # as r segments are simulated, for a total time of t #todo: this is probably wrong and need 3K r ??
 
             mu_M_zeta_bound = np.max([ 
-            672*np.pi**2/(alpha**3)*phi_max**4*x_max**5*(np.log(K2*phi_max**4*x_max**5/delta))**6,
-            256*np.pi**2/(alpha**3)*Zq*phi_max**2*x_max**2*(np.log(K1*Zq*phi_max**2*x_max**2/delta))**3,
-            32*gamma1**2**2/(alpha**3)*phi_max**2*x_max*(np.log(K0*phi_max**2*x_max/delta))**3
+                672*np.pi**2/(alpha**3)*phi_max**4*x_max**5*(np.log(K2*phi_max**4*x_max**5/delta))**6,
+                256*np.pi**2/(alpha**3)*Zq*phi_max**2*x_max**2*(np.log(K1*Zq*phi_max**2*x_max**2/delta))**3,
+                32*gamma1**2**2/(alpha**3)*phi_max**2*x_max*(np.log(K0*phi_max**2*x_max/delta))**3
             ])
             return mu_M_zeta_bound
 
@@ -93,7 +93,11 @@ class Taylor_based_methods:
     # since we take the evolution time of a single segment to be $t_1 = \\ln 2/\\lambda$ such that the first segment in Phase estimation has $r = \\frac{\\lambda t_1}{\\ln 2} = 1$ as it should be. 
     # In general, we will need to implement $r \\approx \\frac{4.7}{\\epsilon_{PEA}}$. However, since $\\epsilon_{PEA}$ makes reference to $H$ and we are instead simulating $H \\ln 2/ \\lambda$, 
     # we will have to calculate the eigenvalue to precision $\\epsilon \\ln 2/ \\lambda$; so it is equivalently to fixing an initial time $t_1$ and running multiple segments in each of the $U$ operators in Phase Estimation.
-    def taylor_naive(self, lambd, Gamma, N, epsilon_PEA, epsilon_HS, epsilon_S):
+    def taylor_naive(self, epsilons, lambd, Gamma, N):
+
+        epsilon_PEA = epsilons[0]
+        epsilon_HS = epsilons[1]
+        epsilon_S = epsilons[2]
         
         r = 4.7*lambd / (epsilon_PEA*np.log(2)) # The simulated time
 
@@ -110,7 +114,6 @@ class Taylor_based_methods:
         Prepare_beta = Prepare_beta_1 + Prepare_beta_2
         
         return 3*(2*Prepare_beta + Select_V)*r
-
 
     def taylor_on_the_fly(self, Gamma, N, phi_max, dphi_max, epsilon_PEA, epsilon_HS, epsilon_S, epsilon_H, zeta_max_i, eps_tay):
         '''

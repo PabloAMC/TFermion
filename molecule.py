@@ -97,9 +97,8 @@ class Molecule:
         d = copy.copy(JW_op.terms)
 
         l = abs(np.array(list(d.values())))
-        self.lambd = sum(l)
-        print('<i> lambda', self.lambd)
-        self.Lambda = max(l)
+        self.lambda_value = sum(l)
+        self.Lambda_value = max(l)
         self.Gamma = np.count_nonzero(l >= threshold)
 
         print('<i> ||H||/lambda', self.H_norm/self.lambd)
@@ -135,11 +134,11 @@ class Molecule:
         d = copy.copy(JW_op.terms)
 
         l = abs(np.array(list(d.values())))
-        self.lambd = sum(l)
-        self.Lambda = max(l)
+
+        self.lambda_value = sum(l)
+        self.Lambda_value = max(l)
         self.Gamma = np.count_nonzero(l >= 0)
 
-        print('<i> ||H||/lambda', self.H_norm/self.lambd)
         self.H_norm_lambda_ratio = max(H_NORM_LAMBDA_RATIO,self.H_norm/self.lambd)
 
         return grid.volume
