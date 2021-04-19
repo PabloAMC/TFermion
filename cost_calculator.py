@@ -55,7 +55,7 @@ class Cost_calculator:
 
             if method == 'taylor_naive':
                 self.costs['taylor_naive'] = methods_taylor.taylor_naive(
-                                                self.molecule.Lambda_value,
+                                                self.molecule.lambda_value,
                                                 self.molecule.Gamma,
                                                 self.molecule.N,
                                                 errors['epsilon_PEA'],
