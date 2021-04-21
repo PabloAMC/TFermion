@@ -104,7 +104,7 @@ class Taylor_based_methods:
         epsilon_HS_mj = epsilon_HS / r
     
         K = np.ceil(np.log2(1/epsilon_HS_mj) / np.log2( np.log2 (1/epsilon_HS_mj)))
-        epsilon_SS = epsilon_S /(3*2*(K*2**(np.ceil(np.log2(Gamma)+1)) + 2*K)*r )
+        epsilon_SS = epsilon_S /(3*2*(K*2**(np.ceil(np.log2(Gamma)+1)) + 2*K)*r ) # 3 from AA, 2 for for Prepare and Prepare^+, then Prepare_beta_1 and Prepare_beta_2, finally r
 
         Select_H = 16*(np.ceil(np.log2(Gamma) +1)+3)* 2**4 *N
         Select_V = Select_H * K
@@ -113,9 +113,9 @@ class Taylor_based_methods:
         Prepare_beta_2 = (10+12*np.log2(1/epsilon_SS))*K*2**(np.ceil(np.log2(Gamma)+1))
         Prepare_beta = Prepare_beta_1 + Prepare_beta_2
         
-        return 3*(2*Prepare_beta + Select_V)*r
+        return 3*(2*Prepare_beta + Select_V)*r # 3 from AA, 2 Prepare_beta for Prepare and Prepare^+
 
-    def taylor_on_the_fly(self, Gamma, N, phi_max, dphi_max, epsilon_PEA, epsilon_HS, epsilon_S, epsilon_H, zeta_max_i, eps_tay):
+    def taylor_on_the_fly(self, Gamma, N, phi_max, dphi_max, epsilon_PEA, epsilon_HS, epsilon_S, epsilon_H, eps_tay, zeta_max_i, J):
         '''
         Error terms 
         eps_PEA: Phase estimation
@@ -123,54 +123,54 @@ class Taylor_based_methods:
         eps_S: gate synthesis
         eps_H: discretization of integrals
         eps_taylor: truncation of taylor series to order o
+
+        zeta_max_i: maximum nuclear charge
+        J: number of atoms
         '''
+        d = 6 # Number of Gaussians per basis function
 
         t = 4.7/epsilon_PEA
         x_max = np.log(N * t/ epsilon_H)
         
         lambd = Gamma*phi_max**4 * x_max**5
         r = lambd* t / np.log(2)
-        
-        K_list = []
-        
-        for m_j in range(0, int(np.ceil(np.log(r)))):
-            
-            t_j = 2**m_j
-            epsilon_HS_mj = epsilon_HS / r * 2**m_j
-        
-            K = np.ceil(np.log2(t_j/epsilon_HS_mj) / np.log2( np.log2 (t_j/epsilon_HS_mj)))
-            K_list.append(K)
 
-        epsilon_SS = epsilon_S /np.sum([3*2*(2*K) for K in K_list])
-    
         K = np.ceil(np.log2(r/epsilon_HS) / np.log2( np.log2 (r/epsilon_HS)))
+
+        epsilon_SS = epsilon_S /3*r*2*(2*K) # 3 from AA, 2 Prepare_beta for Prepare and Prepare^+, 2K T gates in the initial theta rotations
         # We distribute the error between all C-U in phase estimation uniformly
-        eps_tay_s = eps_tay/((6+2)*K*r*3*2)
+        eps_tay_s = eps_tay/((6+2)*K*r*3*2) 
 
         x = sympy.Symbol('x')
         order = max(self.tools.order_find(function = math.sqrt(x), x0 = 1, e = eps_tay_s, xeval = x_max),
                     self.tools.order_find(function = math.exp(zeta_max_i*(x)**2), x0 = 0, e = eps_tay_s, xeval = x_max))
         
-        result = 0
-        
-        for m_j in range(0, int(np.ceil(np.log(r)))):
-            
-            t_j = 2**m_j
-            epsilon_HS_mj = epsilon_HS / r * 2**m_j
-        
-            K = np.ceil(np.log2(t_j/epsilon_HS_mj) / np.log2( np.log2 (t_j/epsilon_HS_mj)))
-        
-            mu = ( 3*K*2*r/epsilon_H *2*(4*dphi_max + phi_max/x_max)*phi_max**3 * x_max**6 )**6
-            n = np.log(mu)/3
+        mu = ( 3*K*2*r/epsilon_H *2*(4*dphi_max + phi_max/x_max)*phi_max**3 * x_max**6 )**6
+        n = np.ceil(np.log(mu))/3
 
-            Select_V = 8*N*np.ceil(np.log2(Gamma) +1)*K*(K+1)*(2*K+1)/3 + 16*N*K*(K+1)
+        Select_H = 16*(np.ceil(np.log2(Gamma) +1)+3)* 2**4 *N
+        Select_V = Select_H * K
 
-            Prepare_beta_1 = (20+24*np.log2(1/epsilon_SS))*K
 
-            Prepare_beta_2 = ( 6*35*n**2*(order-1)*4*N + (252+70*(order-1))*n**2 )*K
+        Qphi = N*d*(35*n**2*order + 91*n**2+13*n*order + 13*n)
+        Qnabla = N*d*(35*n**2*order + 126*n**2+13*n*order + 32*n)
+        R = 35*n**2*order + 6*n**2 + 13*n*order - 3*n
+        xi = 12*n 
+    
+        two_body = xi + 4*Qphi + R + 4*(21*n**2)
+        kinetic = Qphi + Qnabla + 21*n**2
+        external_potential = 2*Qphi + J*R + J*(21*n**2) + (J-1)*(4*n) + 12*n*J
 
-            Prepare_beta = Prepare_beta_1 + Prepare_beta_2
+        sample = two_body + kinetic + external_potential
+        n = np.ceil(np.log(mu))
+        Ri = 2*(21*n**2 + 12*n) #For the comparison. The rotation itself is Clifford, as it is a C-R(pi/2)
 
-            result += 3*(2*Prepare_beta + Select_V)*t_j
+        Prepare_beta_1 = (20+24*np.log2(1/epsilon_SS))*K
+
+        Prepare_beta_2 = ( 2*sample + Ri )*K
+
+        Prepare_beta = Prepare_beta_1 + Prepare_beta_2
+
+        result = 3*(2*Prepare_beta + Select_V)*r
 
         return result
