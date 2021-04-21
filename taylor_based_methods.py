@@ -58,7 +58,8 @@ class Taylor_based_methods:
         # end circular definition
 
         epsilon_SS = epsilon_S / (2*K*2*3*r)
-        Prepare_beta = (20+24*np.log2(1/epsilon_SS))*K
+        rot_synt = self.tools.rotation_synthesis(epsilon_SS) #todo: create a function that computes(10+12*np.log2(1/epsilon_SS))
+        Prepare_beta = 2*rot_synt*K
 
         mu = ( r/epsilon_H *2*(4*dphi_max + phi_max/x_max)*phi_max**3 * x_max**6 )**6
         n = np.log(mu)/3
@@ -104,13 +105,15 @@ class Taylor_based_methods:
         epsilon_HS_mj = epsilon_HS / r
     
         K = np.ceil(np.log2(1/epsilon_HS_mj) / np.log2( np.log2 (1/epsilon_HS_mj)))
-        epsilon_SS = epsilon_S /(3*2*(K*2**(np.ceil(np.log2(Gamma)+1)) + 2*K)*r ) # 3 from AA, 2 for for Prepare and Prepare^+, then Prepare_beta_1 and Prepare_beta_2, finally r
+        arb_state_synt = self.tools.arbitrary_state_synthesis(np.ceil(np.log2(Gamma))) #todo: 2**(np.ceil(n+1))
+        epsilon_SS = epsilon_S /(3*2*(K*arb_state_synt + 2*K)*r ) # 3 from AA, 2 for for Prepare and Prepare^+, then Prepare_beta_1 and Prepare_beta_2, finally r
 
         Select_H = 16*(np.ceil(np.log2(Gamma) +1)+3)* 2**4 *N
         Select_V = Select_H * K
 
-        Prepare_beta_1 = (20+24*np.log2(1/epsilon_SS))*K
-        Prepare_beta_2 = (10+12*np.log2(1/epsilon_SS))*K*2**(np.ceil(np.log2(Gamma)+1))
+        rot_synt = self.tools.rotation_synthesis(epsilon_SS) #todo: create a function that computes(10+12*np.log2(1/epsilon_SS))
+        Prepare_beta_1 = 2*rot_synt*K
+        Prepare_beta_2 = rot_synt*K*arb_state_synt
         Prepare_beta = Prepare_beta_1 + Prepare_beta_2
         
         return 3*(2*Prepare_beta + Select_V)*r # 3 from AA, 2 Prepare_beta for Prepare and Prepare^+
@@ -137,35 +140,49 @@ class Taylor_based_methods:
 
         K = np.ceil(np.log2(r/epsilon_HS) / np.log2( np.log2 (r/epsilon_HS)))
 
-        epsilon_SS = epsilon_S /3*r*2*(2*K) # 3 from AA, 2 Prepare_beta for Prepare and Prepare^+, 2K T gates in the initial theta rotations
+        epsilon_SS = epsilon_S /(r*3*2*(2*K)) # 3 from AA, 2 Prepare_beta for Prepare and Prepare^+, 2K T gates in the initial theta rotations
         # We distribute the error between all C-U in phase estimation uniformly
-        eps_tay_s = eps_tay/((6+2)*K*r*3*2) 
-
+        number_of_taylor_expansions = (((4+2+2)*d*N + (J+1))*K*2*3*r) #4+2+2 = two_body + kinetic + external_potential
+        eps_tay_s = eps_tay/number_of_taylor_expansions
         x = sympy.Symbol('x')
         order = max(self.tools.order_find(function = math.sqrt(x), x0 = 1, e = eps_tay_s, xeval = x_max),
                     self.tools.order_find(function = math.exp(zeta_max_i*(x)**2), x0 = 0, e = eps_tay_s, xeval = x_max))
         
         mu = ( 3*K*2*r/epsilon_H *2*(4*dphi_max + phi_max/x_max)*phi_max**3 * x_max**6 )**6
-        n = np.ceil(np.log(mu))/3
+        n = np.ceil(np.ceil(np.log(mu))/3) #each coordinate is a third
 
         Select_H = 16*(np.ceil(np.log2(Gamma) +1)+3)* 2**4 *N
         Select_V = Select_H * K
 
+        sum = self.tools.sum_cost(n) #todo: 4*n
+        mult = self.tools.multiplication_cost(n) #todo: 21*n**2
+        div = self.tools.divide_cost(n) #todo: 14n**2+7*n
 
-        Qphi = N*d*(35*n**2*order + 91*n**2+13*n*order + 13*n)
-        Qnabla = N*d*(35*n**2*order + 126*n**2+13*n*order + 32*n)
-        R = 35*n**2*order + 6*n**2 + 13*n*order - 3*n
-        xi = 12*n 
+        tay = order*sum + (order-1)*(mult + div)
+
+        Qphi = N*d((3*sum) + (3*mult +2*sum) + (mult) + tay + (3*mult)) #In parenthesis each step in the list
+        Qnabla = Qphi + N*d*(4*sum+mult+div)
+        R = 2*mult + sum + tay
+        xi = 3*sum
+        #Qphi = N*d*(35*n**2*order + 91*n**2+13*n*order + 13*n)
+        #Qnabla = N*d*(35*n**2*order + 126*n**2+13*n*order + 32*n)
+        #R = 35*n**2*order + 6*n**2 + 13*n*order - 3*n
+        #xi = 12*n 
     
-        two_body = xi + 4*Qphi + R + 4*(21*n**2)
-        kinetic = Qphi + Qnabla + 21*n**2
-        external_potential = 2*Qphi + J*R + J*(21*n**2) + (J-1)*(4*n) + 12*n*J
+        two_body = xi + 4*Qphi + R + 4*mult
+        kinetic = Qphi + Qnabla + mult
+        external_potential = 2*Qphi + J*R + J*mult + (J-1)*sum + xi*J
 
         sample = two_body + kinetic + external_potential
         n = np.ceil(np.log(mu))
-        Ri = 2*(21*n**2 + 12*n) #For the comparison. The rotation itself is Clifford, as it is a C-R(pi/2)
+        sum = self.tools.sum_cost(n) #todo: 4*n
+        mult = self.tools.multiplication_cost(n) #todo: 21*n**2
+        div = self.tools.divide_cost(n) #todo: 14n**2+7*n
 
-        Prepare_beta_1 = (20+24*np.log2(1/epsilon_SS))*K
+        Ri = 2*(mult + 3*sum) #For the comparison operation. The rotation itself is Clifford, as it is a C-R(pi/2)
+
+        rot_synt = self.tools.rotation_synthesis(epsilon_SS) #todo: create a function that computes(10+12*np.log2(1/epsilon_SS))
+        Prepare_beta_1 = 2*rot_synt*K
 
         Prepare_beta_2 = ( 2*sample + Ri )*K
 
