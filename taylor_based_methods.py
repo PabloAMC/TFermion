@@ -148,11 +148,9 @@ class Taylor_based_methods:
         order = max(self.tools.order_find(function = math.sqrt(x), x0 = 1, e = eps_tay_s, xeval = x_max),
                     self.tools.order_find(function = math.exp(zeta_max_i*(x)**2), x0 = 0, e = eps_tay_s, xeval = x_max))
         
-        mu = ( 3*K*2*r/epsilon_H *2*(4*dphi_max + phi_max/x_max)*phi_max**3 * x_max**6 )**6
-        n = np.ceil(np.ceil(np.log(mu))/3) #each coordinate is a third
-
-        Select_H = 16*(np.ceil(np.log2(Gamma) +1)+3)* 2**4 *N
-        Select_V = Select_H * K
+        mu = ( r*3*2*K/epsilon_H *2*(4*dphi_max + phi_max/x_max)*phi_max**3 * x_max**6 )**6
+        n = np.ceil(np.ceil(np.log2(mu))/3) #each coordinate is a third
+        M = lambd*r*3*2*K/epsilon_H
 
         sum = self.tools.sum_cost(n) #todo: 4*n
         mult = self.tools.multiplication_cost(n) #todo: 21*n**2
@@ -172,21 +170,25 @@ class Taylor_based_methods:
         two_body = xi + 4*Qphi + R + 4*mult
         kinetic = Qphi + Qnabla + mult
         external_potential = 2*Qphi + J*R + J*mult + (J-1)*sum + xi*J
-
         sample = two_body + kinetic + external_potential
-        n = np.ceil(np.log(mu))
+
+        # Notice the change of n here: it is the size of register |m>
+        n = np.ceil(np.log2(M))
         sum = self.tools.sum_cost(n) #todo: 4*n
         mult = self.tools.multiplication_cost(n) #todo: 21*n**2
         div = self.tools.divide_cost(n) #todo: 14n**2+7*n
+        comp = self.tools.compare_cost(max(np.ceil(np.log2(M)),np.ceil(np.log2(mu)))) #todo: 8*n
 
-        Ri = 2*(mult + 3*sum) #For the comparison operation. The rotation itself is Clifford, as it is a C-R(pi/2)
+        Ri = 2*(mult + 3*sum + comp) #For the comparison operation. The rotation itself is Clifford, as it is a C-R(pi/2)
 
         rot_synt = self.tools.rotation_synthesis(epsilon_SS) #todo: create a function that computes(10+12*np.log2(1/epsilon_SS))
+
         Prepare_beta_1 = 2*rot_synt*K
-
         Prepare_beta_2 = ( 2*sample + Ri )*K
-
         Prepare_beta = Prepare_beta_1 + Prepare_beta_2
+
+        Select_H = 16*(np.ceil(np.log2(Gamma) +1)+3)* 2**4 *N
+        Select_V = Select_H * K
 
         result = 3*(2*Prepare_beta + Select_V)*r
 
