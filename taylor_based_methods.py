@@ -10,77 +10,6 @@ class Taylor_based_methods:
 
         self.tools = tools
 
-    def configuration_interaction(self, N, eta, alpha, gamma1, gamma2, epsilon_PEA, epsilon_HS, epsilon_S, epsilon_H, eps_tay, zeta_max_i, phi_max, dphi_max):
-        '''
-        gamma1, gamma2, alpha are defined in D9 and D8
-        '''
-        
-        K0 = 26*gamma1/alpha**2 + 8*np.pi*gamma2/alpha**3 + 32*np.sqrt(3)*gamma1*gamma2 # eq D14a
-        K1 = 8*np.pi**2/alpha**3*(alpha + 2) + 1121*(8*gamma1 + np.sqrt(2))             # eq D14b
-        K2 = 128*np.pi/alpha**6*(alpha + 2) + 2161*np.pi**2*(20*gamma1 + np.sqrt(2))    # eq D14c
-        
-        t = 4.7/epsilon_PEA
-        x_max = np.log(N * t/ epsilon_HS)
-        
-        Gamma = binom(eta, 2)*binom(N-eta, 2) + binom(eta,1)*binom(N-eta,1) + 1 # = d
-        Zq = eta
-        
-        '''
-        Warning, we have a circular definition here of delta, mu_M_zeta and r.
-        In practice we have to find the smallest value of mu_M_zeta compatible with delta:
-        mu_M_zeta \\leq f( epsilon_H / 3K*2 Gamma t mu_M_zeta), with f the np.max defining mu_M_zeta below
-        Due to this complication we distribute the error uniformly accross all C-U which is not optimal
-        '''
-
-        # min mu_M_zeta such that it is larger or equal to the bound given in eq D13
-        def mu_M_zeta_bound_calc(mu_M_zeta):
-            r = 2*Gamma*t*mu_M_zeta
-            K = np.log2(r/epsilon_HS)/np.log2(np.log2(r/epsilon_HS))
-            delta = epsilon_H/(3*r*K)   # delta is the error in calculating a single integral. There are 3K*r of them in the simulation, 
-                                        # as r segments are simulated, for a total time of t #todo: this is probably wrong and need 3K r ??
-
-            mu_M_zeta_bound = np.max([ 
-                672*np.pi**2/(alpha**3)*phi_max**4*x_max**5*(np.log(K2*phi_max**4*x_max**5/delta))**6,
-                256*np.pi**2/(alpha**3)*Zq*phi_max**2*x_max**2*(np.log(K1*Zq*phi_max**2*x_max**2/delta))**3,
-                32*gamma1**2**2/(alpha**3)*phi_max**2*x_max*(np.log(K0*phi_max**2*x_max/delta))**3
-            ])
-            return mu_M_zeta_bound
-
-        # Nonlinear constraint mu_M_zeta >= mu_M_zeta_bound
-        nconstraint = scipy.optimize.NonlinearConstraint(fun = lambda mu_M_zeta: mu_M_zeta - mu_M_zeta_bound_calc(mu_M_zeta), lb = 0, ub = +np.inf, keep_feasible = True)
-
-        result = scipy.optimize.minimize(fun = lambda mu_M_zeta: mu_M_zeta, x0 = 1e4, constraints = [nconstraint], tol = 10, options = {'maxiter': 50}, method='COBYLA') # Works with COBYLA, but not with SLSQP (misses the boundaries) or trust-constr (oscillates)
-
-        mu_M_zeta = float(result['x'])
-        r = 2*Gamma*t*mu_M_zeta
-        K = np.log2(r/epsilon_HS)/np.log2(np.log2(r/epsilon_HS))
-
-        # end circular definition
-
-        epsilon_SS = epsilon_S / (2*K*2*3*r)
-        rot_synt = self.tools.rotation_synthesis(epsilon_SS) #todo: create a function that computes(10+12*np.log2(1/epsilon_SS))
-        Prepare_beta = 2*rot_synt*K
-
-        mu = ( r/epsilon_H *2*(4*dphi_max + phi_max/x_max)*phi_max**3 * x_max**6 )**6
-        n = np.log(mu)/3
-
-        x = sympy.Symbol('x')
-        K =  np.ceil(np.log2(r/epsilon_HS) / np.log2( np.log2 (r/epsilon_HS)))
-        number_sample = 2*K* 3* 2* r
-        eps_tay_s = eps_tay / number_sample
-        order = max(self.tools.order_find(function = math.sqrt(x), x0 = 1, e = eps_tay_s, xeval = x_max),
-                    self.tools.order_find(function = math.exp(zeta_max_i*(x)**2), x0 = 0, e = eps_tay_s, xeval = x_max))
-
-        Sample_w = ( 6*35*n**2*(order-1)*4*N + (189+35*(order-1))*n**2 )*K
-
-        Q_val = 2*Sample_w
-        Q_col = 6*(32*eta*np.log2(N) + 24*eta**2 + 16*eta*(eta+1)*np.log2(N))
-        
-        Select_H = Q_val + 2*Q_col
-        Select_V = K*Select_H
-
-        return r*3*(2*Prepare_beta + Select_V)
-
     # Taylorization (babbush2016exponential)
     # Let us know calcula the cost of performing Phase Estimation. 
     # 1.  We have already mentioned that in this case, controlling the direction of the time evolution adds negligible cost. We will also take the unitary $U$ in Phase estimation to be $U_r$. The number of segments we will have to Hamiltonian simulate in the phase estimation protocol is $r \\approx \\frac{4.7}{\\epsilon_{\\text{PEA}}}$.
@@ -101,10 +30,8 @@ class Taylor_based_methods:
         epsilon_S = epsilons[2]
         
         r = 4.7*lambd / (epsilon_PEA*np.log(2)) # The simulated time
-
-        epsilon_HS_mj = epsilon_HS / r
     
-        K = np.ceil(np.log2(1/epsilon_HS_mj) / np.log2( np.log2 (1/epsilon_HS_mj)))
+        K = np.ceil(np.log2(r/epsilon_HS) / np.log2( np.log2 (r/epsilon_HS)))
         arb_state_synt = self.tools.arbitrary_state_synthesis(np.ceil(np.log2(Gamma))) #todo: 2**(np.ceil(n+1))
         epsilon_SS = epsilon_S /(3*2*(K*arb_state_synt + 2*K)*r ) # 3 from AA, 2 for for Prepare and Prepare^+, then Prepare_beta_1 and Prepare_beta_2, finally r
 
@@ -158,19 +85,15 @@ class Taylor_based_methods:
 
         tay = order*sum + (order-1)*(mult + div)
 
-        Qphi = N*d((3*sum) + (3*mult +2*sum) + (mult) + tay + (3*mult)) #In parenthesis each step in the list
-        Qnabla = Qphi + N*d*(4*sum+mult+div)
+        Q = N*d((3*sum) + (3*mult +2*sum) + (mult) + tay + (3*mult)) #In parenthesis each step in the list
+        Qnabla = Q + N*d*(4*sum+mult+div)
         R = 2*mult + sum + tay
         xi = 3*sum
-        #Qphi = N*d*(35*n**2*order + 91*n**2+13*n*order + 13*n)
-        #Qnabla = N*d*(35*n**2*order + 126*n**2+13*n*order + 32*n)
-        #R = 35*n**2*order + 6*n**2 + 13*n*order - 3*n
-        #xi = 12*n 
     
-        two_body = xi + 4*Qphi + R + 4*mult
-        kinetic = Qphi + Qnabla + mult
-        external_potential = 2*Qphi + J*R + J*mult + (J-1)*sum + xi*J
-        sample = two_body + kinetic + external_potential
+        two_body = xi + 4*Q + R + 4*mult
+        kinetic = Q + Qnabla + mult
+        external_potential = 2*Q + J*R + J*mult + (J-1)*sum + xi*J
+        sample = two_body + (kinetic + external_potential + sum)
 
         # Notice the change of n here: it is the size of register |m>
         n = np.ceil(np.log2(M))
@@ -190,6 +113,121 @@ class Taylor_based_methods:
         Select_H = 16*(np.ceil(np.log2(Gamma) +1)+3)* 2**4 *N
         Select_V = Select_H * K
 
+        #todo: have not computed the cost of the rotations in Oblivious AA
+
         result = 3*(2*Prepare_beta + Select_V)*r
 
         return result
+
+    def configuration_interaction(self, N, eta, alpha, gamma1, gamma2, epsilon_PEA, epsilon_HS, epsilon_S, epsilon_H, eps_tay, zeta_max_i, phi_max, dphi_max, J):
+        '''
+        gamma1, gamma2, alpha are defined in D9 and D8
+        '''
+        d = 6
+        
+        K0 = 26*gamma1/alpha**2 + 8*np.pi*gamma2/alpha**3 + 32*np.sqrt(3)*gamma1*gamma2 # eq D14a
+        K1 = 8*np.pi**2/alpha**3*(alpha + 2) + 1121*(8*gamma1 + np.sqrt(2))             # eq D14b
+        K2 = 128*np.pi/alpha**6*(alpha + 2) + 2161*np.pi**2*(20*gamma1 + np.sqrt(2))    # eq D14c
+        
+        t = 4.7/epsilon_PEA
+        x_max = np.log(N * t/ epsilon_HS)
+        
+        Gamma = binom(eta, 2)*binom(N-eta, 2) + binom(eta,1)*binom(N-eta,1) + 1 # = d
+        Zq = eta
+        
+        '''
+        Warning, we have a circular definition here of delta, mu_M_zeta and r.
+        In practice we have to find the smallest value of mu_M_zeta compatible with delta:
+        mu_M_zeta \\leq f( epsilon_H / 3K*2 Gamma t mu_M_zeta), with f the np.max defining mu_M_zeta below
+        Due to this complication we distribute the error uniformly accross all C-U which is not optimal
+        '''
+
+        # min mu_M_zeta such that it is larger or equal to the bound given in eq D13
+        def mu_M_zeta_bound_calc(mu_M_zeta):
+
+            r = 2*Gamma*t*mu_M_zeta
+            K = np.log2(r/epsilon_HS)/np.log2(np.log2(r/epsilon_HS))
+            delta = epsilon_H/(3*r*K)   # delta is the error in calculating a single integral. There are 3K*r of them in the simulation, 
+                                        # as r segments are simulated, for a total time of t
+
+            mu_M_zeta_bound = np.max([ 
+                672*np.pi**2/(alpha**3)*phi_max**4*x_max**5*(np.log(K2*phi_max**4*x_max**5/delta))**6,
+                256*np.pi**2/(alpha**3)*Zq*phi_max**2*x_max**2*(np.log(K1*Zq*phi_max**2*x_max**2/delta))**3,
+                32*gamma1**2**2/(alpha**3)*phi_max**2*x_max*(np.log(K0*phi_max**2*x_max/delta))**3
+            ])
+            #This bound is so because Lemmas 1-3 are bounding aleph_{\gamma,\rho}. Taking the definition of M, it is clear.
+            return mu_M_zeta_bound
+
+        # Nonlinear constraint mu_M_zeta >= mu_M_zeta_bound
+        nconstraint = scipy.optimize.NonlinearConstraint(fun = lambda mu_M_zeta: mu_M_zeta - mu_M_zeta_bound_calc(mu_M_zeta), lb = 0, ub = +np.inf, keep_feasible = True)
+
+        result = scipy.optimize.minimize(fun = lambda mu_M_zeta: mu_M_zeta, x0 = 1e4, constraints = [nconstraint], tol = 10, options = {'maxiter': 50}, method='COBYLA') # Works with COBYLA, but not with SLSQP (misses the boundaries) or trust-constr (oscillates)
+
+        mu_M_zeta = float(result['x'])
+        r = 2*Gamma*t*mu_M_zeta
+        K = np.log2(r/epsilon_HS)/np.log2(np.log2(r/epsilon_HS))
+
+        delta = epsilon_H/(3*r*K)
+        mu = np.max(
+            np.ceil(((K2*phi_max**4*x_max**5/delta) * (1/alpha*np.log(K2*phi_max**4*x_max**5/delta))**7)**6),
+            np.ceil(((K1*Zq*phi_max**2*x_max**2/delta) * (2/alpha*np.log(K1*Zq*phi_max**2*x_max**2/delta))**4)**3),
+            np.ceil(((K0*phi_max**2*x_max/delta) * (2/alpha*np.log(K0*phi_max**2*x_max/delta))**4)**3)
+        )
+        zeta = epsilon_H/(r*Gamma*mu)
+        M = mu_M_zeta/(epsilon_H/r*Gamma) # = mu_M_zeta/(mu*zeta)
+
+        epsilon_SS = epsilon_S / (2*K*2*3*r)
+        rot_synt = self.tools.rotation_synthesis(epsilon_SS) #todo: create a function that computes(10+12*np.log2(1/epsilon_SS))
+        Prepare_beta = 2*rot_synt*K
+
+        #### Qval cost computation
+        n = np.log(mu)/3
+        x = sympy.Symbol('x')
+
+        number_of_taylor_expansions = (((2*4+2+2)*d*N + (J+1))*K*2*3*r) #2*4+2+2 = 2*two_body + kinetic + external_potential
+        eps_tay_s = eps_tay/number_of_taylor_expansions
+        x = sympy.Symbol('x')
+        order = max(self.tools.order_find(function = math.sqrt(x), x0 = 1, e = eps_tay_s, xeval = x_max),
+                    self.tools.order_find(function = math.exp(zeta_max_i*(x)**2), x0 = 0, e = eps_tay_s, xeval = x_max))
+        
+        n = np.ceil(np.ceil(np.log2(mu))/3) #each coordinate is a third
+
+        sum = self.tools.sum_cost(n) #todo: 4*n
+        mult = self.tools.multiplication_cost(n) #todo: 21*n**2
+        div = self.tools.divide_cost(n) #todo: 14n**2+7*n
+
+        tay = order*sum + (order-1)*(mult + div)
+
+        Q = N*d((3*sum) + (3*mult +2*sum) + (mult) + tay + (3*mult)) #In parenthesis each step in the list
+        Qnabla = Q + N*d*(4*sum+mult+div)
+        R = 2*mult + sum + tay
+        xi = 3*sum
+    
+        two_body = xi + 4*Q + R + 4*mult
+        kinetic = Q + Qnabla + mult
+        external_potential = 2*Q + J*R + J*mult + (J-1)*sum + xi*J
+        sample_2body = 2*two_body + sum
+        sample_1body =  kinetic + external_potential + sum
+
+        comp = self.tools.compare_cost(max(np.ceil(np.log2(M)),np.ceil(np.log2(mu))))
+        Ri = 2*comp
+
+        Q_val = 2*(sample_2body + sample_1body) + Ri
+
+        ### Qcol cost computation
+
+        # There will be eta registers with log2(N) qubits each
+        compare = self.tools.compare_cost(np.log2(N))
+        sort = eta*(4 + compare) # 4 for the c-swap and one comparison
+        check = self.tools.multi_controlled_not(eta*np.log2(N)) #todo: return 16(m-2)
+        sum = self.tools.sum_cost(np.log2(N))
+
+        find_alphas = 2* eta*(4*sum + check + sort + compare) #The 2 is because if it fails we have to reverse the computation
+        find_gammas_2y4 = 2*(3*sum + check+ sort+ compare +3*4) + find_alphas  # The 3*4 is the final 3 Toffolis; the 2 is is because if it fails we have to reverse the computation 
+        
+        Q_col = 2*find_alphas + 2*find_gammas_2y4
+        
+        Select_H = Q_val + 2*Q_col # +swaps, but they are Clifford
+        Select_V = K*Select_H
+
+        return r*3*(2*Prepare_beta + Select_V)
