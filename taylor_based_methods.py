@@ -33,7 +33,7 @@ class Taylor_based_methods:
     
         K = np.ceil(np.log2(r/epsilon_HS) / np.log2( np.log2 (r/epsilon_HS)))
         arb_state_synt = self.tools.arbitrary_state_synthesis(np.ceil(np.log2(Gamma))) #todo: 2**(np.ceil(n+1))
-        epsilon_SS = epsilon_S /(3*2*(K*arb_state_synt + 2*K)*r ) # 3 from AA, 2 for for Prepare and Prepare^+, then Prepare_beta_1 and Prepare_beta_2, finally r
+        epsilon_SS = epsilon_S /(r*3*2*(K*arb_state_synt + 2*K) ) # 3 from AA, 2 for for Prepare and Prepare^+, then Prepare_beta_1 and Prepare_beta_2, finally r
 
         Select_H = 16*(np.ceil(np.log2(Gamma) +1)+3)* 2**4 *N
         Select_V = Select_H * K
@@ -42,8 +42,11 @@ class Taylor_based_methods:
         Prepare_beta_1 = 2*rot_synt*K
         Prepare_beta_2 = rot_synt*K*arb_state_synt
         Prepare_beta = Prepare_beta_1 + Prepare_beta_2
+
+        R = self.tools.multi_controlled_not((K+1)*np.log2(Gamma) + N) # The prepare qubits and the select qubits (in Jordan-Wigner there are N)
+        result = r*(3*(2*Prepare_beta + Select_V) + 2*R)  # 3 from AA, 2 Prepare_beta for Prepare and Prepare^+
         
-        return 3*(2*Prepare_beta + Select_V)*r # 3 from AA, 2 Prepare_beta for Prepare and Prepare^+
+        return result
 
     def taylor_on_the_fly(self, Gamma, N, phi_max, dphi_max, epsilon_PEA, epsilon_HS, epsilon_S, epsilon_H, eps_tay, zeta_max_i, J):
         '''
@@ -102,20 +105,19 @@ class Taylor_based_methods:
         div = self.tools.divide_cost(n) #todo: 14n**2+7*n
         comp = self.tools.compare_cost(max(np.ceil(np.log2(M)),np.ceil(np.log2(mu)))) #todo: 8*n
 
-        Ri = 2*(mult + 3*sum + comp) #For the comparison operation. The rotation itself is Clifford, as it is a C-R(pi/2)
+        kickback = 2*(mult + 3*sum + comp) #For the comparison operation. The rotation itself is Clifford, as it is a C-R(pi/2)
 
         rot_synt = self.tools.rotation_synthesis(epsilon_SS) #todo: create a function that computes(10+12*np.log2(1/epsilon_SS))
 
         Prepare_beta_1 = 2*rot_synt*K
-        Prepare_beta_2 = ( 2*sample + Ri )*K
+        Prepare_beta_2 = ( 2*sample + kickback )*K
         Prepare_beta = Prepare_beta_1 + Prepare_beta_2
 
         Select_H = 16*(np.ceil(np.log2(Gamma) +1)+3)* 2**4 *N
         Select_V = Select_H * K
 
-        #todo: have not computed the cost of the rotations in Oblivious AA
-
-        result = 3*(2*Prepare_beta + Select_V)*r
+        R = self.tools.multi_controlled_not((K+1)*np.log2(Gamma) + N) # The prepare qubits and the select qubits (in Jordan-Wigner there are N)
+        result = r*(3*(2*Prepare_beta + Select_V) + 2*R)
 
         return result
 
@@ -164,7 +166,7 @@ class Taylor_based_methods:
         result = scipy.optimize.minimize(fun = lambda mu_M_zeta: mu_M_zeta, x0 = 1e4, constraints = [nconstraint], tol = 10, options = {'maxiter': 50}, method='COBYLA') # Works with COBYLA, but not with SLSQP (misses the boundaries) or trust-constr (oscillates)
 
         mu_M_zeta = float(result['x'])
-        r = 2*Gamma*t*mu_M_zeta
+        r = 2*Gamma*t*mu_M_zeta/np.log(2)
         K = np.log2(r/epsilon_HS)/np.log2(np.log2(r/epsilon_HS))
 
         delta = epsilon_H/(3*r*K)
@@ -210,9 +212,9 @@ class Taylor_based_methods:
         sample_1body =  kinetic + external_potential + sum
 
         comp = self.tools.compare_cost(max(np.ceil(np.log2(M)),np.ceil(np.log2(mu))))
-        Ri = 2*comp
+        kickback = 2*comp
 
-        Q_val = 2*(sample_2body + sample_1body) + Ri
+        Q_val = 2*(sample_2body + sample_1body) + kickback
 
         ### Qcol cost computation
 
@@ -230,4 +232,5 @@ class Taylor_based_methods:
         Select_H = Q_val + 2*Q_col # +swaps, but they are Clifford
         Select_V = K*Select_H
 
-        return r*3*(2*Prepare_beta + Select_V)
+        R = self.tools.multi_controlled_not((K+1)*np.log2(Gamma) + N) # The prepare qubits and the select qubits (in Jordan-Wigner there are N)
+        result = r*(3*(2*Prepare_beta + Select_V) + 2*R)
