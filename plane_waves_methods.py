@@ -36,18 +36,42 @@ class Plane_waves_methods:
     # Low depth quantum simulation of materials (babbush2018low) Taylor
     def low_depth_taylor(self, N, lambd, Lambd, epsilon_PEA, epsilon_HS, epsilon_S, Ham_norm):
         '''To be used in plane wave basis'''
+
+        D = 3 #dimension of the model
+        M = (N/2)**3
+
         t = 4.7/epsilon_PEA
         r = t*Lambd/np.log(2)
 
         K = np.ceil(np.log2(r/epsilon_HS) / np.log2( np.log2 (r/epsilon_HS))) 
 
         #todo: revise the count to make it more readable once I get over Linear T   
-        epsilon_SS = epsilon_S /(r*3*2*(2*K)) # The extra two is because Uniform requires 2 Rz gates
+        epsilon_SS = epsilon_S /(r*3*2*K*(2+2*D+1)) # The extra two is because Uniform requires 2 Rz gates
         
         mu = np.ceil(np.log(2*np.sqrt(2)*Lambd/epsilon_PEA) + np.log(1 + epsilon_PEA/(8*lambd)) + np.log(1 - (Ham_norm/lambd)**2))
         
-        prepare_beta = K*(6*N+40*np.log(N)+16*np.log(1/epsilon_SS) + 10*mu)
-        select_V = K*(12*N+8*np.log(N))
+        # The number of total rotations is r*2* number of rotations for each preparation P (in this case 2D+1)
+        z_rot_synt = self.tools.z_rotation_synthesis(epsilon_SS) #todo: see table 4 log 1/eps_ss + 10
+
+        def uniform_cost(L, k=0, z_rot_synt = z_rot_synt, controlled = False):
+            if controlled:
+                return 2*k+10*np.log2(L) + 2*z_rot_synt
+            else:
+                return 8*np.log2(L) + 2*z_rot_synt
+
+        def QROM_cost(N): return 4*N
+
+        compare = self.tools.compare(mu)
+        sum = self.tools.compare(D*np.log2(M))
+        Fredkin_cost = 4 # The controlled swaps
+
+        Subprepare = QROM_cost(3*M**D) + uniform_cost(3) + D*uniform_cost(M) + 2*compare + (3+D*np.log2(M))*Fredkin_cost
+        Prepare = Subprepare + D*uniform_cost(M, controlled=True) + D*np.log2(M)*Fredkin_cost + sum + 2*self.tools.multi_controlled_not(np.log2(N))
+        
+        Select = 3*QROM_cost(N) + 2*np.log2(N)*Fredkin_cost
+        rot_synt = self.tools.rotation_synthesis(epsilon_SS) # due to the preparation of the theta angles
+        prepare_beta = K*(Prepare + 2*rot_synt) # The 2*rot_synt is due to the preparation of the theta angles
+        select_V = K*(Select)
 
         R = self.tools.multi_controlled_not(2*np.log2(N)+2*mu+N) # Based on the number qubits needed in the Linear T QRom article
         result = r*(3*(2*prepare_beta + select_V) + 2*R)
