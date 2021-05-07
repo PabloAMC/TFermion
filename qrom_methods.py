@@ -37,7 +37,8 @@ class QROM_methods:
         
         Select = 3*QROM_cost(N) + 2*np.log2(N)*Fredkin_cost
         
-        return r*(2*Prepare + Select)
+        Reflexion = self.tools.multi_controlled_not(2*np.log2(N)+2*mu + N)
+        return r*(2*Prepare + Reflexion + Select) #todo: rotations in the quantum walk
 
     ## Sparsity and low rank factorization (berry2019qubitization)
     def sparsity_low_rank(self, N, lambd, epsilon_PEA, epsilon_S, L, Ham_norm, sparsity_d = None):
@@ -87,4 +88,5 @@ class QROM_methods:
 
         Select = 2*(2*QROM_cost(N) + 2*2*self.tools.multi_controlled_not(np.log2(N))) # The initial 2 is due to Select_1 and Select_2. See figure 1 in original article.
 
-        return r*(2*Prepare + Select)
+        Reflexion = self.tools.multi_controlled_not(2*np.log2(N)+2*mu + N)
+        return r*(2*Prepare+ Reflexion + Select)
