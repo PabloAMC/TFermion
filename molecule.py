@@ -101,8 +101,7 @@ class Molecule:
         self.Lambda_value = max(l)
         self.Gamma = np.count_nonzero(l >= threshold)
 
-        print('<i> ||H||/lambda', self.H_norm/self.lambd)
-        self.H_norm_lambda_ratio = max(H_NORM_LAMBDA_RATIO,self.H_norm/self.lambd)
+        self.H_norm_lambda_ratio = max(H_NORM_LAMBDA_RATIO,self.H_norm/self.lambda_value)
 
     def build_grid(self, grid_length: int = 7):
         '''
@@ -551,7 +550,20 @@ class Molecule:
         '''Returns the charge of the larger atom in the molecule'''
         zeta_i_max = 0
 
+        # The Periodic Table as a python list and dictionary.
+        periodic_table = [  #
+            '?', 'H', 'He', 'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne', 'Na', 'Mg', 'Al',
+            'Si', 'P', 'S', 'Cl', 'Ar', 'K', 'Ca', 'Sc', 'Ti', 'V', 'Cr', 'Mn', 'Fe',
+            'Co', 'Ni', 'Cu', 'Zn', 'Ga', 'Ge', 'As', 'Se', 'Br', 'Kr', 'Rb', 'Sr', 'Y',
+            'Zr', 'Nb', 'Mo', 'Tc', 'Ru', 'Rh', 'Pd', 'Ag', 'Cd', 'In', 'Sn', 'Sb',
+            'Te', 'I', 'Xe', 'Cs', 'Ba', 'La', 'Ce', 'Pr', 'Nd', 'Pm', 'Sm', 'Eu', 'Gd',
+            'Tb', 'Dy', 'Ho', 'Er', 'Tm', 'Yb', 'Lu', 'Hf', 'Ta', 'W', 'Re', 'Os', 'Ir',
+            'Pt', 'Au', 'Hg', 'Tl', 'Pb', 'Bi', 'Po', 'At', 'Rn', 'Fr', 'Ra', 'Ac',
+            'Th', 'Pa', 'U', 'Np', 'Pu', 'Am', 'Cm', 'Bk', 'Cf', 'Es', 'Fm', 'Md', 'No',
+            'Lr'
+        ]
+
         for item in self.molecule_geometry:
-            zeta_i = max(zeta_i_max, MolecularData.periodic_table.index(item[0]))
+            zeta_i = max(zeta_i_max, periodic_table.index(item[0]))
 
         return zeta_i

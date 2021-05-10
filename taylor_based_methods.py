@@ -33,7 +33,7 @@ class Taylor_based_methods:
         r = t*lambd / np.log(2) # The simulated time
     
         K = np.ceil(np.log2(r/epsilon_HS) / np.log2( np.log2 (r/epsilon_HS)))
-        arb_state_synt = self.tools.arbitrary_state_synthesis(np.ceil(np.log2(Gamma))) #todo: 2**(np.ceil(n+1))
+        arb_state_synt = self.tools.arbitrary_state_synthesis(Gamma)
         epsilon_SS = epsilon_S /(r*3*2*(K*arb_state_synt + 2*K) ) # 3 from AA, 2 for for Prepare and Prepare^+, then Prepare_beta_1 and Prepare_beta_2, finally r
 
         Select_H = 16*(np.ceil(np.log2(Gamma) +1)+3)* 2**4 *N
@@ -49,7 +49,14 @@ class Taylor_based_methods:
         
         return result
 
-    def taylor_on_the_fly(self, Gamma, N, phi_max, dphi_max, epsilon_PEA, epsilon_HS, epsilon_S, epsilon_H, eps_tay, zeta_max_i, J):
+    def taylor_on_the_fly(self, epsilons, Gamma, N, phi_max, dphi_max, zeta_max_i, J):
+        
+        epsilon_PEA = epsilons[0]
+        epsilon_HS = epsilons[1]
+        epsilon_S = epsilons[2]
+        epsilon_H = epsilons[3]
+        eps_tay = epsilons[4]
+        
         '''
         Error terms 
         eps_PEA: Phase estimation
