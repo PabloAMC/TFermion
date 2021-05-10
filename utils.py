@@ -104,6 +104,18 @@ class Utils():
     def sum_constraint(self, x):
         return sum(x)
 
+    def arbitrary_state_synthesis(self, N):
+        return 2**(np.ceil(np.log2(N)))
+
+    def rotation_synthesis(self, epsilon_SS):
+        return (10+12*np.log2(1/epsilon_SS))
+
+    def z_rotation(self, epsilon_SS):
+        return 10 + 4*np.log2(1/epsilon_SS)
+
+    def multi_controlled_not(self, N):
+        return 16*(N-2)
+
     # It is necessary to generate two constraints: one linear (each value should be in the range greather than 0 and chemical_accuracy) and one non linear (errors sum should be in the range 0 and chemical accuracy)
     def generate_constraints(self, number_errors):
 

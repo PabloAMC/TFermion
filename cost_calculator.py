@@ -46,8 +46,11 @@ class Cost_calculator:
             self.molecule.get_basic_parameters()
 
             if method == 'taylor_naive':
+
+                arguments = (self.molecule.Lambda_value, self.molecule.Gamma, self.molecule.N)
+
                 # generate values for errors epsilon_PEA, epsilon_HS, epsilon_S
-                optimized_errors = self.calculate_optimized_errors(3, methods_taylor.taylor_naive, (self.molecule.Lambda_value, self.molecule.Gamma, self.molecule.N))
+                optimized_errors = self.calculate_optimized_errors(3, methods_taylor.taylor_naive, arguments)
 
                 self.costs['taylor_naive'] = methods_taylor.taylor_naive(
                     optimized_errors.x,
@@ -60,9 +63,12 @@ class Cost_calculator:
 
                 phi_max, dphi_max, _, _ = self.molecule.molecular_orbital_parameters()
                 zeta_max_i = self.molecule.calculate_zeta_i_max()
+                J = len(self.molecule.molecule_geometry) #is the number of atoms in the molecule
+
+                arguments = (self.molecule.Gamma, self.molecule.N, phi_max, dphi_max, zeta_max_i, J)
 
                 # generate values for errors epsilon_PEA, epsilon_HS, epsilon_S, eps_H, eps_taylor
-                optimized_errors = self.calculate_optimized_errors(5, methods_taylor.taylor_on_the_fly, (self.molecule.Gamma, self.molecule.N, phi_max, dphi_max, zeta_max_i))
+                optimized_errors = self.calculate_optimized_errors(5, methods_taylor.taylor_on_the_fly, arguments)
 
                 self.costs['taylor_on_the_fly'] = methods_taylor.taylor_on_the_fly(
                     optimized_errors.x,
@@ -70,7 +76,8 @@ class Cost_calculator:
                     self.molecule.N,
                     phi_max,
                     dphi_max,
-                    zeta_max_i)
+                    zeta_max_i,
+                    J)
             '''
             elif method == 'configuration_interaction':
                 phi_max, dphi_max = self.molecule.molecular_orbital_parameters()
