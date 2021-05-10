@@ -90,15 +90,15 @@ class Taylor_based_methods:
     # Remember that 
     # $$ K =  O\\left( \\frac{\\log(r/\\epsilon_{HS})}{\\log \\log(r/\\epsilon_{HS})} \\right)$$
     # Notice that the $\\Lambda$ parameters comes in the algorithm only implicitly, since we take the evolution time of a single segment to be $t_1 = \\ln 2/\\Lambda$ such that the first segment in Phase estimation has $r = \\frac{\\Lambda t_1}{\\ln 2} = 1$ as it should be. In general, we will need to implement $r \\approx \\frac{4.7}{\\epsilon_{PEA}}$. However, since $\\epsilon_{PEA}$ makes reference to $H$ and we are instead simulating $H \\ln 2/ \\Lambda$, we will have to calculate the eigenvalue to precision $\\epsilon \\ln 2/ \\Lambda$; so it is equivalently to fixing an initial time $t_1$ and running multiple segments in each of the $U$ operators in Phase Estimation.
-    def taylor_naive(self, x, Lambd, Gamma, N):
+    def taylor_naive(self, errors, Lambd, Gamma, N):
 
         # workaround to ensure that the optimizer never check negative values of errors
         # if any error is lower or equal to 0, the cost is penalized to a maximum value
-        if not all(x_i > 0 for x_i in x): return self.tools.config_variables['maximum_cost']
+        if not all(e_i > 0 for e_i in errors): return self.tools.config_variables['maximum_cost']
 
-        epsilon_PEA = x[0]
-        epsilon_HS = x[1]
-        epsilon_S = x[2]
+        epsilon_PEA = errors[0]
+        epsilon_HS = errors[1]
+        epsilon_S = errors[2]
 
         r = 4.7*Lambd / (epsilon_PEA*np.log(2)) # The simulated time
         K_list = []
@@ -130,7 +130,7 @@ class Taylor_based_methods:
             
         return result
 
-    def taylor_on_the_fly(self, Gamma, N, phi_max, dphi_max, epsilon_PEA, epsilon_HS, epsilon_S, epsilon_H, zeta_max_i, eps_tay):
+    def taylor_on_the_fly(self, errors, Gamma, N, phi_max, dphi_max,  zeta_max_i):
         '''
         Error terms 
         eps_PEA: Phase estimation
@@ -139,6 +139,16 @@ class Taylor_based_methods:
         eps_H: discretization of integrals
         eps_taylor: truncation of taylor series to order o
         '''
+
+        # workaround to ensure that the optimizer never check negative values of errors
+        # if any error is lower or equal to 0, the cost is penalized to a maximum value
+        if not all(e_i > 0 for e_i in errors): return self.tools.config_variables['maximum_cost']
+
+        epsilon_PEA = errors[0]
+        epsilon_HS = errors[1]
+        epsilon_S = errors[2]
+        epsilon_H = errors[3]
+        eps_tay = errors[4]
 
         t = 4.7/epsilon_PEA
         x_max = np.log(N * t/ epsilon_H)

@@ -21,6 +21,9 @@ class Cost_calculator:
 
             methods_trotter = trotter_based_methods.Trotter_based_methods()
 
+            # calculate the basis of the molecule (and its parameters)
+            self.molecule.get_basic_parameters()
+
             if method == 'qdrift': self.costs['qdrift'] = methods_trotter.calc_qdrift_resources(
                                         self.molecule.lambda_value, 
                                         self.molecule.N, 
@@ -39,20 +42,36 @@ class Cost_calculator:
 
             methods_taylor = taylor_based_methods.Taylor_based_methods(self.tools)
 
-            # generate values for errors epsilon_PEA, epsilon_HS, epsilon_S
-            optimized_errors = self.calculate_optimized_errors(3, methods_taylor.taylor_naive, (self.molecule.Lambda_value, self.molecule.Gamma, self.molecule.N))
+            # calculate the basis of the molecule (and its parameters)
+            self.molecule.get_basic_parameters()
 
             if method == 'taylor_naive':
+                # generate values for errors epsilon_PEA, epsilon_HS, epsilon_S
+                optimized_errors = self.calculate_optimized_errors(3, methods_taylor.taylor_naive, (self.molecule.Lambda_value, self.molecule.Gamma, self.molecule.N))
+
                 self.costs['taylor_naive'] = methods_taylor.taylor_naive(
                     optimized_errors.x,
                     self.molecule.Lambda_value,
                     self.molecule.Gamma,
                     self.molecule.N)
 
-        '''
+
             elif method == 'taylor_on_the_fly':
+
+                phi_max, dphi_max, _, _ = self.molecule.molecular_orbital_parameters()
                 zeta_max_i = self.molecule.calculate_zeta_i_max()
-                self.costs['taylor_on_the_fly'] = methods_taylor.taylor_on_the_fly(Gamma, N, phi_max, dphi_max, epsilon_PEA, epsilon_HS, epsilon_S, epsilon_H, zeta_max_i = zeta_max_i, epsilon_tay)
+
+                # generate values for errors epsilon_PEA, epsilon_HS, epsilon_S, eps_H, eps_taylor
+                optimized_errors = self.calculate_optimized_errors(5, methods_taylor.taylor_on_the_fly, (self.molecule.Gamma, self.molecule.N, phi_max, dphi_max, zeta_max_i))
+
+                self.costs['taylor_on_the_fly'] = methods_taylor.taylor_on_the_fly(
+                    optimized_errors.x,
+                    self.molecule.Gamma,
+                    self.molecule.N,
+                    phi_max,
+                    dphi_max,
+                    zeta_max_i)
+            '''
             elif method == 'configuration_interaction':
                 phi_max, dphi_max = self.molecule.molecular_orbital_parameters()
                 # alpha, gamma1, gamma2 are used to calculate K0, K1, K2 (see eq D14 in overleaf)
@@ -103,7 +122,6 @@ class Cost_calculator:
         constraints = self.tools.generate_constraints(number_errors)
         initial_values = self.tools.generate_initial_error_values(number_errors)
 
-        print(initial_values)
         optimized_errors = minimize(
             fun=cost_method,
             x0=initial_values,
