@@ -121,6 +121,19 @@ class Utils():
     def multi_controlled_not(self, N):
         return 16*(N-2)
 
+    def sum_cost(self, n):
+        return 4*n
+
+    def multiplication_cost(self, n):
+        return 21*n**2
+
+    def divide_cost(self, n):
+        return 14*n**2+7*n
+
+    def compare_cost(self, n):
+        return 8*n
+    
+
     # It is necessary to generate two constraints: one linear (each value should be in the range greather than 0 and chemical_accuracy) and one non linear (errors sum should be in the range 0 and chemical accuracy)
     def generate_constraints(self, number_errors):
 
