@@ -82,8 +82,8 @@ class Taylor_based_methods:
         number_of_taylor_expansions = (((4+2+2)*d*N + (J+1))*K*2*3*r) #4+2+2 = two_body + kinetic + external_potential
         eps_tay_s = eps_tay/number_of_taylor_expansions
         x = sympy.Symbol('x')
-        order = max(self.tools.order_find(function = math.sqrt(x), x0 = 1, e = eps_tay_s, xeval = x_max),
-                    self.tools.order_find(function = math.exp(zeta_max_i*(x)**2), x0 = 0, e = eps_tay_s, xeval = x_max))
+        order = max(self.tools.order_find(function=sympy.sqrt(x), x0=1, e=eps_tay_s, xeval=x_max),
+                    self.tools.order_find(function=np.exp(zeta_max_i*(x)**2), x0=0, e=eps_tay_s, xeval=x_max))
         
         mu = ( r*3*2*K/epsilon_H *2*(4*dphi_max + phi_max/x_max)*phi_max**3 * x_max**6 )**6
         n = np.ceil(np.ceil(np.log2(mu))/3) #each coordinate is a third

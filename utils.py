@@ -38,7 +38,7 @@ class Utils():
         return self.args
 
     # Taylor approximation at x0 of the function 'function'
-    def taylor(self, function,x0,n):
+    def taylor(self, function, x0, n):
         i = 0
         p = 0
         x = sympy.Symbol('x')
@@ -53,36 +53,33 @@ class Utils():
         
         x = sympy.Symbol('x')
         
+        def factorial(n):
+
+            if n <= 0:
+                return 1
+            else:
+                return n*factorial(n-1)
+        
+        def taylor_err(function, x0, n, z = None):
+            if z == None:
+                z = x0
+            a = (function.diff(x,n).subs(x,z))/(factorial(n))*(x-x0)**n
+            return a
+
         order = 0
         te = 1
         zeta = np.linspace(x0,xeval,20)
-
+        
         while te > e:# or order < 10:
+
+            print("Order:", order, "error(e):", e, "calculated error(te):", te, "stop: e>te")
             order += 1
             #for z in zeta:
                 #print(taylor_err(f, x0, order, z).subs(x,xeval).evalf())
-            te = np.max([np.abs(self.taylor_err(function, x0, order, z).subs(x,xeval).evalf()) for z in zeta])
-            #print('order',order, te,'\')
+            te = np.max([np.abs(taylor_err(function, x0, order, z).subs(x,xeval).evalf()) for z in zeta])
+            #print('order',order, te,'\n')
             
         return order
-
-    def factorial(self, n):
-        if n <= 0:
-            return 1
-        else:
-            return n*self.factorial(n-1)
-        
-    def taylor_err(self, function, x0, n, z = None):
-        if z == None:
-            z = x0
-                
-        x = sympy.Symbol('x')
-
-        #print('coefficient order',n, function.diff(x,n)/(factorial(n)))#.subs(x,z))
-        a = (function.diff(x,n).subs(x,z))/(self.factorial(n))*(x-x0)**n
-        #print('coefficient order',n, (function.diff(x,n).subs(x,z)/(factorial(n))*(x-x0)**n))
-        #print('a',a)
-        return a
 
     def f(self, x, y):
         return 1/(x**2 + y**2)
