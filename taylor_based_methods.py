@@ -29,7 +29,8 @@ class Taylor_based_methods:
         epsilon_HS = epsilons[1]
         epsilon_S = epsilons[2]
         
-        r = 4.7*lambd / (epsilon_PEA*np.log(2)) # The simulated time
+        t = 4.7/epsilon_PEA
+        r = t*lambd / np.log(2) # The simulated time
     
         K = np.ceil(np.log2(r/epsilon_HS) / np.log2( np.log2 (r/epsilon_HS)))
         arb_state_synt = self.tools.arbitrary_state_synthesis(Gamma)
@@ -173,7 +174,7 @@ class Taylor_based_methods:
         result = scipy.optimize.minimize(fun = lambda mu_M_zeta: mu_M_zeta, x0 = 1e4, constraints = [nconstraint], tol = 10, options = {'maxiter': 50}, method='COBYLA') # Works with COBYLA, but not with SLSQP (misses the boundaries) or trust-constr (oscillates)
 
         mu_M_zeta = float(result['x'])
-        r = 2*Gamma*t*mu_M_zeta/np.log(2)
+        r = 2*Gamma*t*mu_M_zeta/np.log(2) # Table 1 in original article and L = 2 M Gamma, the 2 from register |s> 
         K = np.log2(r/epsilon_HS)/np.log2(np.log2(r/epsilon_HS))
 
         delta = epsilon_H/(3*r*K)
