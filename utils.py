@@ -3,6 +3,7 @@ import json
 from molecule import CHEMICAL_ACCURACY
 import numpy as np
 import random as rnd
+import math
 import sympy
 from scipy import integrate
 from scipy.optimize import NonlinearConstraint, LinearConstraint
@@ -63,22 +64,29 @@ class Utils():
         def taylor_err(function, x0, n, z = None):
             if z == None:
                 z = x0
-            a = (function.diff(x,n).subs(x,z))/(factorial(n))*(x-x0)**n
+            a = (function.diff(x,n).subs(x,z))/(factorial(n))*(z-x0)**n
             return a
 
-        order = 0
-        te = 1
-        zeta = np.linspace(x0,xeval,20)
-        
-        while te > e:# or order < 10:
 
-            print("Order:", order, "error(e):", e, "calculated error(te):", te, "stop: e>te")
-            order += 1
-            #for z in zeta:
-                #print(taylor_err(f, x0, order, z).subs(x,xeval).evalf())
-            te = np.max([np.abs(taylor_err(function, x0, order, z).subs(x,xeval).evalf()) for z in zeta])
-            #print('order',order, te,'\n')
+        order = 1
+        te = 1
+
+        # it is necessary to divide xeval in a smaller number
+        # calculate the power of 2 to get an xeval as closer to 1 as possible
+        bits_xeval = math.floor(math.log2(xeval))
+        xeval /= 2**bits_xeval
+
+        # it is necessary also to divide the error (but the error is divided just by the half of the xeval bits)
+        bits_e = bits_xeval/2
             
+        zeta = np.linspace(x0,xeval,20)
+
+        while te > (e/2**bits_e):# or order < 10: #TODO
+
+            order +=1
+            procesed = [np.abs(taylor_err(function, x0, order, z).subs(x,xeval).evalf()) for z in zeta]
+            te = np.max(procesed)
+
         return order
 
     def f(self, x, y):
