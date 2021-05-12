@@ -65,7 +65,7 @@ class QROM_methods:
             possible_results = np.floor(np.log2(x)), np.ceil(np.log2(x))
             return min(possible_results, key= lambda z: abs(x-2**z))
 
-        Amplitude_amplification = 12*uniform_cost(N/2) + uniform_cost(L) + 6*rot_synt + 4*self.tools.multi_controlled_not(np.log2(N))
+        Amplitude_amplification = 2*3*2*uniform_cost(N/2) + uniform_cost(L) + 2*3*rot_synt + 2*2*self.tools.multi_controlled_not(np.log2(N))
 
         if sparsity_d is not None:
             d = sparsity_d

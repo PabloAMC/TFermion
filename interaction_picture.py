@@ -36,13 +36,14 @@ class Interaction_picture:
         
         # Now we count the number of individual rotations from each source: 
         rot_FFFT = N/2*np.log2(N/2) 
-        rot_U = 8*N 
+        rot_U = 8*N # controlled
         rot_COEF = self.tools.arbitrary_state_synthesis(K)  #todo: Consistency!
         rot_prep = self.tools.arbitrary_state_synthesis(8*N) 
-        rot_PHASE = np.log2(8*N)
+        rot_PHASE = np.ceil(np.log2(8*N)) # controlled
         rot_uniform = 2
-        
-        num_rotations = rot_FFFT* r*(2+3*K*2) + rot_U* r*(1+3*K*2) + rot_COEF* r*3*2 + rot_prep* r*3*K*2 + rot_PHASE* r*(1+3*K*2) + rot_uniform* r*3*(4*(K-1)+2)
+
+        # A prefactor of x2 indicates controlled rotation        
+        num_rotations = rot_FFFT* r*(2+3*K*2) + 2*rot_U* r*(1+3*K*2) + rot_COEF* r*3*2 + rot_prep* r*3*K*2 + 2*rot_PHASE* r*(1+3*K*2) + rot_uniform* r*3*(4*(K-1)+2)
 
         epsilon_SS = epsilon_S / num_rotations
 
@@ -53,9 +54,9 @@ class Interaction_picture:
         NORM = self.tools.multiplication_cost(np.ceil(np.log2(8*N)))
         mult = self.tools.multiplication_cost(2*np.ceil(np.log2(8*N))) # Vk multiplication
 
-        PHASE = rot_PHASE* self.tools.z_rotation_synthesis(epsilon_SS)
+        PHASE = rot_PHASE* self.tools.c_z_rotation_synthesis(epsilon_SS) #todo: to define, use barenco
         exp_V = 2*(ADD+FFFT_cost + NORM + mult) + PHASE
-        exp_U = rot_U * self.tools.z_rotation_synthesis(epsilon_SS)
+        exp_U = rot_U * self.tools.c_z_rotation_synthesis(epsilon_SS) #todo: to define, use barenco
         exp_U_V = exp_V+exp_U
 
         # Qubitization of T
@@ -138,13 +139,14 @@ class Interaction_picture:
         n = np.ceil(1/3*np.log2(N))
         
         # Number of rotations
-        rot_exp_T = np.ceil(2*np.log2(N**(1/3))) +3*eta  # (Controlled) Based on the number of digits: 3 squares  (x2) +  3 eta sums
-        rot_select_U = np.ceil((1/3)*np.log2(N))+np.ceil(np.log2(delta_R)) + 2 # The length of the registers is (1/3)*np.log2(N) (each coord) + log delta_R +  2 (2 sums) 
+        rot_exp_T = np.ceil(2*np.log2(N**(1/3))) +3*eta  # Controlled. Based on the number of digits: 3 squares  (x2) +  3 eta sums
+        rot_select_U = np.ceil((1/3)*np.log2(N))+np.ceil(np.log2(delta_R)) + 2 # Controlled. The length of the registers is (1/3)*np.log2(N) (each coord) + log delta_R +  2 (2 sums) 
         rot_Uniform = 2 # Those not included in Subprepare
         rot_Subprepare = 2 # Only the two rotations from Uniform in Subprepare (cube weighting and the Subprepare in Prepare)
-        rot_COEF = self.tools.arbitrary_state_synthesis(K) #todo: consistency!
+        rot_COEF = self.tools.arbitrary_state_synthesis(K)
 
-        num_rotations = rot_exp_T* r*(1+3*K*2) + rot_select_U* r*3*K + rot_Uniform* r*3*(4*K+2) + rot_Subprepare *r*3*K*2*(1 + 3) + rot_COEF* r*3*2
+        # A prefactor of x2 indicates controlled rotation
+        num_rotations = 2*rot_exp_T* r*(1+3*K*2) + 2*rot_select_U* r*3*K + rot_Uniform* r*3*(4*K+2) + rot_Subprepare *r*3*K*2*(1 + 3*1) + rot_COEF* r*3*2
         epsilon_SS = epsilon_S / num_rotations
 
         # Uniform
@@ -160,7 +162,7 @@ class Interaction_picture:
         mult = self.tools.multiply_cost(np.ceil(np.log2(N**(1/3))))
         sum = self.tools.sum_cost(2*np.ceil(np.log2(N**(1/3))))
         # There is one extra multiplication for the (2pi)^2/Omega^(2/3) coefficient
-        phase = (3*eta + np.ceil(1/3*np.log2(N)))*self.tools.c_arbitrary_rotation(epsilon_SS) + mult
+        phase = rot_exp_T*self.tools.c_z_rotation_synthesis(epsilon_SS) + mult
         exp_T = (3*eta)*mult + (3*eta)*sum + phase 
 
         # Prep_nu
@@ -178,7 +180,7 @@ class Interaction_picture:
         prep_nu = (Subprepare_cube + Other_cube) + Negative0 + In_the_box + Inequality
 
         # Prepare
-        Momentum_state = 3*prep_nu + 2*self.tools.multi_controlled_not(1+n+1) # The Amplitude Amplification step
+        Momentum_state = 3*prep_nu + 2*self.tools.multi_controlled_not(1+n+1) # The Amplitude Amplification step: Rotations on the flag qubits indicating failure 1+n+1 for steps 2, 3 and 4
         Subprepare_J = QROM_cost(J) + uniform_cost(J) + compare + (np.ceil(np.log2(J)))*Fredkin_cost
         U_V_weighting = self.tools.rotation_synthesis(epsilon_SS)
         Prepare = U_V_weighting + Subprepare_J + Momentum_state
@@ -193,7 +195,7 @@ class Interaction_picture:
         max_digits = np.ceil(np.max(2*np.log2(N**(1/3)),1/delta_R))
         mult = self.tools.multiplication_cost(max_digits)
         dot_prod = 3*mult + 2*sum + mult
-        phase = max_digits*self.tools.rotation_synthesis(epsilon_SS)
+        phase = rot_select_U*self.tools.c_z_rotation_synthesis(epsilon_SS)
         Select_U = 2*QROM_cost(J) + 2*dot_prod + phase  + eta*(c_vec_sum + 2*equality)
 
         CRz_on_x = 3*4 # 3 Toffolis are enough
@@ -226,7 +228,5 @@ class Interaction_picture:
         cost = r*(exp_T + TDS)
         return cost
 
-        #TODO: ROTATIONS VS C-ROTATIONS CHECK EVERYWHERE
         #TODO: COS, SQRT AND EXP COSTS
-        #TODO: CHECK ARBITRARY STATE PREPARATION
         #TODO: np.ceil(np.log2()) or np.log2()
