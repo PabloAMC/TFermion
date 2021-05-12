@@ -83,20 +83,20 @@ class Taylor_based_methods:
         number_of_taylor_expansions = (((4+2+2)*d*N + (J+1))*K*2*3*r) #4+2+2 = two_body + kinetic + external_potential
         eps_tay_s = eps_tay/number_of_taylor_expansions
         x = sympy.Symbol('x')
-        order = max(self.tools.order_find(function = math.sqrt(x), x0 = 1, e = eps_tay_s, xeval = x_max),
-                    self.tools.order_find(function = math.exp(zeta_max_i*(x)**2), x0 = 0, e = eps_tay_s, xeval = x_max))
+        order = max(self.tools.order_find(function=sympy.sqrt(x), x0=1, e=eps_tay_s, xeval=x_max),
+                    self.tools.order_find(function=sympy.exp(zeta_max_i*(x)**2), x0=0, e=eps_tay_s, xeval=x_max))
         
         mu = ( r*3*2*K/epsilon_H *2*(4*dphi_max + phi_max/x_max)*phi_max**3 * x_max**6 )**6
         n = np.ceil(np.ceil(np.log2(mu))/3) #each coordinate is a third
         M = lambd*r*3*2*K/epsilon_H
 
-        sum = self.tools.sum_cost(n) #todo: 4*n
-        mult = self.tools.multiplication_cost(n) #todo: 21*n**2
-        div = self.tools.divide_cost(n) #todo: 14n**2+7*n
+        sum = self.tools.sum_cost(n)
+        mult = self.tools.multiplication_cost(n)
+        div = self.tools.divide_cost(n)
 
         tay = order*sum + (order-1)*(mult + div)
 
-        Q = N*d((3*sum) + (3*mult +2*sum) + (mult) + tay + (3*mult)) #In parenthesis each step in the list
+        Q = N*d*((3*sum) + (3*mult +2*sum) + (mult) + tay + (3*mult)) #In parenthesis each step in the list
         Qnabla = Q + N*d*(4*sum+mult+div)
         R = 2*mult + sum + tay
         xi = 3*sum
@@ -108,10 +108,10 @@ class Taylor_based_methods:
 
         # Notice the change of n here: it is the size of register |m>
         n = np.ceil(np.log2(M))
-        sum = self.tools.sum_cost(n) #todo: 4*n
-        mult = self.tools.multiplication_cost(n) #todo: 21*n**2
-        div = self.tools.divide_cost(n) #todo: 14n**2+7*n
-        comp = self.tools.compare_cost(max(np.ceil(np.log2(M)),np.ceil(np.log2(mu)))) #todo: 8*n
+        sum = self.tools.sum_cost(n)
+        mult = self.tools.multiplication_cost(n) 
+        div = self.tools.divide_cost(n)
+        comp = self.tools.compare_cost(max(np.ceil(np.log2(M)),np.ceil(np.log2(mu))))
 
         kickback = 2*(mult + 3*sum + comp) #For the comparison operation. The rotation itself is Clifford, as it is a C-R(pi/2)
 

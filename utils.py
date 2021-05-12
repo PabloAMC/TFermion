@@ -3,6 +3,7 @@ import json
 from molecule import CHEMICAL_ACCURACY
 import numpy as np
 import random as rnd
+import math
 import sympy
 from scipy import integrate
 from scipy.optimize import NonlinearConstraint, LinearConstraint
@@ -38,7 +39,7 @@ class Utils():
         return self.args
 
     # Taylor approximation at x0 of the function 'function'
-    def taylor(self, function,x0,n):
+    def taylor(self, function, x0, n):
         i = 0
         p = 0
         x = sympy.Symbol('x')
@@ -53,36 +54,40 @@ class Utils():
         
         x = sympy.Symbol('x')
         
-        order = 0
+        def factorial(n):
+
+            if n <= 0:
+                return 1
+            else:
+                return n*factorial(n-1)
+        
+        def taylor_err(function, x0, n, z = None):
+            if z == None:
+                z = x0
+            a = (function.diff(x,n).subs(x,z))/(factorial(n))*(z-x0)**n
+            return a
+
+
+        order = 1
         te = 1
+
+        # it is necessary to divide xeval in a smaller number
+        # calculate the power of 2 to get an xeval as closer to 1 as possible
+        bits_xeval = math.floor(math.log2(xeval))
+        xeval /= 2**bits_xeval
+
+        # it is necessary also to divide the error (but the error is divided just by the half of the xeval bits)
+        bits_e = bits_xeval/2
+            
         zeta = np.linspace(x0,xeval,20)
 
-        while te > e:# or order < 10:
-            order += 1
-            #for z in zeta:
-                #print(taylor_err(f, x0, order, z).subs(x,xeval).evalf())
-            te = np.max([np.abs(self.taylor_err(function, x0, order, z).subs(x,xeval).evalf()) for z in zeta])
-            #print('order',order, te,'\')
-            
+        while te > (e/2**bits_e):# or order < 10: #TODO
+
+            order +=1
+            procesed = [np.abs(taylor_err(function, x0, order, z).subs(x,xeval).evalf()) for z in zeta]
+            te = np.max(procesed)
+
         return order
-
-    def factorial(self, n):
-        if n <= 0:
-            return 1
-        else:
-            return n*self.factorial(n-1)
-        
-    def taylor_err(self, function, x0, n, z = None):
-        if z == None:
-            z = x0
-                
-        x = sympy.Symbol('x')
-
-        #print('coefficient order',n, function.diff(x,n)/(factorial(n)))#.subs(x,z))
-        a = (function.diff(x,n).subs(x,z))/(self.factorial(n))*(x-x0)**n
-        #print('coefficient order',n, (function.diff(x,n).subs(x,z)/(factorial(n))*(x-x0)**n))
-        #print('a',a)
-        return a
 
     def f(self, x, y):
         return 1/(x**2 + y**2)
@@ -115,6 +120,19 @@ class Utils():
 
     def multi_controlled_not(self, N):
         return 16*(N-2)
+
+    def sum_cost(self, n):
+        return 4*n
+
+    def multiplication_cost(self, n):
+        return 21*n**2
+
+    def divide_cost(self, n):
+        return 14*n**2+7*n
+
+    def compare_cost(self, n):
+        return 8*n
+    
 
     # It is necessary to generate two constraints: one linear (each value should be in the range greather than 0 and chemical_accuracy) and one non linear (errors sum should be in the range 0 and chemical accuracy)
     def generate_constraints(self, number_errors):
