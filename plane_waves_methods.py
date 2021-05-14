@@ -100,7 +100,7 @@ class Plane_waves_methods:
 
         number_taylor_series = r* 3* 2*2*K(J+1)
         eps_tay_s = eps_tay / number_taylor_series
-        order = self.tools.order_find(function = math.cos(x), x0 = 1, e = eps_tay_s, xeval = x_max)
+        cos_order = self.tools.order_find(function = math.cos(x), x0 = 1, e = eps_tay_s, xeval = x_max)
 
         n = np.ceil(np.ceil(np.log2(mu))/3) #each coordinate is a third
         M = lambd*r*3*2*K/epsilon_H
@@ -109,10 +109,10 @@ class Plane_waves_methods:
         mult = self.tools.multiplication_cost(n) #todo: 21*n**2
         div = self.tools.divide_cost(n) #todo: 14n**2+7*n
 
-        tay = order*sum + (order-1)*(mult + div)
+        cordic = 2*cos_order + mult 
 
-        prepare_p_equal_q = (3*mult) + (3*sum) (3*mult+2*sum)+((3*mult+2*sum) + (tay))*J + (mult+div + J*(mult+div)) 
-        prepare_p_neq_q = (3*mult) + (3*mult+2*sum) + tay + div +mult
+        prepare_p_equal_q = (3*mult) + (3*sum) (3*mult+2*sum)+((3*mult+2*sum) + (cordic))*J + (mult+div + J*(mult+div)) 
+        prepare_p_neq_q = (3*mult) + (3*mult+2*sum) + cordic + div +mult
         prepare_p_q_0 = 2*mult
 
         sample_w = prepare_p_equal_q + prepare_p_neq_q + prepare_p_q_0

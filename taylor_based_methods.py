@@ -56,15 +56,16 @@ class Taylor_based_methods:
         epsilon_HS = epsilons[1]
         epsilon_S = epsilons[2]
         epsilon_H = epsilons[3]
-        eps_tay = epsilons[4]
-        
+        eps_tay = epsilons[4] 
+
         '''
         Error terms 
         eps_PEA: Phase estimation
         eps_HS: the truncation of K
         eps_S: gate synthesis
         eps_H: discretization of integrals
-        eps_taylor: truncation of taylor series to order o
+        eps_taylor: Used for arithmetic operations such as taylor series, babylon algorithm for the sqrt and CORDIC algorithm for cos
+
 
         zeta_max_i: maximum nuclear charge
         J: number of atoms
@@ -84,8 +85,9 @@ class Taylor_based_methods:
         number_of_taylor_expansions = (((4+2+2)*d*N + (J+1))*K*2*3*r) #4+2+2 = two_body + kinetic + external_potential
         eps_tay_s = eps_tay/number_of_taylor_expansions
         x = sympy.Symbol('x')
-        order = max(self.tools.order_find(function=sympy.sqrt(x), x0=1, e=eps_tay_s, xeval=x_max),
-                    self.tools.order_find(function=sympy.exp(zeta_max_i*(x)**2), x0=0, e=eps_tay_s, xeval=x_max))
+
+        exp_order = self.tools.order_find(function = math.exp(zeta_max_i*(x)**2), x0 = 0, e = eps_tay_s, xeval = x_max)
+        sqrt_order = self.tools.order_find(function = math.sqrt(x), x0 = 1, e = eps_tay_s, xeval = x_max)
         
         mu = ( r*3*2*K/epsilon_H *2*(4*dphi_max + phi_max/x_max)*phi_max**3 * x_max**6 )**6
         n = np.ceil(np.ceil(np.log2(mu))/3) #each coordinate is a third
@@ -95,11 +97,12 @@ class Taylor_based_methods:
         mult = self.tools.multiplication_cost(n)
         div = self.tools.divide_cost(n)
 
-        tay = order*sum + (order-1)*(mult + div)
+        tay = exp_order*sum + (exp_order-1)*(mult + div) # For the exp
+        babylon = sqrt_order*(div +  sum) # For the sqrt
 
         Q = N*d*((3*sum) + (3*mult +2*sum) + (mult) + tay + (3*mult)) #In parenthesis each step in the list
         Qnabla = Q + N*d*(4*sum+mult+div)
-        R = 2*mult + sum + tay
+        R = 2*mult + sum + babylon
         xi = 3*sum
     
         two_body = xi + 4*Q + R + 4*mult
@@ -197,20 +200,22 @@ class Taylor_based_methods:
         number_of_taylor_expansions = (((2*4+2+2)*d*N + (J+1))*K*2*3*r) #2*4+2+2 = 2*two_body + kinetic + external_potential
         eps_tay_s = eps_tay/number_of_taylor_expansions
         x = sympy.Symbol('x')
-        order = max(self.tools.order_find(function = math.sqrt(x), x0 = 1, e = eps_tay_s, xeval = x_max),
-                    self.tools.order_find(function = math.exp(zeta_max_i*(x)**2), x0 = 0, e = eps_tay_s, xeval = x_max))
-        
+                
+        exp_order = self.tools.order_find(function = math.exp(zeta_max_i*(x)**2), x0 = 0, e = eps_tay_s, xeval = x_max)
+        sqrt_order = self.tools.order_find(function = math.sqrt(x), x0 = 1, e = eps_tay_s, xeval = x_max)
+
         n = np.ceil(np.ceil(np.log2(mu))/3) #each coordinate is a third
 
         sum = self.tools.sum_cost(n) #todo: 4*n
         mult = self.tools.multiplication_cost(n) #todo: 21*n**2
         div = self.tools.divide_cost(n) #todo: 14n**2+7*n
 
-        tay = order*sum + (order-1)*(mult + div)
+        tay = exp_order*sum + (exp_order-1)*(mult + div) # For the exp
+        babylon = sqrt_order*(div +  sum) # For the sqrt
 
         Q = N*d((3*sum) + (3*mult +2*sum) + (mult) + tay + (3*mult)) #In parenthesis each step in the list
         Qnabla = Q + N*d*(4*sum+mult+div)
-        R = 2*mult + sum + tay
+        R = 2*mult + sum + babylon
         xi = 3*sum
     
         two_body = xi + 4*Q + R + 4*mult
