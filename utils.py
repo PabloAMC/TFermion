@@ -67,6 +67,16 @@ class Utils():
             a = (function.diff(x,n).subs(x,z))/(factorial(n))*(z-x0)**n
             return a
 
+        error = 1
+        # get the half digits of the xeval (len(xeval)/2)
+        n = int(str(xeval)[:int(len(str(xeval))/2)])
+        order = 0
+        while error > e:
+
+            n = ((xeval/n)+n)/2
+            error = function(xeval)-n
+            order+=1
+
 
         order = 1
         te = 1

@@ -78,12 +78,33 @@ class Cost_calculator:
                     dphi_max,
                     zeta_max_i,
                     J)
-            '''
+            
             elif method == 'configuration_interaction':
-                phi_max, dphi_max = self.molecule.molecular_orbital_parameters()
-                # alpha, gamma1, gamma2 are used to calculate K0, K1, K2 (see eq D14 in overleaf)
-                self.costs['configuration_interaction'] = methods_taylor.configuration_interaction(N, eta, alpha, gamma1, K0, K1, K2, epsilon_PEA, epsilon_HS, epsilon_S, epsilon_H, epsilon_tay, zeta_max_i, phi_max = phi_max, dphi_max = dphi_max)
+                phi_max, _, grad_max = self.molecule.molecular_orbital_parameters()
+                zeta_max_i = self.molecule.calculate_zeta_i_max()
+                J = len(self.molecule.molecule_geometry) #is the number of atoms in the molecule
 
+                arguments = (self.molecule.N, zeta_max_i, phi_max, J)
+
+                # generate values for errors epsilon_PEA, epsilon_HS, epsilon_S, eps_H, eps_taylor
+                optimized_errors = self.calculate_optimized_errors(5, methods_taylor.configuration_interaction, arguments)
+
+                # alpha, gamma1, gamma2 are used to calculate K0, K1, K2 (see eq D14 in overleaf)
+                self.costs['configuration_interaction'] = methods_taylor.configuration_interaction(
+                    optimized_errors.x,
+                    self.molecule.N,
+                    eta,    
+                    alpha,
+                    gamma1,
+                    gamma2,
+                    K0,
+                    K1,
+                    K2,
+                    zeta_max_i,
+                    phi_max,
+                    J)
+
+        '''
         elif method == 'low_depth_trotter' or method == 'low_depth_taylor' or method == 'low_depth_taylor_on_the_fly':
 
             methods_plane_waves = plane_waves_methods.Plane_waves_methods(self.tools)
