@@ -100,7 +100,7 @@ class Plane_waves_methods:
 
         number_taylor_series = r* 3* 2*2*K(J+1)
         eps_tay_s = eps_tay / number_taylor_series
-        cos_order = self.tools.order_find(function = math.cos(x), x0 = 1, e = eps_tay_s, xeval = x_max)
+        cos_order = self.tools.order_find(function = math.cos(x), x0 = 1, e = eps_tay_s, xeval = x_max, function='cos')
 
         n = np.ceil(np.ceil(np.log2(mu))/3) #each coordinate is a third
         M = lambd*r*3*2*K/epsilon_H

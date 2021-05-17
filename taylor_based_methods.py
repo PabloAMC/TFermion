@@ -86,8 +86,8 @@ class Taylor_based_methods:
         eps_tay_s = eps_tay/number_of_taylor_expansions
         x = sympy.Symbol('x')
 
-        exp_order = self.tools.order_find(function = math.exp(zeta_max_i*(x)**2), x0 = 0, e = eps_tay_s, xeval = x_max)
-        sqrt_order = self.tools.order_find(function = math.sqrt(x), x0 = 1, e = eps_tay_s, xeval = x_max)
+        exp_order = self.tools.order_find(lambda x:math.exp(zeta_max_i*(x)**2), x0 = 0, e = eps_tay_s, xeval = x_max, function_name = 'sqrt')
+        sqrt_order = self.tools.order_find(lambda x:math.sqrt(x), x0 = 1, e = eps_tay_s, xeval = x_max, function_name = 'exp')
         
         mu = ( r*3*2*K/epsilon_H *2*(4*dphi_max + phi_max/x_max)*phi_max**3 * x_max**6 )**6
         n = np.ceil(np.ceil(np.log2(mu))/3) #each coordinate is a third
@@ -201,8 +201,8 @@ class Taylor_based_methods:
         eps_tay_s = eps_tay/number_of_taylor_expansions
         x = sympy.Symbol('x')
                 
-        exp_order = self.tools.order_find(function = math.exp(zeta_max_i*(x)**2), x0 = 0, e = eps_tay_s, xeval = x_max)
-        sqrt_order = self.tools.order_find(function = math.sqrt(x), x0 = 1, e = eps_tay_s, xeval = x_max)
+        exp_order = self.tools.order_find(lambda x:math.exp(zeta_max_i*(x)**2), x0 = 0, e = eps_tay_s, xeval = x_max, function_name = 'sqrt')
+        sqrt_order = self.tools.order_find(lambda x:math.sqrt(x), x0 = 1, e = eps_tay_s, xeval = x_max, function_name = 'exp')
 
         n = np.ceil(np.ceil(np.log2(mu))/3) #each coordinate is a third
 

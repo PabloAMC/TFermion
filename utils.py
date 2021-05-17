@@ -50,54 +50,46 @@ class Utils():
 
     #print(taylor(sympy.sqrt(x), 1, 5))#.subs(x,1).evalf())
 
-    def order_find(self, function, x0, e, xeval):
+    def order_find(self, function, e, xeval, function_name):
         
-        x = sympy.Symbol('x')
-        
-        def factorial(n):
-
-            if n <= 0:
-                return 1
-            else:
-                return n*factorial(n-1)
-        
-        def taylor_err(function, x0, n, z = None):
-            if z == None:
-                z = x0
-            a = (function.diff(x,n).subs(x,z))/(factorial(n))*(z-x0)**n
-            return a
-
         error = 1
         # get the half digits of the xeval (len(xeval)/2)
         n = int(str(xeval)[:int(len(str(xeval))/2)])
         order = 0
         while error > e:
 
-            n = ((xeval/n)+n)/2
-            error = function(xeval)-n
+            error = self.calculate_error_function(function, function_name, n, xeval, order)
             order+=1
 
-
-        order = 1
-        te = 1
-
-        # it is necessary to divide xeval in a smaller number
-        # calculate the power of 2 to get an xeval as closer to 1 as possible
-        bits_xeval = math.floor(math.log2(xeval))
-        xeval /= 2**bits_xeval
-
-        # it is necessary also to divide the error (but the error is divided just by the half of the xeval bits)
-        bits_e = bits_xeval/2
-            
-        zeta = np.linspace(x0,xeval,20)
-
-        while te > (e/2**bits_e):# or order < 10: #TODO
-
-            order +=1
-            procesed = [np.abs(taylor_err(function, x0, order, z).subs(x,xeval).evalf()) for z in zeta]
-            te = np.max(procesed)
-
         return order
+
+    def calculate_error_function(self, function, function_name, n, xeval, order):
+        
+        if function_name == 'sqrt':
+        
+            n = ((xeval/n)+n)/2
+            error = function(xeval)-n
+
+            return error
+
+        elif function_name == 'exp':
+
+            d = xeval # d=x0-x / x0=0 and x=xeval
+            error = 1
+
+            for i in range(1, order+1):
+                error *= d/i
+            
+            return error
+
+        elif function_name == 'cos':
+
+            result = 1
+            return result
+
+        else:
+            raise NotImplementedError
+    
 
     def f(self, x, y):
         return 1/(x**2 + y**2)
@@ -125,14 +117,8 @@ class Utils():
     def rotation_synthesis(self, epsilon_SS):
         return (10+12*np.log2(1/epsilon_SS))
 
-    def z_rotation_synthesis(self, epsilon_SS):
+    def z_rotation(self, epsilon_SS):
         return 10 + 4*np.log2(1/epsilon_SS)
-
-    def c_rotation_synthesis(self, epsilon_SS):
-        return 2*self.rotation_synthesis(epsilon_SS)
-
-    def c_z_rotation_synthesis(self, epsilon_SS):
-        return 2*self.z_rotation_synthesis(epsilon_SS)
 
     def multi_controlled_not(self, N):
         return 16*(N-2)
