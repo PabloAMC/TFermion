@@ -46,7 +46,7 @@ class Plane_waves_methods:
         K = np.ceil(np.log2(r/epsilon_HS) / np.log2( np.log2 (r/epsilon_HS))) 
 
         #todo: revise the count to make it more readable once I get over Linear T   
-        epsilon_SS = epsilon_S /(r*3*2*K*(2+2*D+1)) # The extra two is because Uniform requires 2 Rz gates
+        epsilon_SS = epsilon_S /(r*3*2*K*(2+4*D+2)) # In the sum the first 2 is due to Uniform_3, next 2D are due to 2 uses of Uniform_M^{otimes D}, and the final two due to the controlled rotation theta angles
         
         mu = np.ceil(np.log(2*np.sqrt(2)*Lambd/epsilon_PEA) + np.log(1 + epsilon_PEA/(8*lambd)) + np.log(1 - (Ham_norm/lambd)**2))
         
@@ -69,8 +69,8 @@ class Plane_waves_methods:
         Prepare = Subprepare + D*uniform_cost(M, controlled=True) + D*np.log2(M)*Fredkin_cost + sum + 2*self.tools.multi_controlled_not(np.log2(N))
         
         Select = 3*QROM_cost(N) + 2*np.log2(N)*Fredkin_cost
-        rot_synt = self.tools.rotation_synthesis(epsilon_SS) # due to the preparation of the theta angles
-        prepare_beta = K*(Prepare + 2*rot_synt) # The 2*rot_synt is due to the preparation of the theta angles
+        crot_synt = self.tools.c_rotation_synthesis(epsilon_SS) # due to the preparation of the theta angles
+        prepare_beta = K*(Prepare + crot_synt) # The 2*rot_synt is due to the preparation of the theta angles
         select_V = K*(Select)
 
         R = self.tools.multi_controlled_not(2*np.log2(N)+2*mu+N) # Based on the number qubits needed in the Linear T QRom article
@@ -96,9 +96,11 @@ class Plane_waves_methods:
         # x_max = max value of one dimension
         x = sympy.Symbol('x')
         K =  np.ceil(np.log2(r/epsilon_HS) / np.log2( np.log2 (r/epsilon_HS)))
+        epsilon_SS = epsilon_S / (2*K*2*3*r) # Due to the theta angles c-rotation in prepare_beta
+
         number_taylor_series = r* 3* 2*2*K(J+1)
         eps_tay_s = eps_tay / number_taylor_series
-        order = self.tools.order_find(function = math.cos(x), x0 = 1, e = eps_tay_s, xeval = x_max)
+        cos_order = self.tools.order_find(function = math.cos(x), x0 = 1, e = eps_tay_s, xeval = x_max)
 
         n = np.ceil(np.ceil(np.log2(mu))/3) #each coordinate is a third
         M = lambd*r*3*2*K/epsilon_H
@@ -107,10 +109,10 @@ class Plane_waves_methods:
         mult = self.tools.multiplication_cost(n) #todo: 21*n**2
         div = self.tools.divide_cost(n) #todo: 14n**2+7*n
 
-        tay = order*sum + (order-1)*(mult + div)
+        cordic = 2*cos_order + mult 
 
-        prepare_p_equal_q = (3*mult) + (3*sum) (3*mult+2*sum)+((3*mult+2*sum) + (tay))*J + (mult+div + J*(mult+div)) 
-        prepare_p_neq_q = (3*mult) + (3*mult+2*sum) + tay + div +mult
+        prepare_p_equal_q = (3*mult) + (3*sum) (3*mult+2*sum)+((3*mult+2*sum) + (cordic))*J + (mult+div + J*(mult+div)) 
+        prepare_p_neq_q = (3*mult) + (3*mult+2*sum) + cordic + div +mult
         prepare_p_q_0 = 2*mult
 
         sample_w = prepare_p_equal_q + prepare_p_neq_q + prepare_p_q_0
@@ -118,7 +120,8 @@ class Plane_waves_methods:
         kickback = 32*np.log(mu)
 
         prepare_W = 2*sample_w + kickback
-        prepare_beta = K*prepare_W
+        crot_synt = self.tools.c_rotation_synthesis(epsilon_SS)
+        prepare_beta = K*(prepare_W + crot_synt)
         select_H = (12*N + 8*np.log(N))
         select_V = K*select_H
 
