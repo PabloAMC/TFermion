@@ -344,7 +344,7 @@ class Molecule:
 
             print('<i> Rank =', len(lambda_ls))
 
-            # Electronic Repulsion Integral #todo: does not get the right symmetry
+            # Electronic Repulsion Integral
             eri = np.einsum('l,lpq,lrs->pqrs',lambda_ls, (one_body_squares + np.transpose(one_body_squares, (0,2,1)))/2, (one_body_squares + np.transpose(one_body_squares, (0,2,1)))/2)
 
             # Integrals have type complex but they do not have imaginary part
@@ -567,3 +567,27 @@ class Molecule:
             zeta_i = max(zeta_i_max, periodic_table.index(item[0]))
 
         return zeta_i
+
+    def min_alpha(self):
+        '''
+        To be used in configuration interaction to calculate the alpha parameter.
+        We will be using:
+        How to recover exponents: https://github.com/pyscf/pyscf/blob/f0fc18dc994e63e5dab132d7276eb22cdc9f25bf/pyscf/gto/mole.py#L3117
+        Example on how to get exponent information: https://github.com/pyscf/pyscf/blob/master/examples/gto/11-basis_info.py
+        
+        What we are doing behind the scenes:
+        # - For the correct basis in https://github.com/pyscf/pyscf/blob/master/pyscf/gto/basis/
+        # - For the atoms in the molecule
+        # - The first column of numbers indicates the exponent values (alphas).
+        # Since we need an upper bound, we want the smallest of the exponents of the atoms of the molecule, in the right basis
+        # eg alpha = min alphas
+        '''
+
+        pyscf_mol = self.molecule_data._pyscf_data['mol']
+
+        alphas = [list(pyscf_mol.bas_exp(i)) for i in range(pyscf_mol.nbas)]
+        alphas = lambda alphas: [item for sublist in alphas for item in sublist]
+
+        alpha = np.min(alphas)
+        return alpha
+
