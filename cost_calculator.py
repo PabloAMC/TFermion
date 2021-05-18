@@ -97,9 +97,6 @@ class Cost_calculator:
                     alpha,
                     gamma1,
                     gamma2,
-                    K0,
-                    K1,
-                    K2,
                     zeta_max_i,
                     phi_max,
                     J)
