@@ -136,11 +136,11 @@ class Taylor_based_methods:
         '''
         gamma1, gamma2, alpha are defined in D9 and D8
         '''
-        d = 6
+        d = 6 ## THIS IS SORT OF AN HYPERPARAMETER: THE NUMBER OF GAUSSIANS PER BASIS FUNCTION
         
-        K0 = 26*gamma1/alpha**2 + 8*np.pi*gamma2/alpha**3 + 32*np.sqrt(3)*gamma1*gamma2 # eq D14a
-        K1 = 8*np.pi**2/alpha**3*(alpha + 2) + 1121*(8*gamma1 + np.sqrt(2))             # eq D14b
-        K2 = 128*np.pi/alpha**6*(alpha + 2) + 2161*np.pi**2*(20*gamma1 + np.sqrt(2))    # eq D14c
+        K0 = 26*gamma1/alpha**2 + 8*np.pi*gamma2/alpha**3 + 32*np.sqrt(3)*gamma1*gamma2 # eq 28
+        K1 = 8*np.pi**2/alpha**3*(alpha + 2) + 1121*(8*gamma1 + np.sqrt(2))             # eq 29
+        K2 = 128*np.pi/alpha**6*(alpha + 2) + 2161*np.pi**2*(20*gamma1 + np.sqrt(2))    # eq 30
         
         t = 4.7/epsilon_PEA
         x_max = np.log(N * t/ epsilon_HS)

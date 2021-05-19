@@ -40,9 +40,10 @@ class Trotter_based_methods:
         eps_tot_2 = 4*(np.pi*2**m-1)**2/n
         
         # error in individual rotations
-        eps = (eps_tot/(2*np.pi*(2**m-1)))**2
+        epsilon_SS = (eps_tot/(2*np.pi*(2**m-1)))**2 # Same as below
+        epsilon_SS = (eps_tot/n) # from eq 39 same as the one above
 
-        rost_cost_factor = 3*(10+12*np.log(1/eps))*np.log(N)
+        rost_cost_factor = N*self.tools.c_rotation_synthesis(epsilon_SS)
         
         return rost_cost_factor*n
 
@@ -72,9 +73,8 @@ class Trotter_based_methods:
         n2 = 8*Gamma**2 * ( 2**(m+1)*np.pi**3*Lambda_A**3/eps_tot_2  )**(1/2) *2*(2**m-1)
         n3 = 8*Gamma**2 * ( 2**(m+1)*np.pi**3*Lambda_A**3/eps_tot_3  )**(1/2) *2*(2**m-1)
 
-        # Esto probablemente esté mal:
-        eps = 1/4*(eps_tot/(np.pi*2**m*Lambda_A))**(3/2)
+        epsilon_SS = eps_tot/n
 
-        rost_cost_factor = 3*(10+12*np.log(1/eps))*np.log(N)
+        rost_cost_factor = N*self.tools.c_rotation_synthesis(epsilon_SS)
         
         return rost_cost_factor*n
