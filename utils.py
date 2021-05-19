@@ -1,5 +1,6 @@
 import argparse
 import json
+from test import cordic_trig
 from molecule import CHEMICAL_ACCURACY
 import numpy as np
 import random as rnd
@@ -84,12 +85,27 @@ class Utils():
 
         elif function_name == 'cos':
 
-            result = 1
-            return result
+            #TODO: check if it is necessary to convert to radians
+            error = cordic_trig(xeval) - math.cos(xeval)
+            return error
 
         else:
             raise NotImplementedError
     
+    def cordic_trig(beta,N=1000):
+
+        K = 0.6072529350088812561694
+        x,y = 1, 0
+
+        for i in range(0,N):
+            d = 1.0
+            if beta < 0:
+                d = -1.0
+
+            (x,y) = (x - (d*(2.0**(-i))*y), (d*(2.0**(-i))*x) + y)
+            beta = beta - (d*math.atan(2**(-i)))
+            
+        return K*x
 
     def f(self, x, y):
         return 1/(x**2 + y**2)
