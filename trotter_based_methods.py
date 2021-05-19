@@ -19,10 +19,6 @@ class Trotter_based_methods:
     # $$m = q +\\log_2 \\left(\\frac{1}{2p_f} + \\frac{1}{2}\\right),$$,
     # $\\delta_E = 2\\lambda\\delta$,  $q = \\log_2 \\delta -1$; and $P_f = p_f +2\\epsilon_{tot}$
 
-    # We want to minimize the total cost,
-    # $$3n(10+12\\log \\epsilon^{-1})\\log N  = 3\\frac{27\\pi^2}{2}\\frac{\\lambda^2}{\\delta_E^2 P_f}(10+12\\log \\epsilon^{-1})\\log N$$,
-    # where $\\epsilon$ is the error of individual rotations $$\\epsilon = \\frac{\\epsilon(j)}{n(j)} = \\frac{\\epsilon_{tot}^2}{4\\pi^2(2^m-1)^2}$$
-
     def calc_qdrift_resources(self, lambd, N, deltaE = 1e-4, P_failure = .1):
         n = ((27*np.pi**2/2)*(lambd/deltaE)**2) / P_failure**3
 
@@ -41,7 +37,7 @@ class Trotter_based_methods:
         
         # error in individual rotations
         epsilon_SS = (eps_tot/(2*np.pi*(2**m-1)))**2 # Same as below
-        epsilon_SS = (eps_tot/n) # from eq 39 same as the one above
+        epsilon_SS = eps_tot/n # from eq 39 same as the one above
 
         rost_cost_factor = N*self.tools.c_rotation_synthesis(epsilon_SS)
         
