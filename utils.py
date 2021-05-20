@@ -1,5 +1,6 @@
 import argparse
 import json
+from test import cordic_trig
 from molecule import CHEMICAL_ACCURACY
 import numpy as np
 import random as rnd
@@ -58,19 +59,23 @@ class Utils():
         order = 0
         while error > e:
 
-            error = self.calculate_error_function(function, function_name, n, xeval, order)
+            if function_name == 'sqrt' or function_name == 'exp':
+                error, _ = self.calculate_error_function(function, function_name, n, xeval, order)
+            elif function_name == 'cos':
+                error, xeval = self.calculate_error_function(function, function_name, n, xeval, order, xeval)
+
             order+=1
 
         return order
 
-    def calculate_error_function(self, function, function_name, n, xeval, order):
+    def calculate_error_function(self, function, function_name, n, xeval, order, value_to_find=0):
         
         if function_name == 'sqrt':
         
             n = ((xeval/n)+n)/2
             error = function(xeval)-n
 
-            return error
+            return error, xeval
 
         elif function_name == 'exp':
 
@@ -80,16 +85,41 @@ class Utils():
             for i in range(1, order+1):
                 error *= d/i
             
-            return error
+            return error, xeval
 
         elif function_name == 'cos':
 
-            result = 1
-            return result
+            #TODO: check if it is necessary to convert to radians
+            K = 0.6072529350088812561694
+            x,y = 1, 0
+            d = 1.0
+
+            if xeval < 0:
+                d = -1.0
+
+            (x,y) = (x - (d*(2.0**(-order))*y), (d*(2.0**(-order))*x) + y)
+            xeval = xeval - (d*math.atan(2**(-order)))
+
+            error = K*x - math.cos(value_to_find)
+
+            return error, xeval
 
         else:
             raise NotImplementedError
     
+    def cordic_trig(beta):
+
+        K = 0.6072529350088812561694
+        x,y = 1, 0
+
+        d = 1.0
+        if beta < 0:
+            d = -1.0
+
+        (x,y) = (x - (d*(2.0**(-i))*y), (d*(2.0**(-i))*x) + y)
+        beta = beta - (d*math.atan(2**(-i)))
+            
+        return K*x
 
     def f(self, x, y):
         return 1/(x**2 + y**2)
