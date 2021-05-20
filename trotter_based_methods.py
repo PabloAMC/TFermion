@@ -19,14 +19,14 @@ class Trotter_based_methods:
     # $$m = q +\\log_2 \\left(\\frac{1}{2p_f} + \\frac{1}{2}\\right),$$,
     # $\\delta_E = 2\\lambda\\delta$,  $q = \\log_2 \\delta -1$; and $P_f = p_f +2\\epsilon_{tot}$
 
-    def calc_qdrift_resources(self, lambd, N, epsilon_PEA, epsilon_S):
+    def calc_qdrift_resources(self, lambd, N, epsilon_PEA, epsilon_HS, epsilon_S):
 
         deltaE = epsilon_PEA
-        eps_tot = epsilon_S
+        eps_tot = epsilon_HS
 
         P_failure = 6*eps_tot
 
-        n = ((27*np.pi**2/2)*(lambd/deltaE)**2) / P_failure**3
+        r = ((27*np.pi**2/2)*(lambd/deltaE)**2) / P_failure**3
 
         #delta = deltaE/(2*lambd)
         #q = np.log2(1/delta)-1
@@ -42,23 +42,23 @@ class Trotter_based_methods:
         
         # error in individual rotations
         #epsilon_SS = (eps_tot/(2*np.pi*(2**m-1)))**2/N # Same as below. The N comes from Jordan Wigner implementation
-        epsilon_SS = epsilon_S/(n*N) # from eq 39 same as the one above
+        epsilon_SS = epsilon_S/(r*N) # from eq 39 same as the one above
 
         rost_cost_factor = N*self.tools.c_rotation_synthesis(epsilon_SS)
         
-        return rost_cost_factor*n
+        return rost_cost_factor*r
 
     # For the randomised Hamiltonian approach, the equations are similar. However, now $p_f = 3/4P_f$ and ,
     # $$n = 8\\Gamma^2\\left(\\frac{ \\pi^3 \\Lambda^3}{8\\delta_E^3}\\right)^{1/2}\\left(\\frac{1+p_f}{p_f}\\right)^{3/2}\\frac{1}{\\epsilon_{tot}^{1/2}} 
     # = 4.35\\sqrt{8}\\pi^{3/2}\\Gamma^2 \\frac{\\Lambda^{3/2}}{\\delta_E^{3/2}P_f^2}$$ 
-    def calc_rand_ham_resources(self, Lambd, lambd, Gamma, N, epsilon_PEA, epsilon_S):
+    def calc_rand_ham_resources(self, Lambd, lambd, Gamma, N, epsilon_PEA, epsilon_HS, epsilon_S):
 
         deltaE = epsilon_PEA
-        eps_tot = epsilon_S
+        eps_tot = epsilon_HS
 
         P_failure = 8*eps_tot
 
-        n = 4.35*np.sqrt(8)*(np.pi*Lambd/deltaE)**(3/2) *(Gamma/ P_failure)**2
+        r = 4.35*np.sqrt(8)*(np.pi*Lambd/deltaE)**(3/2) *(Gamma/ P_failure)**2
 
         # error in individual rotations
         #Lambda_A = Lambd/(2*lambd)
@@ -81,8 +81,8 @@ class Trotter_based_methods:
         #n2 = 8*Gamma**2 * ( 2**(m+1)*np.pi**3*Lambda_A**3/eps_tot_2  )**(1/2) *2*(2**m-1)
         #n3 = 8*Gamma**2 * ( 2**(m+1)*np.pi**3*Lambda_A**3/eps_tot_3  )**(1/2) *2*(2**m-1)
 
-        epsilon_SS = eps_tot/(n*N) # N comes from Jordan-Wigner, n is the number of U applied
+        epsilon_SS = epsilon_S/(r*N) # N comes from Jordan-Wigner, n is the number of U applied
 
         rost_cost_factor = N*self.tools.c_rotation_synthesis(epsilon_SS)
         
-        return rost_cost_factor*n
+        return rost_cost_factor*r
