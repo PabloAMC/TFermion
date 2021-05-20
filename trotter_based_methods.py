@@ -36,8 +36,8 @@ class Trotter_based_methods:
         eps_tot_2 = 4*(np.pi*2**m-1)**2/n
         
         # error in individual rotations
-        epsilon_SS = (eps_tot/(2*np.pi*(2**m-1)))**2 # Same as below
-        epsilon_SS = eps_tot/n # from eq 39 same as the one above
+        epsilon_SS = (eps_tot/(2*np.pi*(2**m-1)))**2/N # Same as below. The N comes from Jordan Wigner implementation
+        epsilon_SS = eps_tot/(n*N) # from eq 39 same as the one above
 
         rost_cost_factor = N*self.tools.c_rotation_synthesis(epsilon_SS)
         
@@ -69,7 +69,7 @@ class Trotter_based_methods:
         n2 = 8*Gamma**2 * ( 2**(m+1)*np.pi**3*Lambda_A**3/eps_tot_2  )**(1/2) *2*(2**m-1)
         n3 = 8*Gamma**2 * ( 2**(m+1)*np.pi**3*Lambda_A**3/eps_tot_3  )**(1/2) *2*(2**m-1)
 
-        epsilon_SS = eps_tot/n
+        epsilon_SS = eps_tot/(n*N) # N comes from Jordan-Wigner, n is the number of U applied
 
         rost_cost_factor = N*self.tools.c_rotation_synthesis(epsilon_SS)
         
