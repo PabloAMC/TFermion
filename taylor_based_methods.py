@@ -206,9 +206,9 @@ class Taylor_based_methods:
 
         n = np.ceil(np.ceil(np.log2(mu))/3) #each coordinate is a third
 
-        sum = self.tools.sum_cost(n) #todo: 4*n
-        mult = self.tools.multiplication_cost(n) #todo: 21*n**2
-        div = self.tools.divide_cost(n) #todo: 14n**2+7*n
+        sum = self.tools.sum_cost(n)
+        mult = self.tools.multiplication_cost(n)
+        div = self.tools.divide_cost(n)
 
         tay = exp_order*sum + (exp_order-1)*(mult + div) # For the exp
         babylon = sqrt_order*(div +  sum) # For the sqrt
@@ -234,7 +234,7 @@ class Taylor_based_methods:
         # There will be eta registers with log2(N) qubits each
         compare = self.tools.compare_cost(np.log2(N))
         sort = eta*(4 + compare) # 4 for the c-swap and one comparison
-        check = self.tools.multi_controlled_not(eta*np.log2(N)) #todo: return 16(m-2)
+        check = self.tools.multi_controlled_not(eta*np.log2(N))
         sum = self.tools.sum_cost(np.log2(N))
 
         find_alphas = 2* eta*(4*sum + check + sort + compare) #The 2 is because if it fails we have to reverse the computation

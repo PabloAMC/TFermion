@@ -12,7 +12,6 @@ class Plane_waves_methods:
     # Low depth quantum simulation of materials (babbush2018low) Trotter
     def low_depth_trotter(self, N, eta, Omega, epsilon_PEA, epsilon_HS, epsilon_S):
         
-        #TODO eta = number of electrons
         t = 4.7/epsilon_PEA
         sum_1_nu = 4*np.pi(np.sqrt(3)*N**(1/3)/2 - 1) + 3 - 3/N**(1/3) + 3*self.tools.I(N**(1/3))
         max_V = eta**2/(2*np.pi*Omega**(1/3))*sum_1_nu
@@ -26,7 +25,7 @@ class Plane_waves_methods:
         single_qubit_rotations = 8*N + 8*N*(8*N-1) + 8*N + N*np.log(N/2) # U, V, T and FFFT single rotations
         epsilon_SS = epsilon_S/single_qubit_rotations
         
-        exp_UV_cost = (8*N*(8*N-1) + 8*N)*self.tools.z_rotation_synthesis(epsilon_SS) #todo: 4*log2(1/epsilon) + 10
+        exp_UV_cost = (8*N*(8*N-1) + 8*N)*self.tools.z_rotation_synthesis(epsilon_SS)
         exp_T_cost = 8*N**self.tools.z_rotation_synthesis(epsilon_SS)
         F2 = 2
         FFFT_cost = N/2*np.log2(N)*F2 + N/2*(np.log2(N)-1)*self.tools.z_rotation_synthesis(epsilon_SS) 
@@ -51,7 +50,7 @@ class Plane_waves_methods:
         mu = np.ceil(np.log(2*np.sqrt(2)*Lambd/epsilon_PEA) + np.log(1 + epsilon_PEA/(8*lambd)) + np.log(1 - (Ham_norm/lambd)**2))
         
         # The number of total rotations is r*2* number of rotations for each preparation P (in this case 2D+1)
-        z_rot_synt = self.tools.z_rotation_synthesis(epsilon_SS) #todo: see table 4 log 1/eps_ss + 10
+        z_rot_synt = self.tools.z_rotation_synthesis(epsilon_SS)
 
         def uniform_cost(L, k=0, z_rot_synt = z_rot_synt, controlled = False):
             if controlled:
@@ -105,14 +104,15 @@ class Plane_waves_methods:
         n = np.ceil(np.ceil(np.log2(mu))/3) #each coordinate is a third
         M = lambd*r*3*2*K/epsilon_H
 
-        sum = self.tools.sum_cost(n) #todo: 4*n
-        mult = self.tools.multiplication_cost(n) #todo: 21*n**2
-        div = self.tools.divide_cost(n) #todo: 14n**2+7*n
+        sum = self.tools.sum_cost(n)
+        mult = self.tools.multiplication_cost(n)
+        div = self.tools.divide_cost(n)
 
+        angle_to_0_2pi_interval = div + mult + sum # angle <- angle - lceil angle/2pi rceil * 2pi
         cordic = 2*cos_order + mult 
 
-        prepare_p_equal_q = (3*mult) + (3*sum) (3*mult+2*sum)+((3*mult+2*sum) + (cordic))*J + (mult+div + J*(mult+div)) 
-        prepare_p_neq_q = (3*mult) + (3*mult+2*sum) + cordic + div +mult
+        prepare_p_equal_q = (3*mult) + (3*sum) (3*mult+2*sum)+((3*mult+2*sum) + (cordic+angle_to_0_2pi_interval))*J + (mult+div + J*(mult+div)) 
+        prepare_p_neq_q = (3*mult) + (3*mult+2*sum) + cordic+angle_to_0_2pi_interval + div +mult
         prepare_p_q_0 = 2*mult
 
         sample_w = prepare_p_equal_q + prepare_p_neq_q + prepare_p_q_0
