@@ -54,6 +54,31 @@ class Molecule:
         self.gamma_threshold = self.tools.config_variables['gamma_threshold']
         self.molecule_geometry = geometry_from_pubchem(self.molecule_name) # We prefer pyscf because of functionality.
 
+        ## Center the molecule so that coords can be put in a box
+
+        # Tuple to list
+        for i, (at, coord) in zip(range(len(self.molecule_geometry)), self.molecule_geometry):
+            self.molecule_geometry[i] = (at, list(coord))
+
+        self.xmax = 0
+
+        # Shift each coordinate
+        for j in range(3):
+            maximum = max([self.molecule_geometry[i][1][j] for i in range(len(self.molecule_geometry))])
+            minimum = min([self.molecule_geometry[i][1][j] for i in range(len(self.molecule_geometry))])
+
+            avg = (maximum + minimum)/2
+
+            for i in range(len(self.molecule_geometry)):
+                self.molecule_geometry[i][1][j] -= avg
+
+            maximum = max([self.molecule_geometry[i][1][j] for i in range(len(self.molecule_geometry))])
+            self.xmax = max(self.xmax,maximum) 
+        
+        # List to tuple
+        for i, (at, coord) in zip(range(len(self.molecule_geometry)), self.molecule_geometry):
+            self.molecule_geometry[i] = (at, tuple(coord))
+
         #From OpenFermion
         self.molecule_data = MolecularData(self.molecule_geometry, self.tools.config_variables['basis'], multiplicity = 1)
 
@@ -82,7 +107,7 @@ class Molecule:
         fermion_operator = get_fermion_operator(molecular_hamiltonian)
         JW_op = jordan_wigner(fermion_operator)
         #BK_op = openfermion.transforms.bravyi_kitaev(fermion_operator) #Results seem to be the same no matter what transform one uses
-        
+
         #sparse_mat = openfermion.get_sparse_operator(JW_op)
         #dense_operator = sparse_mat.todense()
         #max_eig, _ = scipy.sparse.linalg.eigsh(sparse_mat, k=1, which="LM")       
@@ -114,8 +139,10 @@ class Molecule:
         # Figure out length scale based on Wigner-Seitz radius and construct a basis grid.
         # Wigner_seitz_radius  https://en.wikipedia.org/wiki/Wigner%E2%80%93Seitz_radius
 
-        length_scale = openfermion.wigner_seitz_length_scale(wigner_seitz_radius = wigner_seitz_radius, n_particles = self.eta, dimension = 3)
-
+        #Have to investigate better how is the grid created, and 
+        #length_scale = openfermion.wigner_seitz_length_scale(wigner_seitz_radius = wigner_seitz_radius, n_particles = self.eta, dimension = 3)
+        
+        length_scale = 4*self.xmax # We set a box whose length is 4 times the maximum coordinate value of any atom, as the box has to be twice as large as the maximum distance in each coord
         grid = Grid(dimensions = 3, length = grid_length, scale = length_scale) # Complexity is determined by lenght
 
         #h_plane_wave = plane_wave_hamiltonian(grid, self.molecule_geometry, plane_wave = False, include_constant=False, non_periodic = non_periodic, spinless = True)
@@ -130,15 +157,22 @@ class Molecule:
         else:
             self.H_norm = abs(self.molecule_pyscf.hf_energy)
 
-        d = copy.copy(JW_op.terms)
-
-        l = abs(np.array(list(d.values())))
+        l = abs(np.array(list(JW_op.terms.values())))
 
         self.lambda_value = sum(l)
         self.Lambda_value = max(l)
         self.Gamma = np.count_nonzero(l >= 0)
 
         self.H_norm_lambda_ratio = max(H_NORM_LAMBDA_RATIO,self.H_norm/self.lambd)
+
+        avg_paulis_per_unitary = 0
+        weighted_avg_paulis_per_unitary = 0
+        for unitary, weight in JW_op.terms:
+            avg_paulis_per_unitary += len(unitary)
+            weighted_avg_paulis_per_unitary += len(unitary)*float(weight)
+
+        self.avg_paulis_per_unitary /= len(JW_op.terms)
+        self.weighted_avg_paulis_per_unitary /= self.lambda_value
 
         return grid.volume
 

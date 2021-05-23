@@ -37,7 +37,7 @@ class Interaction_picture:
         # Now we count the number of individual rotations from each source: 
         rot_FFFT = N/2*np.log2(N/2) 
         rot_U = 8*N # controlled
-        rot_COEF = self.tools.arbitrary_state_synthesis(K)  #todo: Consistency!
+        rot_COEF = self.tools.arbitrary_state_synthesis(K)
         rot_prep = self.tools.arbitrary_state_synthesis(8*N) 
         rot_PHASE = np.ceil(np.log2(8*N)) # controlled
         rot_uniform = 2
@@ -54,9 +54,9 @@ class Interaction_picture:
         NORM = self.tools.multiplication_cost(np.ceil(np.log2(8*N)))
         mult = self.tools.multiplication_cost(2*np.ceil(np.log2(8*N))) # Vk multiplication
 
-        PHASE = rot_PHASE* self.tools.c_z_rotation_synthesis(epsilon_SS) #todo: to define, use barenco
+        PHASE = rot_PHASE* self.tools.c_z_rotation_synthesis(epsilon_SS)
         exp_V = 2*(ADD+FFFT_cost + NORM + mult) + PHASE
-        exp_U = rot_U * self.tools.c_z_rotation_synthesis(epsilon_SS) #todo: to define, use barenco
+        exp_U = rot_U * self.tools.c_z_rotation_synthesis(epsilon_SS)
         exp_U_V = exp_V+exp_U
 
         # Qubitization of T

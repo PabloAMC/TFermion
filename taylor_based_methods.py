@@ -36,7 +36,7 @@ class Taylor_based_methods:
         arb_state_synt = self.tools.arbitrary_state_synthesis(Gamma)
         epsilon_SS = epsilon_S /(r*3*2*(K*arb_state_synt + 2*K) ) # 3 from AA, 2 for for Prepare and Prepare^+, then Prepare_beta_1 and Prepare_beta_2, finally r
 
-        Select_H = 16*(np.ceil(np.log2(Gamma) +1)+3)* 2**4 *N
+        Select_H = 2*self.tools.multi_controlled_not(np.ceil(np.log2(Gamma) +1)+3)* 2**4 * (N/2) # The first two is because we multi-control to an ancilla, rotate and uncompute the ancilla. The (N/2) is the average number of number of Paulis in each creation/annihilation operator
         Select_V = Select_H * K
 
         crot_synt = self.tools.c_rotation_synthesis(epsilon_SS)
@@ -124,7 +124,7 @@ class Taylor_based_methods:
         Prepare_beta_2 = ( 2*sample + kickback )*K
         Prepare_beta = Prepare_beta_1 + Prepare_beta_2
 
-        Select_H = 16*(np.ceil(np.log2(Gamma) +1)+3)* 2**4 *N
+        Select_H = 2*self.tools.multi_controlled_not(np.ceil(np.log2(Gamma) +1)+3)* 2**4 * (N/2) # The first two is because we multi-control to an ancilla, rotate and uncompute the ancilla. The (N/2) is the average number of number of Paulis in each creation/annihilation operator
         Select_V = Select_H * K
 
         R = self.tools.multi_controlled_not((K+1)*np.log2(Gamma) + N) # The prepare qubits and the select qubits (in Jordan-Wigner there are N)
