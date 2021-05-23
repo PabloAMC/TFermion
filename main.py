@@ -10,6 +10,7 @@ tools = utils.Utils(config_path)
 args = tools.parse_arguments()
 
 # Some examples: HYDROFLUORIC ACID, Ammonia, water, methane, O2, CO2, O3, NaCl
+#molecule = Molecule(name = 'H', tools = tools)
 molecule = Molecule(name = args.molecule_name, tools = tools)
 
 #molecule.low_rank_approximation(occupied_indices = [0,1,2], active_indices = [3,4], virtual_indices = [5,6], sparsify = True)

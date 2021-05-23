@@ -119,12 +119,25 @@ class Molecule:
         else:
             self.H_norm = abs(self.molecule_pyscf.hf_energy)
 
-        d = copy.copy(JW_op.terms)
-
-        l = abs(np.array(list(d.values())))
+        l = abs(np.array(list(JW_op.terms.values())))
         self.lambda_value = sum(l)
         self.Lambda_value = max(l)
         self.Gamma = np.count_nonzero(l >= threshold)
+
+        avg_Z_per_unitary = 0
+        avg_XY_per_unitary = 0
+        weighted_avg_Z_per_unitary = 0
+        weighted_avg_XY_per_unitary = 0
+        for unitary, weight in JW_op.terms.items():
+            avg_Z_per_unitary += len([P[1] for P in unitary if P[1] == 'Z'])
+            avg_XY_per_unitary += len([P[1] for P in unitary if (P[1] == 'X' or P[1] == 'Y')])
+            weighted_avg_Z_per_unitary += len([P[1] for P in unitary if P[1] == 'Z'])*float(abs(weight))
+            weighted_avg_XY_per_unitary += len([P[1] for P in unitary if P[1] == 'X' or P[1] == 'Y'])*float(abs(weight))
+
+        self.avg_Z_per_unitary = avg_Z_per_unitary/len(JW_op.terms)
+        self.avg_XY_per_unitary = avg_XY_per_unitary/len(JW_op.terms)
+        self.weighted_avg_Z_per_unitary = weighted_avg_Z_per_unitary/self.lambda_value
+        self.weighted_avg_XY_per_unitary = weighted_avg_XY_per_unitary/self.lambda_value
 
         self.H_norm_lambda_ratio = max(H_NORM_LAMBDA_RATIO,self.H_norm/self.lambda_value)
 
@@ -165,14 +178,20 @@ class Molecule:
 
         self.H_norm_lambda_ratio = max(H_NORM_LAMBDA_RATIO,self.H_norm/self.lambd)
 
-        avg_paulis_per_unitary = 0
-        weighted_avg_paulis_per_unitary = 0
-        for unitary, weight in JW_op.terms:
-            avg_paulis_per_unitary += len(unitary)
-            weighted_avg_paulis_per_unitary += len(unitary)*float(weight)
+        avg_Z_per_unitary = 0
+        avg_XY_per_unitary = 0
+        weighted_avg_Z_per_unitary = 0
+        weighted_avg_XY_per_unitary = 0
+        for unitary, weight in JW_op.terms.items():
+            avg_Z_per_unitary += len([P[1] for P in unitary if P[1] == 'Z'])
+            avg_XY_per_unitary += len([P[1] for P in unitary if (P[1] == 'X' or P[1] == 'Y')])
+            weighted_avg_Z_per_unitary += len([P[1] for P in unitary if P[1] == 'Z'])*float(abs(weight))
+            weighted_avg_XY_per_unitary += len([P[1] for P in unitary if P[1] == 'X' or P[1] == 'Y'])*float(abs(weight))
 
-        self.avg_paulis_per_unitary /= len(JW_op.terms)
-        self.weighted_avg_paulis_per_unitary /= self.lambda_value
+        self.avg_Z_per_unitary = avg_Z_per_unitary/len(JW_op.terms)
+        self.avg_XY_per_unitary = avg_XY_per_unitary/len(JW_op.terms)
+        self.weighted_avg_Z_per_unitary = weighted_avg_Z_per_unitary/self.lambda_value
+        self.weighted_avg_XY_per_unitary = weighted_avg_XY_per_unitary/self.lambda_value
 
         return grid.volume
 

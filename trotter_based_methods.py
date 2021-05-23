@@ -7,7 +7,7 @@ class Trotter_based_methods:
 
     # qDrift and Trotterization
 
-    def calc_qdrift_resources(self, lambd, weighted_average_paulis, epsilon_PEA, epsilon_HS, epsilon_S):
+    def calc_qdrift_resources(self, lambd, weighted_avg_Z_per_unitary, weighted_avg_XY_per_unitary, epsilon_PEA, epsilon_HS, epsilon_S):
 
         deltaE = epsilon_PEA
         eps_tot = epsilon_HS
@@ -16,13 +16,13 @@ class Trotter_based_methods:
 
         n = ((27*np.pi**2/2)*(lambd/deltaE)**2) / P_failure**3
 
-        epsilon_SS = epsilon_S/(n*weighted_average_paulis) # from eq 39 same as the one above
+        epsilon_SS = epsilon_S/(2*n*(weighted_avg_Z_per_unitary+ weighted_avg_XY_per_unitary)) # The 2 is due to the control
 
-        rost_cost_factor = weighted_average_paulis*self.tools.c_rotation_synthesis(epsilon_SS)
+        rost_cost_factor = weighted_avg_XY_per_unitary*self.tools.c_rotation_synthesis(epsilon_SS) + weighted_avg_Z_per_unitary*self.tools.c_z_rotation_synthesis(epsilon_SS)
         
         return 1/(1-P_failure)*rost_cost_factor*n
 
-    def calc_rand_ham_resources(self, Lambd, Gamma, average_paulis, epsilon_PEA, epsilon_HS, epsilon_S):
+    def calc_rand_ham_resources(self, Lambd, Gamma, avg_Z_per_unitary, avg_XY_per_unitary, epsilon_PEA, epsilon_HS, epsilon_S):
 
         deltaE = epsilon_PEA
         eps_tot = epsilon_HS
@@ -31,8 +31,8 @@ class Trotter_based_methods:
 
         n = 4.35*np.sqrt(8)*(np.pi*Lambd/deltaE)**(3/2) *(Gamma/ P_failure)**2
 
-        epsilon_SS = epsilon_S/(n*average_paulis)
+        epsilon_SS = epsilon_S/(2*n*(avg_Z_per_unitary+ avg_XY_per_unitary)) # The 2 is due to the control
 
-        rost_cost_factor = average_paulis*self.tools.c_rotation_synthesis(epsilon_SS)
-        
+        rost_cost_factor = avg_XY_per_unitary*self.tools.c_rotation_synthesis(epsilon_SS) + avg_Z_per_unitary*self.tools.c_z_rotation_synthesis(epsilon_SS)
+
         return 1/(1-P_failure)*rost_cost_factor*n
