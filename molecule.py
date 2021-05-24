@@ -46,7 +46,7 @@ wigner_seitz_radius = 5. # Chosen as in https://quantumai.google/openfermion/tut
 
 class Molecule:
 
-    def __init__(self, name, tools, program = 'pyscf'):
+    def __init__(self, name, tools, charge = 0, program = 'pyscf'):
 
         self.molecule_name = name
         self.tools = tools
@@ -81,7 +81,7 @@ class Molecule:
             self.molecule_geometry[i] = (at, tuple(coord))
 
         #From OpenFermion
-        self.molecule_data = MolecularData(self.molecule_geometry, self.tools.config_variables['basis'], multiplicity = 1, filename = 'name')
+        self.molecule_data = MolecularData(self.molecule_geometry, self.tools.config_variables['basis'], charge = charge, multiplicity = 1, filename = 'name')
 
         #Add possibility of boundary conditions https://sunqm.github.io/pyscf/tutorial.html#initializing-a-crystal -> Seems quite complicated and not straightforward
         if program == 'psi4': 
