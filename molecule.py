@@ -1,6 +1,7 @@
 import itertools
 import openfermion
 import copy
+import json
 
 from openfermionpsi4 import run_psi4
 from openfermionpyscf import run_pyscf
@@ -80,7 +81,7 @@ class Molecule:
             self.molecule_geometry[i] = (at, tuple(coord))
 
         #From OpenFermion
-        self.molecule_data = MolecularData(self.molecule_geometry, self.tools.config_variables['basis'], multiplicity = 1)
+        self.molecule_data = MolecularData(self.molecule_geometry, self.tools.config_variables['basis'], multiplicity = 1, filename = 'name')
 
         #Add possibility of boundary conditions https://sunqm.github.io/pyscf/tutorial.html#initializing-a-crystal -> Seems quite complicated and not straightforward
         if program == 'psi4': 
@@ -479,14 +480,12 @@ class Molecule:
             JW_op = openfermion.transforms.jordan_wigner(fermion_operator)
             #BK_op = openfermion.transforms.bravyi_kitaev(fermion_operator) #Results seem to be the same no matter what transform one uses
 
-            d = JW_op.terms
-            del d[()]
-            l = abs(np.array(list(d.values())))
-            lambd = sum(l)
+            l = abs(np.array(list(JW_op.terms.values())))
+            lambda_value = sum(l)
 
-            print('<i> Lambda', lambd)
+            print('<i> lambda', lambda_value)
 
-            return lambd
+            return lambda_value
         
         exact_E = low_rank_truncation_mp2_energy(rank_threshold = 0, sparsity_threshold = 0)
 
@@ -644,3 +643,60 @@ class Molecule:
         alpha = np.min(alphas)
         return alpha
 
+    def save(self,json_name,JW_op_terms): 
+        '''
+        To save pyscf files: 
+        https://github.com/pyscf/pyscf/blob/1de8c145abb3e1a7392df9118e8062e6fe6bde00/examples/ao2mo/01-outcore.py
+        https://github.com/pyscf/pyscf/blob/1de8c145abb3e1a7392df9118e8062e6fe6bde00/examples/misc/02-chkfile.py
+        
+        To save MolecularData class:
+        https://github.com/quantumlib/OpenFermion/blob/7c3581ad75716d1ff6a0043a516d271052a90e35/src/openfermion/chem/molecular_data.py#L567
+        '''
+        
+        #The function takes MolecularData from file 'filename.hdf5' where filename is self.name
+        self.molecule_data.save()
+
+        molecule_properties = {}
+
+        molecule_properties["N"] = self.N
+        molecule_properties["lambda_value"] = self.lambda_value
+        molecule_properties["Lambda_value"] = self.Lambda_value
+        molecule_properties["Gamma"] = self.Gamma
+        molecule_properties["eta"] = self.eta
+
+        molecule_properties["avg_Z_per_unitary"] = self.avg_Z_per_unitary
+        molecule_properties["avg_XY_per_unitary"] = self.avg_XY_per_unitary
+        molecule_properties["weighted_avg_Z_per_unitary"] = self.weighted_avg_Z_per_unitary
+        molecule_properties["weighted_avg_XY_per_unitary"] = self.weighted_avg_XY_per_unitary
+        molecule_properties["xmax"] = self.xmax
+
+        molecule_properties["JW_op_terms"] = JW_op_terms
+
+        with open(json_name, "w") as fp:
+            json.dump(molecule_properties,fp) 
+
+    def load(self,json_name):
+        '''
+        To load MolecularData: https://github.com/quantumlib/OpenFermion/blob/7c3581ad75716d1ff6a0043a516d271052a90e35/src/openfermion/chem/molecular_data.py#L719
+        '''
+        
+        #The function takes MolecularData from file 'filename.hdf5' where filename is self.name
+        self.molecule_data.load()
+
+        molecule_properties = json.loads(json_name)
+
+        self.N = molecule_properties["N"]
+        self.lambda_value = molecule_properties["lambda_value"]
+        self.Lambda_value = molecule_properties["Lambda_value"]
+        self.Gamma = molecule_properties["Gamma"]
+        self.eta = molecule_properties["eta"]
+
+        self.avg_Z_per_unitary = molecule_properties["avg_Z_per_unitary"]
+        self.avg_XY_per_unitary = molecule_properties["avg_XY_per_unitary"]
+        self.weighted_avg_Z_per_unitary = molecule_properties["weighted_avg_Z_per_unitary"]
+        self.weighted_avg_XY_per_unitary = molecule_properties["weighted_avg_XY_per_unitary"]
+        self.xmax = molecule_properties["xmax"]
+
+        JW_op_terms = molecule_properties["JW_op_terms"]
+
+        return JW_op_terms
