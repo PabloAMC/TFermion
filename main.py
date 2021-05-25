@@ -28,10 +28,10 @@ print('The cost to calculate the energy of', args.molecule_name,'with method', a
 
 #### TESTS ###
 
-# QDRIFT: python3 main.py water qdrift 'C 2p' OK
-# RAND-HAM: python3 main.py water rand_ham 'C 2p' OK 
-# Taylor naive: python3 main.py water taylor_naive 'C 2p' OK
-# Taylor on the fly: python3 main.py water taylor_on_the_fly 'C 2p' OK
+# QDRIFT: python3 main.py water qdrift 'C 2p' FAIL
+# RAND-HAM: python3 main.py water rand_ham 'C 2p' FAIL 
+# Taylor naive: python3 main.py water taylor_naive 'C 2p' FAIL
+# Taylor on the fly: python3 main.py water taylor_on_the_fly 'C 2p' FAIL
 # Configuration interaction: python3 main.py water configuration_interaction 'C 2p' FAIL
 # Low Depth Trotter: python3 main.py water low_depth_trotter 'C 2p' FAIL
 # Low Depth Taylor: python3 main.py water low_depth_taylor 'C 2p' FAIL
