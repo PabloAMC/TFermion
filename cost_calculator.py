@@ -1,3 +1,4 @@
+from scipy import optimize
 import trotter_based_methods
 import taylor_based_methods
 import plane_waves_methods
@@ -83,10 +84,13 @@ class Cost_calculator:
             
             elif method == 'configuration_interaction':
                 phi_max, _, grad_max = self.molecule.molecular_orbital_parameters()
+                gamma1 = grad_max * x_max / phi_max
+                gamma2 = grad_max**2 * x_max**2 / phi_max
+                eta = self.molecule.eta
                 zeta_max_i = self.molecule.calculate_zeta_i_max()
                 J = len(self.molecule.molecule_geometry) #is the number of atoms in the molecule
 
-                arguments = (self.molecule.N, zeta_max_i, phi_max, J)
+                arguments = (self.molecule.N, eta, alpha, gamma1, gamma2, zeta_max_i, phi_max, J)
 
                 # generate values for errors epsilon_PEA, epsilon_HS, epsilon_S, eps_H, eps_taylor
                 optimized_errors = self.calculate_optimized_errors(5, methods_taylor.configuration_interaction, arguments)
@@ -103,7 +107,7 @@ class Cost_calculator:
                     phi_max,
                     J)
 
-        '''
+        
         elif method == 'low_depth_trotter' or method == 'low_depth_taylor' or method == 'low_depth_taylor_on_the_fly':
 
             methods_plane_waves = plane_waves_methods.Plane_waves_methods(self.tools)
@@ -115,34 +119,147 @@ class Cost_calculator:
             # J = len(self.molecule.geometry) #is the number of atoms in the molecule
 
             if method == 'low_depth_trotter':
-                self.costs['low_depth_trotter'] = methods_plane_waves.low_depth_trotter(N, eta, Omega, epsilon_PEA, epsilon_HS, epsilon_S)
+
+                N = self.molecule.N
+                eta = self.molecule.eta
+
+
+                arguments = (N, eta, Omega)
+
+                # generate values for errors epsilon_PEA, epsilon_HS, epsilon_S
+                optimized_errors = self.calculate_optimized_errors(3, methods_plane_waves.low_depth_trotter, arguments)
+
+                self.costs['low_depth_trotter'] = methods_plane_waves.low_depth_trotter(
+                    optimized_errors.x,
+                    N, 
+                    eta, 
+                    Omega)
+
             elif method == 'low_depth_taylor':
-                self.costs['low_depth_taylor'] = methods_plane_waves.low_depth_taylor(N, lambda_value, Lambda_value, epsilon_PEA, epsilon_HS, epsilon_S, Ham_norm)
+
+                N = self.molecule.N
+                lambda_value = self.molecule.lambda_value
+                Lambda_value = self.molecule.Lambda_value
+
+                arguments = (N, lambda_value, Lambda_value, Ham_norm)
+
+                # generate value for errors epsilon_PEA, epsilon_HS, epsilon_S
+                optimized_errors = self.calculate_optimized_errors(3, methods_plane_waves.low_depth_taylor, arguments)
+
+                self.costs['low_depth_taylor'] = methods_plane_waves.low_depth_taylor(
+                    optimized_errors.x,
+                    N, 
+                    lambda_value, 
+                    Lambda_value, 
+                    Ham_norm)
+
             elif method == 'low_depth_taylor_on_the_fly':
+
+                N = self.molecule.N
+                eta = self.molecule.eta
+                lambda_value = self.molecule.lambda_value
+                J = len(self.molecule.molecule_geometry) #is the number of atoms in the molecule
+
+                arguments = (N, eta, lambda_value, Omega, Ham_norm, J, x_max)
+
+                # generate value for errors epsilon_PEA, epsilon_HS, epsilon_S, epsilon_H, epsilon_tay
+                optimized_errors = self.calculate_optimized_errors(5, methods_plane_waves.low_depth_taylor_on_the_fly, arguments)
+
                 # find x_max from cell volume assuming a perfect cube centered on 0
-                self.costs['low_depth_taylor_on_the_fly'] = methods_plane_waves.low_depth_taylor_on_the_fly(N, eta, lambda_value, Omega, epsilon_PEA, epsilon_HS, epsilon_S, epsilon_tay, Ham_norm, J, x_max)
+                self.costs['low_depth_taylor_on_the_fly'] = methods_plane_waves.low_depth_taylor_on_the_fly(
+                    optimized_errors.x,
+                    N, 
+                    eta, 
+                    lambda_value, 
+                    Omega,
+                    Ham_norm, 
+                    J, 
+                    x_max)
 
         elif method == 'linear_t' or method == 'sparsity_low_rank':
 
             methods_qrom = qrom_methods.QROM_methods()
 
             if method == 'linear_t':
-                self.costs['linear_t'] = methods_qrom.linear_T(N, lambda_value, epsilon_PEA, epsilon_S, Ham_norm)
+                
+                N = self.molecule.N
+                lambda_value = self.molecule.lambda_value
+
+                arguments = (N, lambda_value, Ham_norm)
+
+                # generate value for errors epsilon_PEA, epsilon_S
+                optimized_errors = self.calculate_optimized_errors(2, methods_qrom.linear_T, arguments)
+                
+                self.costs['linear_t'] = methods_qrom.linear_T(
+                    optimized_errors.x,
+                    N, 
+                    lambda_value,
+                    Ham_norm)
+
             elif method == 'sparsity_low_rank':
+                
                 #todo: how to select the sparsify option here appropriately
                 molecular_hamiltonian, final_rank = self.molecule.low_rank_approximation(occupied_indices = self.molecule.occupied_indices, active_indices = self.molecule.active_indices, virtual_indices = self.molecule.virtual_indices, sparsify = True)
-                molecule.get_basic_parameters(molecular_hamiltonian = molecular_hamiltonian)
-                self.costs['sparsity_low_rank'] = methods_qrom.sparsity_low_rank(N = self.molecule.N, lambda_value = self.molecule.lambd, eps_PEA, eps_S, L = final_rank, Ham_norm)
+                self.molecule.get_basic_parameters(molecular_hamiltonian = molecular_hamiltonian)
+
+                N = self.molecule.N
+                lambda_value = self.molecule.lambda_value
+
+                arguments = (N, lambda_value, Ham_norm)
+
+                # generate value for errors epsilon_PEA, epsilon_S
+                optimized_errors = self.calculate_optimized_errors(2, methods_qrom.sparsity_low_rank, arguments)
+
+                self.costs['sparsity_low_rank'] = methods_qrom.sparsity_low_rank(
+                    optimized_errors.x,
+                    N, 
+                    lambda_value,
+                    final_rank, 
+                    Ham_norm)
         
         elif method == 'interaction_picture' or method == 'sublinear_scaling':
 
             methods_interaction_picture = interaction_picture.Interaction_picture()
 
             if method == 'interaction_picture':
-                self.costs['interaction_picture'] = methods_interaction_picture.interaction_picture(N, self.molecule.Gamma, lambda_value_T, lambda_value_U_V, epsilon_S, epsilon_HS, epsilon_PEA)
+
+                N = self.molecule.N
+                Gamma = self.molecule.Gamma
+
+                arguments = (N, Gamma, lambda_value_T, lambda_value_U_V)
+
+                # generate value for errors epsilon_S, epsilon_HS, epsilon_PEA
+                optimized_errors = self.calculate_optimized_errors(3, methods_interaction_picture.interaction_picture, arguments)
+
+                self.costs['interaction_picture'] = methods_interaction_picture.interaction_picture(
+                    optimized_errors.x,
+                    N, 
+                    Gamma, 
+                    lambda_value_T, 
+                    lambda_value_U_V)
+            
+            
+            
             elif method == 'sublinear_scaling':
-                self.costs['sublinear_scaling'] = methods_interaction_picture.sublinear_scaling_interaction(N, eta, self.molecule.Gamma, lambda_value_T, lambda_value_U_V, epsilon_S, epsilon_HS, epsilon_PEA, epsilon_mu, epsilon_M_0, J)
-        '''
+
+                N = self.molecule.N
+                eta = self.molecule.eta
+                Gamma = self.molecule.Gamma
+                J = len(self.molecule.molecule_geometry) #is the number of atoms in the molecule
+
+                arguments = (N, eta, Gamma, lambda_value_T, lambda_value_U_V, J)
+
+                # generate value for errors epsilon_S, epsilon_HS, epsilon_PEA, epsilon_mu, epsilon_M_0, epsilon_R
+                optimized_errors = self.calculate_optimized_errors(6, methods_interaction_picture.sublinear_scaling_interaction, arguments)
+
+                self.costs['sublinear_scaling'] = methods_interaction_picture.sublinear_scaling_interaction(
+                    optimized_errors.x,
+                    N, 
+                    eta, 
+                    Gamma, 
+                    lambda_value_T, 
+                    lambda_value_U_V,
+                    J)
 
     def calculate_optimized_errors(self, number_errors, cost_method, arguments):
 

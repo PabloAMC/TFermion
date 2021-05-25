@@ -5,7 +5,12 @@ class Interaction_picture:
     def __init__(self):
         pass
 
-    def interaction_picture(self, N, Gamma, lambd_T, lambd_U_V, epsilon_S, epsilon_HS, epsilon_PEA):
+    def interaction_picture(self, epsilons, N, Gamma, lambd_T, lambd_U_V):
+
+        epsilon_S = epsilons[0]
+        epsilon_HS = epsilons[1]
+        epsilon_PEA = epsilons[2]
+
         '''
         The number of rotations is very large here:
         Each of the r segments can be simulated as e^{-i(U+V)t} T(e^{-i \\int H_I (s) ds})
@@ -97,7 +102,15 @@ class Interaction_picture:
         return cost
 
     ## Sublinear scaling and interaction picture babbush2019quantum
-    def sublinear_scaling_interaction(self, N, eta, Gamma, lambd_T, lambd_U_V, epsilon_S, epsilon_HS, epsilon_PEA, epsilon_mu, epsilon_M0, epsilon_R, J):
+    def sublinear_scaling_interaction(self, epsilons, N, eta, Gamma, lambd_T, lambd_U_V, J):
+        
+        epsilon_S = epsilons[0]
+        epsilon_HS = epsilons[1]
+        epsilon_PEA = epsilons[2]
+        epsilon_mu = epsilons[3]
+        epsilon_M0 = epsilons[4]
+        epsilon_R = epsilons[5]
+        
         ''' 
         See the interaction_picture function for more background
         J represents the number of atoms

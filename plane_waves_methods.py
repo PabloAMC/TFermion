@@ -10,7 +10,11 @@ class Plane_waves_methods:
         self.tools = tools
 
     # Low depth quantum simulation of materials (babbush2018low) Trotter
-    def low_depth_trotter(self, N, eta, Omega, epsilon_PEA, epsilon_HS, epsilon_S):
+    def low_depth_trotter(self, epsilons, N, eta, Omega):
+
+        epsilon_PEA = epsilons[0]
+        epsilon_HS = epsilons[1]
+        epsilon_S = epsilons[2]
         
         t = 4.7/epsilon_PEA
         sum_1_nu = 4*np.pi(np.sqrt(3)*N**(1/3)/2 - 1) + 3 - 3/N**(1/3) + 3*self.tools.I(N**(1/3))
@@ -33,7 +37,12 @@ class Plane_waves_methods:
         return r*(exp_UV_cost + exp_T_cost + 2*FFFT_cost )
 
     # Low depth quantum simulation of materials (babbush2018low) Taylor
-    def low_depth_taylor(self, N, lambd, Lambd, epsilon_PEA, epsilon_HS, epsilon_S, Ham_norm):
+    def low_depth_taylor(self, epsilons, N, lambd, Lambd, Ham_norm):
+
+        epsilon_PEA = epsilons[0]
+        epsilon_HS = epsilons[1]
+        epsilon_S = epsilons[2]
+
         '''To be used in plane wave basis'''
 
         D = 3 #dimension of the model
@@ -78,7 +87,14 @@ class Plane_waves_methods:
         return result
 
     # Low depth quantum simulation of materials (babbush2018low) On-the fly
-    def low_depth_taylor_on_the_fly(self, N, eta, Gamma, lambd, Omega, epsilon_PEA, epsilon_HS, epsilon_S, epsilon_H, eps_tay, Ham_norm, J, x_max):
+    def low_depth_taylor_on_the_fly(self, epsilons, N, eta, Gamma, lambd, Omega, Ham_norm, J, x_max):
+        
+        epsilon_PEA = epsilons[0]
+        epsilon_HS = epsilons[1]
+        epsilon_S = epsilons[2]
+        epsilon_H = epsilons[3]
+        eps_tay = epsilons[4]
+        
         '''To be used in plane wave basis
         J: Number of atoms
         '''
@@ -99,7 +115,7 @@ class Plane_waves_methods:
 
         number_taylor_series = r* 3* 2*2*K(J+1)
         eps_tay_s = eps_tay / number_taylor_series
-        cos_order = self.tools.order_find(function = math.cos(x), x0 = 1, e = eps_tay_s, xeval = x_max, function='cos')
+        cos_order = self.tools.order_find(function = math.cos(x), function_name = 'cos', e = eps_tay_s, xeval = x_max)
 
         n = np.ceil(np.ceil(np.log2(mu))/3) #each coordinate is a third
         M = lambd*r*3*2*K/epsilon_H

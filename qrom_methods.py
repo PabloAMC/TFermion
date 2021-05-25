@@ -6,7 +6,11 @@ class QROM_methods:
         pass
 
     ## Linear T complexity (babbush2018encoding)
-    def linear_T(self, N, lambd, epsilon_PEA, epsilon_S, Ham_norm):
+    def linear_T(self, epsilons, N, lambd, Ham_norm):
+
+        epsilon_PEA = epsilons[0]
+        epsilon_S = epsilons[1]
+
         '''To be used in plane wave basis'''
         t = 4.7/epsilon_PEA
         r = lambd*t
@@ -41,7 +45,10 @@ class QROM_methods:
         return r*(2*Prepare + Reflexion + Select) #todo: rotations in the quantum walk
 
     ## Sparsity and low rank factorization (berry2019qubitization)
-    def sparsity_low_rank(self, N, lambd, epsilon_PEA, epsilon_S, L, Ham_norm, sparsity_d = None):
+    def sparsity_low_rank(self, epsilons, N, lambd, L, Ham_norm, sparsity_d = None):
+
+        epsilon_PEA = epsilons[0]
+        epsilon_S = epsilons[1]
 
         t = 4.7/epsilon_PEA
         r = lambd*t

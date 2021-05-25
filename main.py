@@ -33,3 +33,10 @@ print('The cost to calculate the energy of', args.molecule_name,'with method', a
 # Taylor naive: python3 main.py water taylor_naive 'C 2p' OK
 # Taylor on the fly: python3 main.py water taylor_on_the_fly 'C 2p' OK
 # Configuration interaction: python3 main.py water configuration_interaction 'C 2p' FAIL
+# Low Depth Trotter: python3 main.py water low_depth_trotter 'C 2p' FAIL
+# Low Depth Taylor: python3 main.py water low_depth_taylor 'C 2p' FAIL
+# Low Depth On The Fly: python3 main.py water low_depth_on_the_fly 'C 2p' FAIL
+# Linear T: python3 main.py linear_T 'C 2p' FAIL
+# Sparsity Low Rank: python3 main.py sparsity_low_rank 'C 2p' FAIL
+# Interaction Picture: python3 main.py interaction_picture 'C 2p' FAIL
+# Sublinear Scaling: python3 main.py sublinear_scaling 'C 2p' FAIL
