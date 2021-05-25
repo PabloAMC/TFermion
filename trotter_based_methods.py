@@ -7,7 +7,7 @@ class Trotter_based_methods:
 
     # qDrift and Trotterization
 
-    def calc_qdrift_resources(self, lambd, weighted_avg_Z_per_unitary, weighted_avg_XY_per_unitary, epsilon_PEA, epsilon_HS, epsilon_S):
+    def calc_qdrift_resources(self, lambd, epsilon_PEA, epsilon_HS, epsilon_S):
 
         deltaE = epsilon_PEA
         eps_tot = epsilon_HS
@@ -22,7 +22,7 @@ class Trotter_based_methods:
 
         return 1/(1-P_failure)*rost_cost_factor*n
 
-    def calc_rand_ham_resources(self, Lambd, Gamma, avg_Z_per_unitary, avg_XY_per_unitary, epsilon_PEA, epsilon_HS, epsilon_S):
+    def calc_rand_ham_resources(self, Lambd, Gamma, epsilon_PEA, epsilon_HS, epsilon_S):
 
         deltaE = epsilon_PEA
         eps_tot = epsilon_HS

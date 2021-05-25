@@ -95,12 +95,13 @@ class Molecule:
         self.active_indices = None #range(self.molecule_data.n_orbitals) # This is the default
         self.virtual_indices = []
 
+        self.N  = self.molecule_data.n_orbitals * 2 # The 2 is due to orbitals -> spin orbitals
+
         #self.build_grid()
         #self.get_basic_parameters()
 
     def get_basic_parameters(self, threshold = 0, molecular_hamiltonian = None):
 
-        self.N  = self.molecule_data.n_orbitals * 2 # The 2 is due to orbitals -> spin orbitals
         self.eta = self.molecule_data.n_electrons
 
         if molecular_hamiltonian is None:
@@ -125,6 +126,7 @@ class Molecule:
         self.Lambda_value = max(l)
         self.Gamma = np.count_nonzero(l >= threshold)
 
+        '''
         avg_Z_per_unitary = 0
         avg_XY_per_unitary = 0
         weighted_avg_Z_per_unitary = 0
@@ -139,7 +141,7 @@ class Molecule:
         self.avg_XY_per_unitary = avg_XY_per_unitary/len(JW_op.terms)
         self.weighted_avg_Z_per_unitary = weighted_avg_Z_per_unitary/self.lambda_value
         self.weighted_avg_XY_per_unitary = weighted_avg_XY_per_unitary/self.lambda_value
-
+        '''
         self.H_norm_lambda_ratio = max(H_NORM_LAMBDA_RATIO,self.H_norm/self.lambda_value)
 
     def build_grid(self, grid_length: int = 7):
@@ -179,6 +181,7 @@ class Molecule:
 
         self.H_norm_lambda_ratio = max(H_NORM_LAMBDA_RATIO,self.H_norm/self.lambd)
 
+        '''
         avg_Z_per_unitary = 0
         avg_XY_per_unitary = 0
         weighted_avg_Z_per_unitary = 0
@@ -193,6 +196,7 @@ class Molecule:
         self.avg_XY_per_unitary = avg_XY_per_unitary/len(JW_op.terms)
         self.weighted_avg_Z_per_unitary = weighted_avg_Z_per_unitary/self.lambda_value
         self.weighted_avg_XY_per_unitary = weighted_avg_XY_per_unitary/self.lambda_value
+        '''
 
         return grid.volume
 
@@ -664,10 +668,12 @@ class Molecule:
         molecule_properties["Gamma"] = self.Gamma
         molecule_properties["eta"] = self.eta
 
+        '''
         molecule_properties["avg_Z_per_unitary"] = self.avg_Z_per_unitary
         molecule_properties["avg_XY_per_unitary"] = self.avg_XY_per_unitary
         molecule_properties["weighted_avg_Z_per_unitary"] = self.weighted_avg_Z_per_unitary
         molecule_properties["weighted_avg_XY_per_unitary"] = self.weighted_avg_XY_per_unitary
+        '''
         molecule_properties["xmax"] = self.xmax
 
         molecule_properties["JW_op_terms"] = JW_op_terms
@@ -691,10 +697,12 @@ class Molecule:
         self.Gamma = molecule_properties["Gamma"]
         self.eta = molecule_properties["eta"]
 
+        '''
         self.avg_Z_per_unitary = molecule_properties["avg_Z_per_unitary"]
         self.avg_XY_per_unitary = molecule_properties["avg_XY_per_unitary"]
         self.weighted_avg_Z_per_unitary = molecule_properties["weighted_avg_Z_per_unitary"]
         self.weighted_avg_XY_per_unitary = molecule_properties["weighted_avg_XY_per_unitary"]
+        '''
         self.xmax = molecule_properties["xmax"]
 
         JW_op_terms = molecule_properties["JW_op_terms"]
