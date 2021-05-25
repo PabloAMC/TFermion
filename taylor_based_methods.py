@@ -104,7 +104,7 @@ class Taylor_based_methods:
         Qnabla = Q + N*d*(4*sum+mult+div)
         R = 2*mult + sum + babylon
         xi = 3*sum
-    
+
         two_body = xi + 4*Q + R + 4*mult
         kinetic = Q + Qnabla + mult
         external_potential = 2*Q + J*R + J*mult + (J-1)*sum + xi*J
@@ -132,7 +132,15 @@ class Taylor_based_methods:
 
         return result
 
-    def configuration_interaction(self, N, eta, alpha, gamma1, gamma2, epsilon_PEA, epsilon_HS, epsilon_S, epsilon_H, eps_tay, zeta_max_i, phi_max, J):
+    def configuration_interaction(self, epsilons, N, eta, alpha, gamma1, gamma2, zeta_max_i, phi_max, J):
+
+        epsilon_PEA = epsilons[0]
+        epsilon_HS = epsilons[1]
+        epsilon_S = epsilons[2]
+        epsilon_H = epsilons[3]
+        eps_tay = epsilons[4]
+
+
         '''
         gamma1, gamma2, alpha are defined in D9 and D8
         '''

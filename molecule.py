@@ -644,9 +644,9 @@ class Molecule:
         pyscf_mol = self.molecule_data._pyscf_data['mol']
 
         alphas = [list(pyscf_mol.bas_exp(i)) for i in range(pyscf_mol.nbas)]
-        alphas = lambda alphas: [item for sublist in alphas for item in sublist]
+        alphas_func = lambda alphas: [item for sublist in alphas for item in sublist]
 
-        alpha = np.min(alphas)
+        alpha = np.min(alphas_func(alphas))
         return alpha
 
     def save(self,json_name,JW_op_terms): 

@@ -96,7 +96,8 @@ class Cost_calculator:
                     J)
             
             elif method == 'configuration_interaction':
-                phi_max, _, grad_max = self.molecule.molecular_orbital_parameters()
+                phi_max, _, grad_max, _ = self.molecule.molecular_orbital_parameters()
+                N = self.molecule.N
                 x_max = self.molecule.xmax
                 alpha = self.molecule.min_alpha()
                 gamma1 = grad_max * x_max / phi_max
@@ -105,7 +106,7 @@ class Cost_calculator:
                 zeta_max_i = self.molecule.calculate_zeta_i_max()
                 J = len(self.molecule.molecule_geometry) #is the number of atoms in the molecule
 
-                arguments = (self.molecule.N, eta, alpha, gamma1, gamma2, zeta_max_i, phi_max, J)
+                arguments = (N, eta, alpha, gamma1, gamma2, zeta_max_i, phi_max, J)
 
                 # generate values for errors epsilon_PEA, epsilon_HS, epsilon_S, eps_H, eps_taylor
                 optimized_errors = self.calculate_optimized_errors(5, methods_taylor.configuration_interaction, arguments)
@@ -113,7 +114,7 @@ class Cost_calculator:
                 # alpha, gamma1, gamma2 are used to calculate K0, K1, K2 (see eq D14 in overleaf)
                 self.costs['configuration_interaction'] = methods_taylor.configuration_interaction(
                     optimized_errors.x,
-                    self.molecule.N,
+                    N,
                     eta,    
                     alpha,
                     gamma1,
@@ -178,6 +179,7 @@ class Cost_calculator:
                 eta = self.molecule.eta
                 Gamma = self.molecule.Gamma
                 lambda_value = self.molecule.lambda_value
+                _ = self.molecule.build_grid()
                 Omega = self.molecule.Omega
                 x_max = self.molecule.xmax
                 J = len(self.molecule.molecule_geometry) #is the number of atoms in the molecule
@@ -271,6 +273,7 @@ class Cost_calculator:
                 N = self.molecule.N
                 eta = self.molecule.eta
                 Gamma = self.molecule.Gamma
+
                 J = len(self.molecule.molecule_geometry) #is the number of atoms in the molecule
 
                 _ = self.molecule.build_grid()
