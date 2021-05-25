@@ -708,3 +708,45 @@ class Molecule:
         JW_op_terms = molecule_properties["JW_op_terms"]
 
         return JW_op_terms
+
+    def lambda_of_Hamiltonian_terms_2nd(self,grid, non_periodic = False, spinless = False):
+        '''To be used in second quantization (interaction_picture) only'''
+
+        molecular_hamiltonian = self.molecule_data.get_molecular_hamiltonian(occupied_indices=self.occupied_indices, active_indices=self.active_indices)
+
+        #T_dual = molecular_hamiltonian.dual_basis_kinetic(grid, spinless = spinless) 
+        V_dual = molecular_hamiltonian.dual_basis_potential(grid = grid, spinless = spinless, non_periodic = non_periodic) # diagonal
+        U_dual = molecular_hamiltonian.dual_basis_external_potential(grid = grid, geometry = self.molecule_geometry, spinless = spinless, non_periodic = non_periodic) # diagonal
+
+        T_primal = molecular_hamiltonian.plane_wave_kinetic(grid, spinless = spinless) # diagonal
+        #V_primal = molecular_hamiltonian.plane_wave_potential(grid, spinless = spinless, non_periodic = non_periodic)
+        #U_primal = molecular_hamiltonian.plane_wave_external_potential(grid, spinless = spinless, non_periodic = non_periodic)
+        
+        JW_op = jordan_wigner(V_dual)
+        l = abs(np.array(list(JW_op.terms.values())))
+        lambda_V = sum(l)
+
+        JW_op = jordan_wigner(U_dual)
+        l = abs(np.array(list(JW_op.terms.values())))
+        lambda_U = sum(l)
+
+        JW_op = jordan_wigner(T_primal)
+        l = abs(np.array(list(JW_op.terms.values())))
+        lambda_T = sum(l)
+
+        lambda_U_V = lambda_U+lambda_V
+
+        return lambda_T, lambda_U_V
+
+    def lambda_of_Hamiltonian_terms_1st(self, eta, Omega, N):
+        '''To be used in first quantization'''
+        
+        def quadratic_sum(N): return N*(N+1)*(2*N + 1)**3
+        
+        sum_nu = quadratic_sum(int(N^{1/3}))
+
+        lambda_U_V = (2*np.sqrt(3)*eta*(3*eta-1))*(N/Omega)**(1/3)
+
+        lambda_T = eta/2 * (2*np.pi/Omega**(1/3))**2 * sum_nu
+
+        return lambda_T, lambda_U_V
