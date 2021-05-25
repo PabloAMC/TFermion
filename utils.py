@@ -33,12 +33,9 @@ class Utils():
         parser.add_argument("molecule_name", help="name of the molecule to analyze", type=str)
         parser.add_argument("method", help="method to calculate the energy of the molecule", type=str)
         parser.add_argument("ao_labels", help="atomic orbital labels for the avas method to select the active space. Example: ['Fe 3d', 'C 2pz']", type=list)
-
-        try:
-            parser.add_argument("charge", help="charge of the molecule, defaults to 0", type=int)
-        except:
-            pass
         
+        parser.add_argument("-c", "--charge",  help="charge of the molecule, defaults to 0", type=int)
+
         self.args = parser.parse_args()
 
         return self.args
@@ -139,6 +136,9 @@ class Utils():
 
     def z_rotation(self, epsilon_SS):
         return 10 + 4*np.log2(1/epsilon_SS)
+
+    def c_z_rotation(self, epsilon_SS):
+        return 2*self.z_rotation(epsilon_SS)
 
     def multi_controlled_not(self, N):
         return 16*(N-2)

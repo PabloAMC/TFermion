@@ -21,25 +21,38 @@ class Cost_calculator:
         if method == 'qdrift' or method == 'rand_ham':
             #todo: error handling will need to be modified after I talk with Michael
 
-            methods_trotter = trotter_based_methods.Trotter_based_methods()
+            methods_trotter = trotter_based_methods.Trotter_based_methods(self.tools)
 
             # calculate the basis of the molecule (and its parameters)
             self.molecule.get_basic_parameters()
 
-            if method == 'qdrift': self.costs['qdrift'] = methods_trotter.calc_qdrift_resources(
-                                        self.molecule.lambda_value, 
-                                        self.molecule.weighted_avg_Z_per_unitary, 
-                                        self.molecule.weighted_avg_XY_per_unitary, 
-                                        deltaE = 1e-4, 
-                                        P_failure = .1)
+            if method == 'qdrift': 
+                
+                lambda_value = self.molecule.lambda_value
+                arguments = (lambda_value)
 
-            elif method == 'rand_ham': self.costs['rand_ham'] = methods_trotter.calc_rand_ham_resources(
-                                            self.molecule.Lambda_value, 
-                                            self.molecule.Gamma,
-                                            self.molecule.avg_Z_per_unitary, 
-                                            self.molecule.avg_XY_per_unitary, 
-                                            deltaE = 1e-4, 
-                                            P_failure = .1)
+                # generate values for errors epsilon_PEA, epsilon_HS, epsilon_S
+                optimized_errors = self.calculate_optimized_errors(3, methods_trotter.calc_qdrift_resources, arguments)
+                
+                
+                self.costs['qdrift'] = methods_trotter.calc_qdrift_resources(
+                                        optimized_errors.x,
+                                        lambda_value)
+
+            elif method == 'rand_ham': 
+
+                Lambda_value = self.molecule.Lambda_value
+                Gamma = self.molecule.Gamma
+
+                arguments = (Lambda_value, Gamma)
+
+                # generate values for errors epsilon_PEA, epsilon_HS, epsilon_S
+                optimized_errors = self.calculate_optimized_errors(3, methods_trotter.calc_rand_ham_resources, arguments)
+                
+                self.costs['rand_ham'] = methods_trotter.calc_rand_ham_resources(
+                                            optimized_errors.x,
+                                            Lambda_value,
+                                            Gamma)
         
         elif method == 'taylor_naive' or method == 'taylor_on_the_fly' or method == 'configuration_interaction':
 

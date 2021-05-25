@@ -2,12 +2,17 @@ import numpy as np
 
 class Trotter_based_methods:
 
-    def __init__(self):
-        pass
+    def __init__(self, tools):
+
+        self.tools = tools
 
     # qDrift and Trotterization
 
-    def calc_qdrift_resources(self, lambd, epsilon_PEA, epsilon_HS, epsilon_S):
+    def calc_qdrift_resources(self, epsilons, lambd):
+
+        epsilon_PEA = epsilons[0]
+        epsilon_HS = epsilons[1]
+        epsilon_S = epsilons[2]
 
         deltaE = epsilon_PEA
         eps_tot = epsilon_HS
@@ -18,11 +23,15 @@ class Trotter_based_methods:
 
         epsilon_SS = epsilon_S/(2*n) # The 2 is due to the control
 
-        rost_cost_factor = 2*self.tools.c_z_rotation_synthesis(epsilon_SS)
+        rost_cost_factor = 2*self.tools.c_z_rotation(epsilon_SS)
 
         return 1/(1-P_failure)*rost_cost_factor*n
 
-    def calc_rand_ham_resources(self, Lambd, Gamma, epsilon_PEA, epsilon_HS, epsilon_S):
+    def calc_rand_ham_resources(self, epsilons, Lambd, Gamma):
+
+        epsilon_PEA = epsilons[0]
+        epsilon_HS = epsilons[1]
+        epsilon_S = epsilons[2]
 
         deltaE = epsilon_PEA
         eps_tot = epsilon_HS
@@ -33,6 +42,6 @@ class Trotter_based_methods:
 
         epsilon_SS = epsilon_S/(2*n) # The 2 is due to the control
 
-        rost_cost_factor = 2*self.tools.c_z_rotation_synthesis(epsilon_SS)
+        rost_cost_factor = 2*self.tools.c_z_rotation(epsilon_SS)
 
         return 1/(1-P_failure)*rost_cost_factor*n

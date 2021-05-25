@@ -59,9 +59,9 @@ class Interaction_picture:
         NORM = self.tools.multiplication_cost(np.ceil(np.log2(8*N)))
         mult = self.tools.multiplication_cost(2*np.ceil(np.log2(8*N))) # Vk multiplication
 
-        PHASE = rot_PHASE* self.tools.c_z_rotation_synthesis(epsilon_SS)
+        PHASE = rot_PHASE* self.tools.c_z_rotation(epsilon_SS)
         exp_V = 2*(ADD+FFFT_cost + NORM + mult) + PHASE
-        exp_U = rot_U * self.tools.c_z_rotation_synthesis(epsilon_SS)
+        exp_U = rot_U * self.tools.c_z_rotation(epsilon_SS)
         exp_U_V = exp_V+exp_U
 
         # Qubitization of T
@@ -176,7 +176,7 @@ class Interaction_picture:
         mult = self.tools.multiply_cost(np.ceil(np.log2(N**(1/3))))
         sum = self.tools.sum_cost(2*np.ceil(np.log2(N**(1/3))))
         # There is one extra multiplication for the (2pi)^2/Omega^(2/3) coefficient
-        phase = rot_exp_T*self.tools.c_z_rotation_synthesis(epsilon_SS) + mult
+        phase = rot_exp_T*self.tools.c_z_rotation(epsilon_SS) + mult
         exp_T = (3*eta)*mult + (3*eta)*sum + phase 
 
         # Prep_nu
@@ -209,7 +209,7 @@ class Interaction_picture:
         max_digits = np.ceil(np.max(2*np.log2(N**(1/3)),1/delta_R))
         mult = self.tools.multiplication_cost(max_digits)
         dot_prod = 3*mult + 2*sum + mult
-        phase = rot_select_U*self.tools.c_z_rotation_synthesis(epsilon_SS)
+        phase = rot_select_U*self.tools.c_z_rotation(epsilon_SS)
         Select_U = 2*QROM_cost(J) + 2*dot_prod + phase  + eta*(c_vec_sum + 2*equality)
 
         CRz_on_x = 3*4 # 3 Toffolis are enough
