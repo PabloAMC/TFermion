@@ -7,6 +7,7 @@ import math
 import sympy
 from scipy import integrate
 from scipy.optimize import NonlinearConstraint, LinearConstraint
+from itertools import groupby
 
 class Utils():
 
@@ -57,7 +58,11 @@ class Utils():
         error = 1
         # get the half digits of the xeval (len(xeval)/2)
         order = 0
-        while error > e:
+
+        # this array stores the last n error values in order to check if all are equal (a minimum optimization point is reached)
+        last_error_values = [0, 1]
+
+        while error > e and not self.all_equal(last_error_values):
 
             if function_name == 'sqrt' or function_name == 'exp':
                 n = int(str(xeval)[:int(len(str(int(xeval)))/2)])
@@ -65,9 +70,18 @@ class Utils():
             elif function_name == 'cos':
                 error, xeval = self.calculate_error_function(function, function_name, 1, xeval, order, xeval)
 
+            # if maximum length is reached, last value is deleted
+            if len(last_error_values) > 10: last_error_values.pop(0)
+            last_error_values.append(error)
+
             order+=1
 
         return order
+
+    def all_equal(self, iterable):
+        g = groupby(iterable)
+        return next(g, True) and not next(g, False)
+
 
     def calculate_error_function(self, function, function_name, n, xeval, order, value_to_find=0):
         
@@ -133,6 +147,9 @@ class Utils():
 
     def rotation_synthesis(self, epsilon_SS):
         return (10+12*np.log2(1/epsilon_SS))
+
+    def c_rotation_synthesis(self, epsilon_SS):
+        return 2*self.rotation_synthesis(epsilon_SS)
 
     def z_rotation(self, epsilon_SS):
         return 10 + 4*np.log2(1/epsilon_SS)

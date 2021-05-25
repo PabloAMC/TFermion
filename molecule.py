@@ -198,7 +198,7 @@ class Molecule:
         self.weighted_avg_XY_per_unitary = weighted_avg_XY_per_unitary/self.lambda_value
         '''
 
-        return grid.volume
+        return grid
 
         # recursive method that iterates over all rows of a molecule to get the parameters:
         # lambda_value is the sum all coefficients of the hamiltonian (sum of all terms)
@@ -642,9 +642,9 @@ class Molecule:
         pyscf_mol = self.molecule_data._pyscf_data['mol']
 
         alphas = [list(pyscf_mol.bas_exp(i)) for i in range(pyscf_mol.nbas)]
-        alphas = lambda alphas: [item for sublist in alphas for item in sublist]
+        alphas_func = lambda alphas: [item for sublist in alphas for item in sublist]
 
-        alpha = np.min(alphas)
+        alpha = np.min(alphas_func(alphas))
         return alpha
 
     def save(self,json_name,JW_op_terms): 
