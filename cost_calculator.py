@@ -144,6 +144,7 @@ class Cost_calculator:
                 N = self.molecule.N
                 lambda_value = self.molecule.lambda_value
                 Lambda_value = self.molecule.Lambda_value
+                Ham_norm = self.molecule.H_norm_lambda_ratio 
 
                 arguments = (N, lambda_value, Lambda_value, Ham_norm)
 
@@ -161,12 +162,13 @@ class Cost_calculator:
 
                 N = self.molecule.N
                 eta = self.molecule.eta
+                Gamma = self.molecule.Gamma
                 lambda_value = self.molecule.lambda_value
                 Omega = self.molecule.build_grid()
                 x_max = self.molecule.xmax
                 J = len(self.molecule.molecule_geometry) #is the number of atoms in the molecule
 
-                arguments = (N, eta, lambda_value, Omega, Ham_norm, J, x_max)
+                arguments = (N, eta, Gamma, lambda_value, Omega, J, x_max)
 
                 # generate value for errors epsilon_PEA, epsilon_HS, epsilon_S, epsilon_H, epsilon_tay
                 optimized_errors = self.calculate_optimized_errors(5, methods_plane_waves.low_depth_taylor_on_the_fly, arguments)
@@ -175,10 +177,10 @@ class Cost_calculator:
                 self.costs['low_depth_taylor_on_the_fly'] = methods_plane_waves.low_depth_taylor_on_the_fly(
                     optimized_errors.x,
                     N, 
-                    eta, 
+                    eta,
+                    Gamma,
                     lambda_value, 
                     Omega,
-                    Ham_norm, 
                     J, 
                     x_max)
 
@@ -190,6 +192,7 @@ class Cost_calculator:
                 
                 N = self.molecule.N
                 lambda_value = self.molecule.lambda_value
+                Ham_norm = self.molecule.H_norm_lambda_ratio 
 
                 arguments = (N, lambda_value, Ham_norm)
 
@@ -210,6 +213,7 @@ class Cost_calculator:
 
                 N = self.molecule.N
                 lambda_value = self.molecule.lambda_value
+                Ham_norm = self.molecule.H_norm_lambda_ratio 
 
                 arguments = (N, lambda_value, Ham_norm)
 
