@@ -28,16 +28,16 @@ class Cost_calculator:
 
             if method == 'qdrift': self.costs['qdrift'] = methods_trotter.calc_qdrift_resources(
                                         self.molecule.lambda_value, 
-                                        self.weighted_avg_Z_per_unitary, 
-                                        self.weighted_avg_XY_per_unitary, 
+                                        self.molecule.weighted_avg_Z_per_unitary, 
+                                        self.molecule.weighted_avg_XY_per_unitary, 
                                         deltaE = 1e-4, 
                                         P_failure = .1)
 
             elif method == 'rand_ham': self.costs['rand_ham'] = methods_trotter.calc_rand_ham_resources(
                                             self.molecule.Lambda_value, 
                                             self.molecule.Gamma,
-                                            self.avg_Z_per_unitary, 
-                                            self.avg_XY_per_unitary, 
+                                            self.molecule.avg_Z_per_unitary, 
+                                            self.molecule.avg_XY_per_unitary, 
                                             deltaE = 1e-4, 
                                             P_failure = .1)
         
@@ -84,6 +84,8 @@ class Cost_calculator:
             
             elif method == 'configuration_interaction':
                 phi_max, _, grad_max = self.molecule.molecular_orbital_parameters()
+                x_max = self.molecule.xmax
+                alpha = self.molecule.min_alpha()
                 gamma1 = grad_max * x_max / phi_max
                 gamma2 = grad_max**2 * x_max**2 / phi_max
                 eta = self.molecule.eta
@@ -123,6 +125,8 @@ class Cost_calculator:
                 N = self.molecule.N
                 eta = self.molecule.eta
 
+                grid_length = (self.molecule.N * 100) ** 1/3
+                Omega = self.molecule.build_grid(grid_length)
 
                 arguments = (N, eta, Omega)
 
@@ -158,6 +162,8 @@ class Cost_calculator:
                 N = self.molecule.N
                 eta = self.molecule.eta
                 lambda_value = self.molecule.lambda_value
+                Omega = self.molecule.build_grid()
+                x_max = self.molecule.xmax
                 J = len(self.molecule.molecule_geometry) #is the number of atoms in the molecule
 
                 arguments = (N, eta, lambda_value, Omega, Ham_norm, J, x_max)
