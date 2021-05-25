@@ -36,7 +36,7 @@ class Taylor_based_methods:
         arb_state_synt = self.tools.arbitrary_state_synthesis(Gamma)
         epsilon_SS = epsilon_S /(r*3*2*(K*arb_state_synt + 2*K) ) # 3 from AA, 2 for for Prepare and Prepare^+, then Prepare_beta_1 and Prepare_beta_2, finally r
 
-        Select_H = 16*(np.ceil(np.log2(Gamma) +1)+3)* 2**4 *N
+        Select_H = 2*self.tools.multi_controlled_not(np.ceil(np.log2(Gamma) +1)+3)* 2**4 * (N/2) # The first two is because we multi-control to an ancilla, rotate and uncompute the ancilla. The (N/2) is the average number of number of Paulis in each creation/annihilation operator
         Select_V = Select_H * K
 
         crot_synt = self.tools.c_rotation_synthesis(epsilon_SS)
@@ -124,7 +124,7 @@ class Taylor_based_methods:
         Prepare_beta_2 = ( 2*sample + kickback )*K
         Prepare_beta = Prepare_beta_1 + Prepare_beta_2
 
-        Select_H = 16*(np.ceil(np.log2(Gamma) +1)+3)* 2**4 *N
+        Select_H = 2*self.tools.multi_controlled_not(np.ceil(np.log2(Gamma) +1)+3)* 2**4 * (N/2) # The first two is because we multi-control to an ancilla, rotate and uncompute the ancilla. The (N/2) is the average number of number of Paulis in each creation/annihilation operator
         Select_V = Select_H * K
 
         R = self.tools.multi_controlled_not((K+1)*np.log2(Gamma) + N) # The prepare qubits and the select qubits (in Jordan-Wigner there are N)
@@ -206,9 +206,9 @@ class Taylor_based_methods:
 
         n = np.ceil(np.ceil(np.log2(mu))/3) #each coordinate is a third
 
-        sum = self.tools.sum_cost(n) #todo: 4*n
-        mult = self.tools.multiplication_cost(n) #todo: 21*n**2
-        div = self.tools.divide_cost(n) #todo: 14n**2+7*n
+        sum = self.tools.sum_cost(n)
+        mult = self.tools.multiplication_cost(n)
+        div = self.tools.divide_cost(n)
 
         tay = exp_order*sum + (exp_order-1)*(mult + div) # For the exp
         babylon = sqrt_order*(div +  sum) # For the sqrt
@@ -234,7 +234,7 @@ class Taylor_based_methods:
         # There will be eta registers with log2(N) qubits each
         compare = self.tools.compare_cost(np.log2(N))
         sort = eta*(4 + compare) # 4 for the c-swap and one comparison
-        check = self.tools.multi_controlled_not(eta*np.log2(N)) #todo: return 16(m-2)
+        check = self.tools.multi_controlled_not(eta*np.log2(N))
         sum = self.tools.sum_cost(np.log2(N))
 
         find_alphas = 2* eta*(4*sum + check + sort + compare) #The 2 is because if it fails we have to reverse the computation

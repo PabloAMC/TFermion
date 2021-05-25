@@ -8,9 +8,16 @@ config_path = './config/config.json'
 tools = utils.Utils(config_path)
 
 args = tools.parse_arguments()
+try:
+    charge = args.charge
+except:
+    charge = 0
 
-# Some examples: HYDROFLUORIC ACID, Ammonia, water, methane, O2, CO2, O3, NaCl
-molecule = Molecule(name = args.molecule_name, tools = tools)
+# Some easy examples: HYDROFLUORIC ACID, Ammonia, water, methane, O2, CO2, O3, NaCl
+# More complex examples (beware the time): https://pubchem.ncbi.nlm.nih.gov/compound/7966 (cyclohexanol, MA's choosing)
+# https://pubchem.ncbi.nlm.nih.gov/compound/25000034 (Tetrahedral, 1.66 Amstrong), https://pubchem.ncbi.nlm.nih.gov/compound/167316 (table 1 in https://chemistry-europe.onlinelibrary.wiley.com/doi/full/10.1002/cphc.200700128?casa_token=fYXpuPMymU4AAAAA%3Ao0dz2LXXn8yVq56nOt5ZrV92HiuzItsffXm6Nn_O9z3hXt2d2Sm2qVX-GZwQsnQ_z4PPPPrN2jSqfIg)
+#molecule = Molecule(name = 'H', tools = tools)
+molecule = Molecule(name = args.molecule_name, tools = tools, charge = charge)
 
 #molecule.low_rank_approximation(occupied_indices = [0,1,2], active_indices = [3,4], virtual_indices = [5,6], sparsify = True)
 #ne_act_cas, n_mocore, n_mocas, n_movir = molecule.active_space(ao_labels=['O 2pz'])

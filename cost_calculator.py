@@ -18,6 +18,7 @@ class Cost_calculator:
 
 
         if method == 'qdrift' or method == 'rand_ham':
+            #todo: error handling will need to be modified after I talk with Michael
 
             methods_trotter = trotter_based_methods.Trotter_based_methods()
 
@@ -26,15 +27,16 @@ class Cost_calculator:
 
             if method == 'qdrift': self.costs['qdrift'] = methods_trotter.calc_qdrift_resources(
                                         self.molecule.lambda_value, 
-                                        self.molecule.N, 
+                                        self.weighted_avg_Z_per_unitary, 
+                                        self.weighted_avg_XY_per_unitary, 
                                         deltaE = 1e-4, 
                                         P_failure = .1)
 
             elif method == 'rand_ham': self.costs['rand_ham'] = methods_trotter.calc_rand_ham_resources(
                                             self.molecule.Lambda_value, 
-                                            self.molecule.lambda_value, 
                                             self.molecule.Gamma,
-                                            self.molecule.N, 
+                                            self.avg_Z_per_unitary, 
+                                            self.avg_XY_per_unitary, 
                                             deltaE = 1e-4, 
                                             P_failure = .1)
         

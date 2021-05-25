@@ -1,6 +1,7 @@
 import itertools
 import openfermion
 import copy
+import json
 
 from openfermionpsi4 import run_psi4
 from openfermionpyscf import run_pyscf
@@ -45,7 +46,7 @@ wigner_seitz_radius = 5. # Chosen as in https://quantumai.google/openfermion/tut
 
 class Molecule:
 
-    def __init__(self, name, tools, program = 'pyscf'):
+    def __init__(self, name, tools, charge = 0, program = 'pyscf'):
 
         self.molecule_name = name
         self.tools = tools
@@ -54,8 +55,33 @@ class Molecule:
         self.gamma_threshold = self.tools.config_variables['gamma_threshold']
         self.molecule_geometry = geometry_from_pubchem(self.molecule_name) # We prefer pyscf because of functionality.
 
+        ## Center the molecule so that coords can be put in a box
+
+        # Tuple to list
+        for i, (at, coord) in zip(range(len(self.molecule_geometry)), self.molecule_geometry):
+            self.molecule_geometry[i] = (at, list(coord))
+
+        self.xmax = 0
+
+        # Shift each coordinate
+        for j in range(3):
+            maximum = max([self.molecule_geometry[i][1][j] for i in range(len(self.molecule_geometry))])
+            minimum = min([self.molecule_geometry[i][1][j] for i in range(len(self.molecule_geometry))])
+
+            avg = (maximum + minimum)/2
+
+            for i in range(len(self.molecule_geometry)):
+                self.molecule_geometry[i][1][j] -= avg
+
+            maximum = max([self.molecule_geometry[i][1][j] for i in range(len(self.molecule_geometry))])
+            self.xmax = max(self.xmax,maximum) 
+        
+        # List to tuple
+        for i, (at, coord) in zip(range(len(self.molecule_geometry)), self.molecule_geometry):
+            self.molecule_geometry[i] = (at, tuple(coord))
+
         #From OpenFermion
-        self.molecule_data = MolecularData(self.molecule_geometry, self.tools.config_variables['basis'], multiplicity = 1)
+        self.molecule_data = MolecularData(self.molecule_geometry, self.tools.config_variables['basis'], charge = charge, multiplicity = 1, filename = 'name')
 
         #Add possibility of boundary conditions https://sunqm.github.io/pyscf/tutorial.html#initializing-a-crystal -> Seems quite complicated and not straightforward
         if program == 'psi4': 
@@ -82,7 +108,7 @@ class Molecule:
         fermion_operator = get_fermion_operator(molecular_hamiltonian)
         JW_op = jordan_wigner(fermion_operator)
         #BK_op = openfermion.transforms.bravyi_kitaev(fermion_operator) #Results seem to be the same no matter what transform one uses
-        
+
         #sparse_mat = openfermion.get_sparse_operator(JW_op)
         #dense_operator = sparse_mat.todense()
         #max_eig, _ = scipy.sparse.linalg.eigsh(sparse_mat, k=1, which="LM")       
@@ -94,12 +120,25 @@ class Molecule:
         else:
             self.H_norm = abs(self.molecule_pyscf.hf_energy)
 
-        d = copy.copy(JW_op.terms)
-
-        l = abs(np.array(list(d.values())))
+        l = abs(np.array(list(JW_op.terms.values())))
         self.lambda_value = sum(l)
         self.Lambda_value = max(l)
         self.Gamma = np.count_nonzero(l >= threshold)
+
+        avg_Z_per_unitary = 0
+        avg_XY_per_unitary = 0
+        weighted_avg_Z_per_unitary = 0
+        weighted_avg_XY_per_unitary = 0
+        for unitary, weight in JW_op.terms.items():
+            avg_Z_per_unitary += len([P[1] for P in unitary if P[1] == 'Z'])
+            avg_XY_per_unitary += len([P[1] for P in unitary if (P[1] == 'X' or P[1] == 'Y')])
+            weighted_avg_Z_per_unitary += len([P[1] for P in unitary if P[1] == 'Z'])*float(abs(weight))
+            weighted_avg_XY_per_unitary += len([P[1] for P in unitary if P[1] == 'X' or P[1] == 'Y'])*float(abs(weight))
+
+        self.avg_Z_per_unitary = avg_Z_per_unitary/len(JW_op.terms)
+        self.avg_XY_per_unitary = avg_XY_per_unitary/len(JW_op.terms)
+        self.weighted_avg_Z_per_unitary = weighted_avg_Z_per_unitary/self.lambda_value
+        self.weighted_avg_XY_per_unitary = weighted_avg_XY_per_unitary/self.lambda_value
 
         self.H_norm_lambda_ratio = max(H_NORM_LAMBDA_RATIO,self.H_norm/self.lambda_value)
 
@@ -114,8 +153,10 @@ class Molecule:
         # Figure out length scale based on Wigner-Seitz radius and construct a basis grid.
         # Wigner_seitz_radius  https://en.wikipedia.org/wiki/Wigner%E2%80%93Seitz_radius
 
-        length_scale = openfermion.wigner_seitz_length_scale(wigner_seitz_radius = wigner_seitz_radius, n_particles = self.eta, dimension = 3)
-
+        #Have to investigate better how is the grid created, and 
+        #length_scale = openfermion.wigner_seitz_length_scale(wigner_seitz_radius = wigner_seitz_radius, n_particles = self.eta, dimension = 3)
+        
+        length_scale = 4*self.xmax # We set a box whose length is 4 times the maximum coordinate value of any atom, as the box has to be twice as large as the maximum distance in each coord
         grid = Grid(dimensions = 3, length = grid_length, scale = length_scale) # Complexity is determined by lenght
 
         #h_plane_wave = plane_wave_hamiltonian(grid, self.molecule_geometry, plane_wave = False, include_constant=False, non_periodic = non_periodic, spinless = True)
@@ -130,15 +171,28 @@ class Molecule:
         else:
             self.H_norm = abs(self.molecule_pyscf.hf_energy)
 
-        d = copy.copy(JW_op.terms)
-
-        l = abs(np.array(list(d.values())))
+        l = abs(np.array(list(JW_op.terms.values())))
 
         self.lambda_value = sum(l)
         self.Lambda_value = max(l)
         self.Gamma = np.count_nonzero(l >= 0)
 
         self.H_norm_lambda_ratio = max(H_NORM_LAMBDA_RATIO,self.H_norm/self.lambd)
+
+        avg_Z_per_unitary = 0
+        avg_XY_per_unitary = 0
+        weighted_avg_Z_per_unitary = 0
+        weighted_avg_XY_per_unitary = 0
+        for unitary, weight in JW_op.terms.items():
+            avg_Z_per_unitary += len([P[1] for P in unitary if P[1] == 'Z'])
+            avg_XY_per_unitary += len([P[1] for P in unitary if (P[1] == 'X' or P[1] == 'Y')])
+            weighted_avg_Z_per_unitary += len([P[1] for P in unitary if P[1] == 'Z'])*float(abs(weight))
+            weighted_avg_XY_per_unitary += len([P[1] for P in unitary if P[1] == 'X' or P[1] == 'Y'])*float(abs(weight))
+
+        self.avg_Z_per_unitary = avg_Z_per_unitary/len(JW_op.terms)
+        self.avg_XY_per_unitary = avg_XY_per_unitary/len(JW_op.terms)
+        self.weighted_avg_Z_per_unitary = weighted_avg_Z_per_unitary/self.lambda_value
+        self.weighted_avg_XY_per_unitary = weighted_avg_XY_per_unitary/self.lambda_value
 
         return grid.volume
 
@@ -426,14 +480,12 @@ class Molecule:
             JW_op = openfermion.transforms.jordan_wigner(fermion_operator)
             #BK_op = openfermion.transforms.bravyi_kitaev(fermion_operator) #Results seem to be the same no matter what transform one uses
 
-            d = JW_op.terms
-            del d[()]
-            l = abs(np.array(list(d.values())))
-            lambd = sum(l)
+            l = abs(np.array(list(JW_op.terms.values())))
+            lambda_value = sum(l)
 
-            print('<i> Lambda', lambd)
+            print('<i> lambda', lambda_value)
 
-            return lambd
+            return lambda_value
         
         exact_E = low_rank_truncation_mp2_energy(rank_threshold = 0, sparsity_threshold = 0)
 
@@ -591,3 +643,60 @@ class Molecule:
         alpha = np.min(alphas)
         return alpha
 
+    def save(self,json_name,JW_op_terms): 
+        '''
+        To save pyscf files: 
+        https://github.com/pyscf/pyscf/blob/1de8c145abb3e1a7392df9118e8062e6fe6bde00/examples/ao2mo/01-outcore.py
+        https://github.com/pyscf/pyscf/blob/1de8c145abb3e1a7392df9118e8062e6fe6bde00/examples/misc/02-chkfile.py
+        
+        To save MolecularData class:
+        https://github.com/quantumlib/OpenFermion/blob/7c3581ad75716d1ff6a0043a516d271052a90e35/src/openfermion/chem/molecular_data.py#L567
+        '''
+        
+        #The function takes MolecularData from file 'filename.hdf5' where filename is self.name
+        self.molecule_data.save()
+
+        molecule_properties = {}
+
+        molecule_properties["N"] = self.N
+        molecule_properties["lambda_value"] = self.lambda_value
+        molecule_properties["Lambda_value"] = self.Lambda_value
+        molecule_properties["Gamma"] = self.Gamma
+        molecule_properties["eta"] = self.eta
+
+        molecule_properties["avg_Z_per_unitary"] = self.avg_Z_per_unitary
+        molecule_properties["avg_XY_per_unitary"] = self.avg_XY_per_unitary
+        molecule_properties["weighted_avg_Z_per_unitary"] = self.weighted_avg_Z_per_unitary
+        molecule_properties["weighted_avg_XY_per_unitary"] = self.weighted_avg_XY_per_unitary
+        molecule_properties["xmax"] = self.xmax
+
+        molecule_properties["JW_op_terms"] = JW_op_terms
+
+        with open(json_name, "w") as fp:
+            json.dump(molecule_properties,fp) 
+
+    def load(self,json_name):
+        '''
+        To load MolecularData: https://github.com/quantumlib/OpenFermion/blob/7c3581ad75716d1ff6a0043a516d271052a90e35/src/openfermion/chem/molecular_data.py#L719
+        '''
+        
+        #The function takes MolecularData from file 'filename.hdf5' where filename is self.name
+        self.molecule_data.load()
+
+        molecule_properties = json.loads(json_name)
+
+        self.N = molecule_properties["N"]
+        self.lambda_value = molecule_properties["lambda_value"]
+        self.Lambda_value = molecule_properties["Lambda_value"]
+        self.Gamma = molecule_properties["Gamma"]
+        self.eta = molecule_properties["eta"]
+
+        self.avg_Z_per_unitary = molecule_properties["avg_Z_per_unitary"]
+        self.avg_XY_per_unitary = molecule_properties["avg_XY_per_unitary"]
+        self.weighted_avg_Z_per_unitary = molecule_properties["weighted_avg_Z_per_unitary"]
+        self.weighted_avg_XY_per_unitary = molecule_properties["weighted_avg_XY_per_unitary"]
+        self.xmax = molecule_properties["xmax"]
+
+        JW_op_terms = molecule_properties["JW_op_terms"]
+
+        return JW_op_terms
