@@ -37,7 +37,7 @@ class Plane_waves_methods:
         return r*(exp_UV_cost + exp_T_cost + 2*FFFT_cost )
 
     # Low depth quantum simulation of materials (babbush2018low) Taylor
-    def low_depth_taylor(self, epsilons, N, lambd, Lambd, H_norm_lambda_ratio):
+    def low_depth_taylor(self, epsilons, N, lambda_value, Lambda_value, H_norm_lambda_ratio):
 
         epsilon_PEA = epsilons[0]
         epsilon_HS = epsilons[1]
@@ -49,14 +49,14 @@ class Plane_waves_methods:
         M = (N/2)**3
 
         t = 4.7/epsilon_PEA
-        r = t*Lambd/np.log(2)
+        r = t*Lambda_value/np.log(2)
 
         K = np.ceil(np.log2(r/epsilon_HS) / np.log2( np.log2 (r/epsilon_HS))) 
 
         #todo: revise the count to make it more readable once I get over Linear T   
         epsilon_SS = epsilon_S /(r*3*2*K*(2+4*D+2)) # In the sum the first 2 is due to Uniform_3, next 2D are due to 2 uses of Uniform_M^{otimes D}, and the final two due to the controlled rotation theta angles
         
-        mu = np.ceil(np.log(2*np.sqrt(2)*Lambd/epsilon_PEA) + np.log(1 + epsilon_PEA/(8*lambd)) + np.log(1 - (H_norm_lambda_ratio)**2))
+        mu = np.ceil(np.log(2*np.sqrt(2)*Lambda_value/epsilon_PEA) + np.log(1 + epsilon_PEA/(8*lambda_value)) + np.log(1 - (H_norm_lambda_ratio)**2))
         
         # The number of total rotations is r*2* number of rotations for each preparation P (in this case 2D+1)
         z_rot_synt = self.tools.z_rotation_synthesis(epsilon_SS)
@@ -87,7 +87,7 @@ class Plane_waves_methods:
         return result
 
     # Low depth quantum simulation of materials (babbush2018low) On-the fly
-    def low_depth_taylor_on_the_fly(self, epsilons, N, eta, Gamma, lambd, Omega, J, x_max):
+    def low_depth_taylor_on_the_fly(self, epsilons, N, eta, Gamma, lambda_value, Omega, J, x_max):
         
         epsilon_PEA = epsilons[0]
         epsilon_HS = epsilons[1]
@@ -100,9 +100,9 @@ class Plane_waves_methods:
         '''
         sum_1_nu = 4*np.pi(np.sqrt(3)*N**(1/3)/2 - 1) + 3 - 3/N**(1/3) + 3*self.tools.I(N**(1/3))
         sum_nu = self.quadratic_sum(int(N^{1/3}))
-        lambd = (2*eta+1)/(8*Omega**(1/3)*np.pi)*(Omega**(2/3)*8*N/(2*np.pi)**2)*sum_1_nu*((2*eta+1)*np.pi/(2*Omega) + (8*N-1)*np.pi/(4*Omega)) + 8*N/2*(np.pi**2* sum_nu/(N*Omega**(2/3))+4) 
+        lambda_value = (2*eta+1)/(8*Omega**(1/3)*np.pi)*(Omega**(2/3)*8*N/(2*np.pi)**2)*sum_1_nu*((2*eta+1)*np.pi/(2*Omega) + (8*N-1)*np.pi/(4*Omega)) + 8*N/2*(np.pi**2* sum_nu/(N*Omega**(2/3))+4) 
         t = 4.7/epsilon_PEA
-        r = t*lambd/np.log(2)
+        r = t*lambda_value/np.log(2)
         
         zeta = epsilon_H/(r*Gamma)
         max_W = (2*eta+1)/(8*Omega**(1/3)*np.pi)
@@ -118,7 +118,7 @@ class Plane_waves_methods:
         cos_order = self.tools.order_find(function = math.cos(x), function_name = 'cos', e = eps_tay_s, xeval = x_max)
 
         n = np.ceil(np.ceil(np.log2(mu))/3) #each coordinate is a third
-        M = lambd*r*3*2*K/epsilon_H
+        M = lambda_value*r*3*2*K/epsilon_H
 
         sum = self.tools.sum_cost(n)
         mult = self.tools.multiplication_cost(n)
