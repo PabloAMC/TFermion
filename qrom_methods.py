@@ -6,7 +6,7 @@ class QROM_methods:
         pass
 
     ## Linear T complexity (babbush2018encoding)
-    def linear_T(self, epsilons, N, lambd, Ham_norm):
+    def linear_T(self, epsilons, N, lambd, H_norm_lambda_ratio):
 
         epsilon_PEA = epsilons[0]
         epsilon_S = epsilons[1]
@@ -15,7 +15,7 @@ class QROM_methods:
         t = 4.7/epsilon_PEA
         r = lambd*t
         
-        mu = np.ceil(np.log(2*np.sqrt(2)*lambd/epsilon_PEA) + np.log(1 + epsilon_PEA/(8*lambd)) + np.log(1 - (Ham_norm/lambd)**2))
+        mu = np.ceil(np.log(2*np.sqrt(2)*lambd/epsilon_PEA) + np.log(1 + epsilon_PEA/(8*lambd)) + np.log(1 - (H_norm_lambda_ratio)**2))
         
         D = 3 #dimension of the model
         M = (N/2)**3
@@ -45,7 +45,7 @@ class QROM_methods:
         return r*(2*Prepare + Reflexion + Select) #todo: rotations in the quantum walk
 
     ## Sparsity and low rank factorization (berry2019qubitization)
-    def sparsity_low_rank(self, epsilons, N, lambd, L, Ham_norm, sparsity_d = None):
+    def sparsity_low_rank(self, epsilons, N, lambd, L, H_norm_lambda_ratio, sparsity_d = None):
 
         epsilon_PEA = epsilons[0]
         epsilon_S = epsilons[1]
@@ -53,7 +53,7 @@ class QROM_methods:
         t = 4.7/epsilon_PEA
         r = lambd*t
         
-        mu = np.ceil(np.log(2*np.sqrt(2)*lambd/epsilon_PEA) + np.log(1 + epsilon_PEA/(8*lambd)) + np.log(1 - (Ham_norm/lambd)**2)) #todo:in all mu definitions, the last Ham_norm/lambd to be substituted by max(Ham_norm/lambd, c) with c = .75 or so
+        mu = np.ceil(np.log(2*np.sqrt(2)*lambd/epsilon_PEA) + np.log(1 + epsilon_PEA/(8*lambd)) + np.log(1 - (H_norm_lambda_ratio)**2)) #todo:in all mu definitions, the last Ham_norm/lambd to be substituted by max(Ham_norm/lambd, c) with c = .75 or so
 
         # Rotations are used in the Uniform protocol as well as in the ancilla to decrease the Success amplitude
         epsilon_SS = epsilon_S/ (r*2*(2*(12 +1)+6)) #first 2 is Prepare and Prepare^+, second Prepare is for the two rotations in each Uniform. Finally we have Uniform_{N/2}, Uniform_L and the ancilla rotations to decrease success prob.
