@@ -241,6 +241,3 @@ class Interaction_picture:
 
         cost = r*(exp_T + TDS)
         return cost
-
-        #TODO: COS, SQRT AND EXP COSTS
-        #TODO: np.ceil(np.log2()) or np.log2()

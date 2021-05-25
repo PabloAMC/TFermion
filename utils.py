@@ -134,6 +134,9 @@ class Utils():
     def rotation_synthesis(self, epsilon_SS):
         return (10+12*np.log2(1/epsilon_SS))
 
+    def c_rotation_synthesis(self, epsilon_SS):
+        return 2*self.rotation_synthesis(epsilon_SS)
+
     def z_rotation(self, epsilon_SS):
         return 10 + 4*np.log2(1/epsilon_SS)
 

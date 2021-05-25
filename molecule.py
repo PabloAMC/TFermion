@@ -181,6 +181,8 @@ class Molecule:
 
         self.H_norm_lambda_ratio = max(H_NORM_LAMBDA_RATIO,self.H_norm/self.lambd)
 
+        self.Omega = grid.volume
+
         '''
         avg_Z_per_unitary = 0
         avg_XY_per_unitary = 0
@@ -198,7 +200,7 @@ class Molecule:
         self.weighted_avg_XY_per_unitary = weighted_avg_XY_per_unitary/self.lambda_value
         '''
 
-        return grid.volume
+        return grid
 
         # recursive method that iterates over all rows of a molecule to get the parameters:
         # lambda_value is the sum all coefficients of the hamiltonian (sum of all terms)

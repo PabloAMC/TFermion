@@ -22,7 +22,7 @@ class QROM_methods:
 
         # The number of total rotations is r*2* number of rotations for each preparation P (in this case 2D+1)
         epsilon_SS = epsilon_S / (r*2*(2*D+1))
-        z_rot_synt = self.tools.z_rotation_synthesis(epsilon_SS) #todo: see table 4 log 1/eps_ss + 10
+        z_rot_synt = self.tools.z_rotation_synthesis(epsilon_SS)
 
         def uniform_cost(L, k=0, z_rot_synt = z_rot_synt, controlled = False):
             if controlled:
@@ -53,12 +53,12 @@ class QROM_methods:
         t = 4.7/epsilon_PEA
         r = lambd*t
         
-        mu = np.ceil(np.log(2*np.sqrt(2)*lambd/epsilon_PEA) + np.log(1 + epsilon_PEA/(8*lambd)) + np.log(1 - (H_norm_lambda_ratio)**2)) #todo:in all mu definitions, the last Ham_norm/lambd to be substituted by max(Ham_norm/lambd, c) with c = .75 or so
+        mu = np.ceil(np.log(2*np.sqrt(2)*lambd/epsilon_PEA) + np.log(1 + epsilon_PEA/(8*lambd)) + np.log(1 - (H_norm_lambda_ratio)**2))
 
         # Rotations are used in the Uniform protocol as well as in the ancilla to decrease the Success amplitude
         epsilon_SS = epsilon_S/ (r*2*(2*(12 +1)+6)) #first 2 is Prepare and Prepare^+, second Prepare is for the two rotations in each Uniform. Finally we have Uniform_{N/2}, Uniform_L and the ancilla rotations to decrease success prob.
-        z_rot_synt = self.tools.z_rotation_synthesis(epsilon_SS) #todo: see table 4 log 1/eps_ss + 10
-        rot_synt = self.tools.rotation_synthesis(epsilon_SS) #todo: see table 12 log 1/eps_ss + 10
+        z_rot_synt = self.tools.z_rotation_synthesis(epsilon_SS)
+        rot_synt = self.tools.rotation_synthesis(epsilon_SS)
 
         def uniform_cost(L, k=0, z_rot_synt = z_rot_synt, controlled = False):
             if controlled:
