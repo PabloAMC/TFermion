@@ -81,6 +81,9 @@ class Cost_calculator:
             
             elif method == 'configuration_interaction':
                 phi_max, _, grad_max = self.molecule.molecular_orbital_parameters()
+                gamma1 = grad_max * x_max / phi_max
+                gamma2 = grad_max**2 * x_max**2 / phi_max
+                eta = self.molecule.eta
                 zeta_max_i = self.molecule.calculate_zeta_i_max()
                 J = len(self.molecule.molecule_geometry) #is the number of atoms in the molecule
 

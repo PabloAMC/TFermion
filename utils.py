@@ -1,6 +1,5 @@
 import argparse
 import json
-from test import cordic_trig
 from molecule import CHEMICAL_ACCURACY
 import numpy as np
 import random as rnd
@@ -55,14 +54,14 @@ class Utils():
         
         error = 1
         # get the half digits of the xeval (len(xeval)/2)
-        n = int(str(xeval)[:int(len(str(xeval))/2)])
         order = 0
         while error > e:
 
             if function_name == 'sqrt' or function_name == 'exp':
+                n = int(str(xeval)[:int(len(str(int(xeval)))/2)])
                 error, _ = self.calculate_error_function(function, function_name, n, xeval, order)
             elif function_name == 'cos':
-                error, xeval = self.calculate_error_function(function, function_name, n, xeval, order, xeval)
+                error, xeval = self.calculate_error_function(function, function_name, 1, xeval, order, xeval)
 
             order+=1
 
@@ -106,20 +105,6 @@ class Utils():
 
         else:
             raise NotImplementedError
-    
-    def cordic_trig(beta):
-
-        K = 0.6072529350088812561694
-        x,y = 1, 0
-
-        d = 1.0
-        if beta < 0:
-            d = -1.0
-
-        (x,y) = (x - (d*(2.0**(-i))*y), (d*(2.0**(-i))*x) + y)
-        beta = beta - (d*math.atan(2**(-i)))
-            
-        return K*x
 
     def f(self, x, y):
         return 1/(x**2 + y**2)
