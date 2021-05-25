@@ -37,7 +37,7 @@ class Plane_waves_methods:
         return r*(exp_UV_cost + exp_T_cost + 2*FFFT_cost )
 
     # Low depth quantum simulation of materials (babbush2018low) Taylor
-    def low_depth_taylor(self, epsilons, N, lambd, Lambd, Ham_norm):
+    def low_depth_taylor(self, epsilons, N, lambd, Lambd, H_norm_lambda_ratio):
 
         epsilon_PEA = epsilons[0]
         epsilon_HS = epsilons[1]
@@ -56,7 +56,7 @@ class Plane_waves_methods:
         #todo: revise the count to make it more readable once I get over Linear T   
         epsilon_SS = epsilon_S /(r*3*2*K*(2+4*D+2)) # In the sum the first 2 is due to Uniform_3, next 2D are due to 2 uses of Uniform_M^{otimes D}, and the final two due to the controlled rotation theta angles
         
-        mu = np.ceil(np.log(2*np.sqrt(2)*Lambd/epsilon_PEA) + np.log(1 + epsilon_PEA/(8*lambd)) + np.log(1 - (Ham_norm/lambd)**2))
+        mu = np.ceil(np.log(2*np.sqrt(2)*Lambd/epsilon_PEA) + np.log(1 + epsilon_PEA/(8*lambd)) + np.log(1 - (H_norm_lambda_ratio)**2))
         
         # The number of total rotations is r*2* number of rotations for each preparation P (in this case 2D+1)
         z_rot_synt = self.tools.z_rotation_synthesis(epsilon_SS)
@@ -87,7 +87,7 @@ class Plane_waves_methods:
         return result
 
     # Low depth quantum simulation of materials (babbush2018low) On-the fly
-    def low_depth_taylor_on_the_fly(self, epsilons, N, eta, Gamma, lambd, Omega, Ham_norm, J, x_max):
+    def low_depth_taylor_on_the_fly(self, epsilons, N, eta, Gamma, lambd, Omega, J, x_max):
         
         epsilon_PEA = epsilons[0]
         epsilon_HS = epsilons[1]
