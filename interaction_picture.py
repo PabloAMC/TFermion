@@ -35,8 +35,7 @@ class Interaction_picture:
         t = 4.7/epsilon_PEA
         r = lambd_T*t/np.log(2) # lambd_T is necessary to take tau = 1
         
-        # Notice that K is a bit different than in other articles 
-        K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS))) 
+        K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1)) 
         M = np.max(16*t*np.log(2)/epsilon_HS * (2*lambd_U_V + lambd_T), K**2)
         
         # Now we count the number of individual rotations from each source: 
@@ -139,7 +138,7 @@ class Interaction_picture:
         r = lambd_U_V*t # lambd_T is necessary to take tau = 1
         
         # Notice that K is a bit different than in other articles 
-        K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS))) # Same as in the previous function
+        K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1))  # Same as in the previous function
         M = np.max(16*t*np.log(2)/epsilon_HS * (lambd_U_V + 2*lambd_T), K**2) # Changes from the M in the previous function in T<->U+V
 
         # Deltas
