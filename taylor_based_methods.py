@@ -166,7 +166,7 @@ class Taylor_based_methods:
         # min mu_M_zeta such that it is larger or equal to the bound given in eq D13
         def mu_M_zeta_bound_calc(mu_M_zeta):
 
-            r = 2*Gamma*t*mu_M_zeta
+            r = 2*Gamma*t*mu_M_zeta/np.log(2)
             K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1)) 
             delta = epsilon_H/(3*r*K)   # delta is the error in calculating a single integral. There are 3K*r of them in the simulation, 
                                         # as r segments are simulated, for a total time of t
@@ -180,7 +180,7 @@ class Taylor_based_methods:
             return mu_M_zeta_bound
 
         # Nonlinear constraint mu_M_zeta >= mu_M_zeta_bound
-        nconstraint = scipy.optimize.NonlinearConstraint(fun = lambda mu_M_zeta: mu_M_zeta - mu_M_zeta_bound_calc(mu_M_zeta), lb = 0, ub = +np.inf, keep_feasible = True)
+        nconstraint = scipy.optimize.NonlinearConstraint(fun = lambda mu_M_zeta: mu_M_zeta_bound_calc(mu_M_zeta)- mu_M_zeta, lb = 0, ub = +np.inf, keep_feasible = True)
 
         result = scipy.optimize.minimize(fun = lambda mu_M_zeta: mu_M_zeta, x0 = 1e20, constraints = [nconstraint], tol = 10, options = {'maxiter': 50}, method='COBYLA') # Works with COBYLA, but not with SLSQP (misses the boundaries) or trust-constr (oscillates)
 
