@@ -143,19 +143,23 @@ class Utils():
         return sum(x)
 
     def arbitrary_state_synthesis(self, N):
-        return 2**(np.ceil(np.log2(N)))
+        '''
+        Number of rotations in arbitrary state synthesis
+        Use theorems 8 and 9 from https://ieeexplore.ieee.org/abstract/document/1629135
+        '''
+        return 2*2**(np.ceil(np.log2(N)))-2
 
-    def rotation_synthesis(self, epsilon_SS):
-        return (10+12*np.log2(1/epsilon_SS))
-
-    def c_rotation_synthesis(self, epsilon_SS):
-        return 2*self.rotation_synthesis(epsilon_SS)
-
-    def z_rotation(self, epsilon_SS):
+    def pauli_rotation_synthesis(self, epsilon_SS):
         return 10 + 4*np.log2(1/epsilon_SS)
 
-    def c_z_rotation(self, epsilon_SS):
-        return 2*self.z_rotation(epsilon_SS)
+    def c_pauli_rotation_synthesis(self, epsilon_SS):
+        return 2*self.pauli_rotation_synthesis(epsilon_SS)
+
+    def SU2_rotation_synthesis(self, epsilon_SS):
+        return 3*self.pauli_rotation_synthesis(epsilon_SS)
+
+    def c_SU2_rotation_synthesis(self, epsilon_SS):
+        return 2*self.SU2_rotation_synthesis(epsilon_SS)
 
     def multi_controlled_not(self, N):
         return 16*(N-2)

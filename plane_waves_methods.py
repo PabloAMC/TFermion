@@ -59,7 +59,7 @@ class Plane_waves_methods:
         mu = np.ceil(np.log(2*np.sqrt(2)*Lambda_value/epsilon_PEA) + np.log(1 + epsilon_PEA/(8*lambda_value)) + np.log(1 - (H_norm_lambda_ratio)**2))
         
         # The number of total rotations is r*2* number of rotations for each preparation P (in this case 2D+1)
-        z_rot_synt = self.tools.z_rotation_synthesis(epsilon_SS)
+        z_rot_synt = self.tools.pauli_rotation_synthesis(epsilon_SS)
 
         def uniform_cost(L, k=0, z_rot_synt = z_rot_synt, controlled = False):
             if controlled:
@@ -77,7 +77,7 @@ class Plane_waves_methods:
         Prepare = Subprepare + D*uniform_cost(M, controlled=True) + D*np.log2(M)*Fredkin_cost + sum + 2*self.tools.multi_controlled_not(np.log2(N))
         
         Select = 3*QROM_cost(N) + 2*np.log2(N)*Fredkin_cost
-        crot_synt = self.tools.c_rotation_synthesis(epsilon_SS) # due to the preparation of the theta angles
+        crot_synt = self.tools.c_pauli_rotation_synthesis(epsilon_SS) # due to the preparation of the theta angles
         prepare_beta = K*(Prepare + crot_synt) # The 2*rot_synt is due to the preparation of the theta angles
         select_V = K*(Select)
 
@@ -136,7 +136,7 @@ class Plane_waves_methods:
         kickback = 32*np.log(mu)
 
         prepare_W = 2*sample_w + kickback
-        crot_synt = self.tools.c_rotation_synthesis(epsilon_SS)
+        crot_synt = self.tools.c_pauli_rotation_synthesis(epsilon_SS)
         prepare_beta = K*(prepare_W + crot_synt)
         select_H = (12*N + 8*np.log(N))
         select_V = K*select_H

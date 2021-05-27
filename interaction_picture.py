@@ -64,7 +64,7 @@ class Interaction_picture:
         exp_U_V = exp_V+exp_U
 
         # Qubitization of T
-        Prepare = rot_prep*self.tools.rotation_synthesis(epsilon_SS)
+        Prepare = rot_prep*self.tools.pauli_rotation_synthesis(epsilon_SS)
         Select = 8*N
         T_qubitization = 2*FFFT_cost + 2*Prepare + Select
 
@@ -72,7 +72,7 @@ class Interaction_picture:
         HAM_T = 2*exp_U_V + T_qubitization
 
         #Uniform
-        z_rot_synt = self.tools.z_rotation_synthesis(epsilon_SS)
+        z_rot_synt = self.tools.pauli_rotation_synthesis(epsilon_SS)
         def uniform_cost(L, k=0, z_rot_synt = z_rot_synt, controlled = False):
             if controlled:
                 return 2*k+10*np.log2(L) + 2*z_rot_synt
@@ -92,7 +92,7 @@ class Interaction_picture:
         DYS_K = (K-1)*DYS_k + DYS_0 + ADD_b
 
         # TDS
-        COEF = rot_COEF*self.tools.rotation_synthesis(epsilon_SS)
+        COEF = rot_COEF*self.tools.pauli_rotation_synthesis(epsilon_SS)
         TDS_2 = 2*COEF + DYS_K
         R = self.tools.multi_controlled_not(N+np.ceil(np.log2(Gamma)) + 2 + np.ceil(np.log2(K+1)) + np.ceil(np.log2(M)))
         TDS = 2*R + 3*TDS_2
@@ -163,7 +163,7 @@ class Interaction_picture:
         epsilon_SS = epsilon_S / num_rotations
 
         # Uniform
-        z_rot_synt = self.tools.z_rotation_synthesis(epsilon_SS)
+        z_rot_synt = self.tools.pauli_rotation_synthesis(epsilon_SS)
         def uniform_cost(L, k=0, z_rot_synt = z_rot_synt, controlled = False):
             if controlled:
                 return 2*k+10*np.log2(L) + 2*z_rot_synt
@@ -183,7 +183,7 @@ class Interaction_picture:
         def QROM_cost(N): return 4*N
         compare = self.tools.compare_cost(np.ceil(np.log2(1/delta_mu)))
         
-        Prepare_cube = rot_Prepare_cube*self.tools.rotation_synthesis(epsilon_SS)
+        Prepare_cube = rot_Prepare_cube*self.tools.pauli_rotation_synthesis(epsilon_SS)
         Other_cube = n*self.tools.multi_controlled_not(np.ceil(np.log2(n)))
 
         Negative0 = self.tools.multi_controlled_not(n)
@@ -195,7 +195,7 @@ class Interaction_picture:
         # Prepare
         Momentum_state = 3*prep_nu + 2*self.tools.multi_controlled_not(1+n+1) # The Amplitude Amplification step: Rotations on the flag qubits indicating failure 1+n+1 for steps 2, 3 and 4
         Subprepare_J = QROM_cost(J) + uniform_cost(J) + compare + (np.ceil(np.log2(J)))*Fredkin_cost
-        U_V_weighting = self.tools.rotation_synthesis(epsilon_SS)
+        U_V_weighting = self.tools.pauli_rotation_synthesis(epsilon_SS)
         Prepare = U_V_weighting + Subprepare_J + Momentum_state
 
         # Select
@@ -233,7 +233,7 @@ class Interaction_picture:
         DYS_K = (K-1)*DYS_k + DYS_0 + ADD_b
 
         # TDS
-        COEF = rot_COEF*self.tools.rotation_synthesis(epsilon_SS)
+        COEF = rot_COEF*self.tools.pauli_rotation_synthesis(epsilon_SS)
         TDS_2 = 2*COEF + DYS_K
         R = self.tools.multi_controlled_not(N+np.ceil(np.log2(Gamma)) + 2 + np.ceil(np.log2(K+1)) + np.ceil(np.log2(M)))
         TDS = 2*R + 3*TDS_2

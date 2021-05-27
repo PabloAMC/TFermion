@@ -23,7 +23,7 @@ class Trotter_based_methods:
 
         epsilon_SS = epsilon_S/(2*n) # The 2 is due to the control
 
-        rost_cost_factor = 2*self.tools.c_z_rotation(epsilon_SS)
+        rost_cost_factor = self.tools.c_pauli_rotation_synthesis(epsilon_SS)
 
         return 1/(1-P_failure)*rost_cost_factor*n
 
@@ -42,6 +42,6 @@ class Trotter_based_methods:
 
         epsilon_SS = epsilon_S/(2*n) # The 2 is due to the control
 
-        rost_cost_factor = 2*self.tools.c_z_rotation(epsilon_SS)
+        rost_cost_factor = self.tools.c_pauli_rotation_synthesis(epsilon_SS)
 
         return 1/(1-P_failure)*rost_cost_factor*n

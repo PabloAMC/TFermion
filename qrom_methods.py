@@ -22,7 +22,7 @@ class QROM_methods:
 
         # The number of total rotations is r*2* number of rotations for each preparation P (in this case 2D+1)
         epsilon_SS = epsilon_S / (r*2*(2*D+1))
-        z_rot_synt = self.tools.z_rotation_synthesis(epsilon_SS)
+        z_rot_synt = self.tools.pauli_rotation_synthesis(epsilon_SS)
 
         def uniform_cost(L, k=0, z_rot_synt = z_rot_synt, controlled = False):
             if controlled:
@@ -57,8 +57,10 @@ class QROM_methods:
 
         # Rotations are used in the Uniform protocol as well as in the ancilla to decrease the Success amplitude
         epsilon_SS = epsilon_S/ (r*2*(2*(12 +1)+6)) #first 2 is Prepare and Prepare^+, second Prepare is for the two rotations in each Uniform. Finally we have Uniform_{N/2}, Uniform_L and the ancilla rotations to decrease success prob.
-        z_rot_synt = self.tools.z_rotation_synthesis(epsilon_SS)
-        rot_synt = self.tools.rotation_synthesis(epsilon_SS)
+        z_rot_synt = self.tools.pauli_rotation_synthesis(epsilon_SS)
+        rot_synt = self.tools.pauli_rotation_synthesis(epsilon_SS)
+
+        compare = self.tools.compare_cost(np.ceil(np.log2(N/2)))
 
         def uniform_cost(L, k=0, z_rot_synt = z_rot_synt, controlled = False):
             if controlled:
@@ -72,7 +74,7 @@ class QROM_methods:
             possible_results = np.floor(np.log2(x)), np.ceil(np.log2(x))
             return min(possible_results, key= lambda z: abs(x-2**z))
 
-        Amplitude_amplification = 2*3*2*uniform_cost(N/2) + uniform_cost(L) + 2*3*rot_synt + 2*2*self.tools.multi_controlled_not(np.log2(N))
+        Amplitude_amplification = 2*3*2*uniform_cost(N/2) + uniform_cost(L) + 2*3*rot_synt + 2*self.tools.multi_controlled_not(np.ceil(np.log2(N))) +2*2*compare
 
         if sparsity_d is not None:
             d = sparsity_d

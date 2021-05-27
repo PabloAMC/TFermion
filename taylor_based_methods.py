@@ -39,8 +39,8 @@ class Taylor_based_methods:
         Select_H = 2*self.tools.multi_controlled_not(np.ceil(np.log2(Gamma) +1)+3)* 2**4 * (N/2) # The first two is because we multi-control to an ancilla, rotate and uncompute the ancilla. The (N/2) is the average number of number of Paulis in each creation/annihilation operator
         Select_V = Select_H * K
 
-        crot_synt = self.tools.c_rotation_synthesis(epsilon_SS)
-        rot_synt = self.tools.rotation_synthesis(epsilon_SS)
+        crot_synt = self.tools.c_pauli_rotation_synthesis(epsilon_SS)
+        rot_synt = self.tools.pauli_rotation_synthesis(epsilon_SS)
         Prepare_beta_1 = crot_synt*K
         Prepare_beta_2 = rot_synt*K*arb_state_synt
         Prepare_beta = Prepare_beta_1 + Prepare_beta_2
@@ -119,7 +119,7 @@ class Taylor_based_methods:
 
         kickback = 2*(mult + 3*sum + comp) #For the comparison operation. The rotation itself is Clifford, as it is a C-R(pi/2)
 
-        crot_synt = self.tools.c_rotation_synthesis(epsilon_SS)
+        crot_synt = self.tools.c_pauli_rotation_synthesis(epsilon_SS)
         Prepare_beta_1 = crot_synt*K
         Prepare_beta_2 = ( 2*sample + kickback )*K
         Prepare_beta = Prepare_beta_1 + Prepare_beta_2
@@ -198,7 +198,7 @@ class Taylor_based_methods:
         M = mu_M_zeta/(epsilon_H/r*Gamma) # = mu_M_zeta/(mu*zeta)
 
         epsilon_SS = epsilon_S / (r*3*2*(2*K)) # 3 from AA, 2 Prepare_beta for Prepare and Prepare^+, 2K T gates in the initial theta rotations
-        crot_synt = self.tools.c_rotation_synthesis(epsilon_SS)
+        crot_synt = self.tools.c_pauli_rotation_synthesis(epsilon_SS)
         Prepare_beta = crot_synt*K
 
         #### Qval cost computation
