@@ -181,6 +181,8 @@ class Molecule:
 
         self.H_norm_lambda_ratio = max(H_NORM_LAMBDA_RATIO,self.H_norm/self.lambd)
 
+        self.Omega = grid.volume
+
         '''
         avg_Z_per_unitary = 0
         avg_XY_per_unitary = 0

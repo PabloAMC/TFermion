@@ -158,9 +158,9 @@ class Cost_calculator:
                 N = self.molecule.N
                 lambda_value = self.molecule.lambda_value
                 Lambda_value = self.molecule.Lambda_value
-                Ham_norm = self.molecule.H_norm_lambda_ratio 
+                H_norm_lambda_ratio = self.molecule.H_norm_lambda_ratio 
 
-                arguments = (N, lambda_value, Lambda_value, Ham_norm)
+                arguments = (N, lambda_value, Lambda_value, H_norm_lambda_ratio)
 
                 # generate value for errors epsilon_PEA, epsilon_HS, epsilon_S
                 optimized_errors = self.calculate_optimized_errors(3, methods_plane_waves.low_depth_taylor, arguments)
@@ -170,7 +170,7 @@ class Cost_calculator:
                     N, 
                     lambda_value, 
                     Lambda_value, 
-                    Ham_norm)
+                    H_norm_lambda_ratio)
 
             elif method == 'low_depth_taylor_on_the_fly':
 
@@ -209,9 +209,9 @@ class Cost_calculator:
                 
                 N = self.molecule.N
                 lambda_value = self.molecule.lambda_value
-                Ham_norm = self.molecule.H_norm_lambda_ratio 
+                H_norm_lambda_ratio = self.molecule.H_norm_lambda_ratio 
 
-                arguments = (N, lambda_value, Ham_norm)
+                arguments = (N, lambda_value, H_norm_lambda_ratio)
 
                 # generate value for errors epsilon_PEA, epsilon_S
                 optimized_errors = self.calculate_optimized_errors(2, methods_qrom.linear_T, arguments)
@@ -220,7 +220,7 @@ class Cost_calculator:
                     optimized_errors.x,
                     N, 
                     lambda_value,
-                    Ham_norm)
+                    H_norm_lambda_ratio)
 
             elif method == 'sparsity_low_rank':
                 
@@ -230,9 +230,9 @@ class Cost_calculator:
 
                 N = self.molecule.N
                 lambda_value = self.molecule.lambda_value
-                Ham_norm = self.molecule.H_norm_lambda_ratio 
+                H_norm_lambda_ratio = self.molecule.H_norm_lambda_ratio 
 
-                arguments = (N, lambda_value, Ham_norm)
+                arguments = (N, lambda_value, H_norm_lambda_ratio)
 
                 # generate value for errors epsilon_PEA, epsilon_S
                 optimized_errors = self.calculate_optimized_errors(2, methods_qrom.sparsity_low_rank, arguments)
@@ -242,7 +242,7 @@ class Cost_calculator:
                     N, 
                     lambda_value,
                     final_rank, 
-                    Ham_norm)
+                    H_norm_lambda_ratio)
         
         elif method == 'interaction_picture' or method == 'sublinear_scaling':
 
@@ -281,8 +281,9 @@ class Cost_calculator:
 
                 J = len(self.molecule.molecule_geometry) #is the number of atoms in the molecule
 
+                _ = self.molecule.build_grid()
+                Omega = self.molecule.Omega
                 lambda_value_T, lambda_value_U_V = self.molecule.lambda_of_Hamiltonian_terms_1st(eta, Omega, N)
-
 
                 arguments = (N, eta, Gamma, lambda_value_T, lambda_value_U_V, J)
 

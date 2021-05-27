@@ -51,7 +51,7 @@ class Plane_waves_methods:
         t = 4.7/epsilon_PEA
         r = t*Lambda_value/np.log(2)
 
-        K = np.ceil(np.log2(r/epsilon_HS) / np.log2( np.log2 (r/epsilon_HS))) 
+        K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1)) 
 
         #todo: revise the count to make it more readable once I get over Linear T   
         epsilon_SS = epsilon_S /(r*3*2*K*(2+4*D+2)) # In the sum the first 2 is due to Uniform_3, next 2D are due to 2 uses of Uniform_M^{otimes D}, and the final two due to the controlled rotation theta angles
@@ -110,7 +110,7 @@ class Plane_waves_methods:
 
         # x_max = max value of one dimension
         x = sympy.Symbol('x')
-        K =  np.ceil(np.log2(r/epsilon_HS) / np.log2( np.log2 (r/epsilon_HS)))
+        K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1))
         epsilon_SS = epsilon_S / (2*K*2*3*r) # Due to the theta angles c-rotation in prepare_beta
 
         number_taylor_series = r* 3* 2*2*K(J+1)

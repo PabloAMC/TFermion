@@ -23,16 +23,16 @@ class Taylor_based_methods:
     # since we take the evolution time of a single segment to be $t_1 = \\ln 2/\\lambda$ such that the first segment in Phase estimation has $r = \\frac{\\lambda t_1}{\\ln 2} = 1$ as it should be. 
     # In general, we will need to implement $r \\approx \\frac{4.7}{\\epsilon_{PEA}}$. However, since $\\epsilon_{PEA}$ makes reference to $H$ and we are instead simulating $H \\ln 2/ \\lambda$, 
     # we will have to calculate the eigenvalue to precision $\\epsilon \\ln 2/ \\lambda$; so it is equivalently to fixing an initial time $t_1$ and running multiple segments in each of the $U$ operators in Phase Estimation.
-    def taylor_naive(self, epsilons, lambd, Gamma, N):
+    def taylor_naive(self, epsilons, lambda_value, Gamma, N):
 
         epsilon_PEA = epsilons[0]
         epsilon_HS = epsilons[1]
         epsilon_S = epsilons[2]
         
         t = 4.7/epsilon_PEA
-        r = t*lambd / np.log(2) # The simulated time
+        r = t*lambda_value / np.log(2) # Number of time segments
     
-        K = np.ceil(np.log2(r/epsilon_HS) / np.log2( np.log2 (r/epsilon_HS)))
+        K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1)) 
         arb_state_synt = self.tools.arbitrary_state_synthesis(Gamma)
         epsilon_SS = epsilon_S /(r*3*2*(K*arb_state_synt + 2*K) ) # 3 from AA, 2 for for Prepare and Prepare^+, then Prepare_beta_1 and Prepare_beta_2, finally r
 
@@ -75,10 +75,10 @@ class Taylor_based_methods:
         t = 4.7/epsilon_PEA
         x_max = np.log(N * t/ epsilon_H)
         
-        lambd = Gamma*phi_max**4 * x_max**5
-        r = lambd* t / np.log(2)
+        lambda_value = Gamma*phi_max**4 * x_max**5
+        r = lambda_value* t / np.log(2)
 
-        K = np.ceil(np.log2(r/epsilon_HS) / np.log2( np.log2 (r/epsilon_HS)))
+        K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1)) 
 
         epsilon_SS = epsilon_S /(r*3*2*(2*K)) # 3 from AA, 2 Prepare_beta for Prepare and Prepare^+, 2K T gates in the initial theta rotations
         # We distribute the error between all C-U in phase estimation uniformly
@@ -91,7 +91,7 @@ class Taylor_based_methods:
         
         mu = ( r*3*2*K/epsilon_H *2*(4*dphi_max + phi_max/x_max)*phi_max**3 * x_max**6 )**6
         n = np.ceil(np.ceil(np.log2(mu))/3) #each coordinate is a third
-        M = lambd*r*3*2*K/epsilon_H
+        M = lambda_value*r*3*2*K/epsilon_H
 
         sum = self.tools.sum_cost(n)
         mult = self.tools.multiplication_cost(n)
@@ -167,7 +167,7 @@ class Taylor_based_methods:
         def mu_M_zeta_bound_calc(mu_M_zeta):
 
             r = 2*Gamma*t*mu_M_zeta
-            K = np.log2(r/epsilon_HS)/np.log2(np.log2(r/epsilon_HS))
+            K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1)) 
             delta = epsilon_H/(3*r*K)   # delta is the error in calculating a single integral. There are 3K*r of them in the simulation, 
                                         # as r segments are simulated, for a total time of t
 
@@ -186,7 +186,7 @@ class Taylor_based_methods:
 
         mu_M_zeta = float(result['x'])
         r = 2*Gamma*t*mu_M_zeta/np.log(2) # Table 1 in original article and L = 2 M Gamma, the 2 from register |s> 
-        K = np.log2(r/epsilon_HS)/np.log2(np.log2(r/epsilon_HS))
+        K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1)) 
 
         delta = epsilon_H/(3*r*K)
         mu = np.max(
