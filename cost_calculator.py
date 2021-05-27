@@ -136,12 +136,11 @@ class Cost_calculator:
 
             if method == 'low_depth_trotter':
 
+                grid_length = int((self.molecule.N * 100) ** 1/3)
+                Omega = self.molecule.build_grid(grid_length).volume
+
                 N = self.molecule.N
                 eta = self.molecule.eta
-
-                grid_length = (self.molecule.N * 100) ** 1/3
-                _ = self.molecule.build_grid(grid_length)
-                Omega = self.molecule.Omega
 
                 arguments = (N, eta, Omega)
 
@@ -175,12 +174,14 @@ class Cost_calculator:
 
             elif method == 'low_depth_taylor_on_the_fly':
 
+                grid_length = int((self.molecule.N * 100) ** 1/3)
+                Omega = self.molecule.build_grid(grid_length).volume
+
                 N = self.molecule.N
                 eta = self.molecule.eta
                 Gamma = self.molecule.Gamma
                 lambda_value = self.molecule.lambda_value
-                _ = self.molecule.build_grid()
-                Omega = self.molecule.Omega
+                
                 x_max = self.molecule.xmax
                 J = len(self.molecule.molecule_geometry) #is the number of atoms in the molecule
 
@@ -251,8 +252,9 @@ class Cost_calculator:
 
                 N = self.molecule.N
                 Gamma = self.molecule.Gamma
-                grid = self.molecule.build_grid()
-                lambda_value_T, lambda_value_U_V = self.molecule.lambda_of_Hamiltonian_terms_2nd(grid)
+            
+                grid_length = int((self.molecule.N * 100) ** 1/3)
+                lambda_value_T, lambda_value_U_V = self.molecule.lambda_of_Hamiltonian_terms_2nd(self.molecule.build_grid(grid_length))
 
                 arguments = (N, Gamma, lambda_value_T, lambda_value_U_V)
 
@@ -273,6 +275,9 @@ class Cost_calculator:
                 N = self.molecule.N
                 eta = self.molecule.eta
                 Gamma = self.molecule.Gamma
+                
+                grid_length = int((self.molecule.N * 100) ** 1/3)
+                Omega = self.molecule.build_grid(grid_length).volume
 
                 J = len(self.molecule.molecule_geometry) #is the number of atoms in the molecule
 
