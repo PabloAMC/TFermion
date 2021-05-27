@@ -182,7 +182,7 @@ class Taylor_based_methods:
         # Nonlinear constraint mu_M_zeta >= mu_M_zeta_bound
         nconstraint = scipy.optimize.NonlinearConstraint(fun = lambda mu_M_zeta: mu_M_zeta_bound_calc(mu_M_zeta)- mu_M_zeta, lb = 0, ub = +np.inf, keep_feasible = True)
 
-        result = scipy.optimize.minimize(fun = lambda mu_M_zeta: mu_M_zeta, x0 = 1e20, constraints = [nconstraint], tol = 10, options = {'maxiter': 50}, method='COBYLA') # Works with COBYLA, but not with SLSQP (misses the boundaries) or trust-constr (oscillates)
+        result = scipy.optimize.minimize(fun = lambda mu_M_zeta: mu_M_zeta, x0 = 1e3, constraints = [nconstraint], tol = 10, options = {'maxiter': 50}, method='COBYLA') # Works with COBYLA, but not with SLSQP (misses the boundaries) or trust-constr (oscillates)
 
         mu_M_zeta = float(result['x'])
         r = 2*Gamma*t*mu_M_zeta/np.log(2) # Table 1 in original article and L = 2 M Gamma, the 2 from register |s> 
