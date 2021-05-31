@@ -1,7 +1,16 @@
 import utils
 from molecule import Molecule
-import numpy as np
 import cost_calculator
+import datetime
+import time
+
+print('\n###################################################################')
+print('##                             QPHASE                            ##')
+print('##                                                               ##')
+print('##      We will see what it is that (Not Google paper copy)      ##')
+print('###################################################################\n')
+
+start_time = time.time()
 
 #Read config file with the QFold configuration variables
 config_path = './config/config.json'
@@ -22,6 +31,14 @@ molecule = Molecule(name = args.molecule_name, tools = tools, charge = args.char
 c_calculator = cost_calculator.Cost_calculator(molecule, tools)
 c_calculator.calculate_cost(args.method)
 print('The cost to calculate the energy of', args.molecule_name,'with method', args.method, 'is', "{:e}".format(c_calculator.costs[args.method]))
+
+execution_time = time.time() - start_time
+
+print('\n** -------------------------------------------------- **')
+print('**                                                    **')
+print('** Execution time     =>', str(datetime.timedelta(seconds=execution_time)) ,' in hh:mm:ss  **')
+print('********************************************************\n\n')
+
 
 #### TESTS ###
 
