@@ -29,10 +29,10 @@ class Plane_waves_methods:
         single_qubit_rotations = 8*N + 8*N*(8*N-1) + 8*N + N*np.log(N/2) # U, V, T and FFFT single rotations
         epsilon_SS = epsilon_S/single_qubit_rotations
         
-        exp_UV_cost = (8*N*(8*N-1) + 8*N)*self.tools.z_rotation_synthesis(epsilon_SS)
-        exp_T_cost = 8*N**self.tools.z_rotation_synthesis(epsilon_SS)
+        exp_UV_cost = (8*N*(8*N-1) + 8*N)*self.tools.pauli_rotation_synthesis(epsilon_SS)
+        exp_T_cost = 8*N**self.tools.pauli_rotation_synthesis(epsilon_SS)
         F2 = 2
-        FFFT_cost = N/2*np.log2(N)*F2 + N/2*(np.log2(N)-1)*self.tools.z_rotation_synthesis(epsilon_SS) 
+        FFFT_cost = N/2*np.log2(N)*F2 + N/2*(np.log2(N)-1)*self.tools.pauli_rotation_synthesis(epsilon_SS) 
         
         return r*(exp_UV_cost + exp_T_cost + 2*FFFT_cost )
 
