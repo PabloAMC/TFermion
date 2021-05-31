@@ -50,7 +50,7 @@ print('********************************************************\n\n')
 # Low Depth Trotter: python3 main.py water low_depth_trotter 'C 2p' FAIL
 # Low Depth Taylor: python3 main.py water low_depth_taylor 'C 2p' FAIL
 # Low Depth On The Fly: python3 main.py water low_depth_on_the_fly 'C 2p' FAIL
-# Linear T: python3 main.py linear_T 'C 2p' FAIL
-# Sparsity Low Rank: python3 main.py sparsity_low_rank 'C 2p' FAIL
-# Interaction Picture: python3 main.py interaction_picture 'C 2p' FAIL
-# Sublinear Scaling: python3 main.py sublinear_scaling 'C 2p' FAIL
+# Linear T: python3 main.py water linear_T 'C 2p' FAIL
+# Sparsity Low Rank: python3 main.py water sparsity_low_rank 'C 2p' OK
+# Interaction Picture: python3 main.py water interaction_picture 'C 2p' FAIL
+# Sublinear Scaling: python3 main.py water sublinear_scaling 'C 2p' FAIL

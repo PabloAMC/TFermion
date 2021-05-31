@@ -2,8 +2,8 @@ import numpy as np
 
 class QROM_methods:
 
-    def __init__(self):
-        pass
+    def __init__(self, tools):
+        self.tools = tools
 
     ## Linear T complexity (babbush2018encoding)
     def linear_T(self, epsilons, N, lambd, H_norm_lambda_ratio):
@@ -79,7 +79,7 @@ class QROM_methods:
         if sparsity_d is not None:
             d = sparsity_d
         else:
-            d = L(N**2/8 + N/4)
+            d = L*(N**2/8 + N/4)
         M = np.log(N**2) + mu
         kc = 2**closest_power(np.sqrt(d/M))
         ku = 2**closest_power(np.sqrt(d))

@@ -318,7 +318,6 @@ class Molecule:
         result = scipy.optimize.minimize(fun = lambda threshold: 1e-2/(threshold+1e-4), x0 = 1e-4, constraints = [nconstraint, lconstraint], tol = .01*CHEMICAL_ACCURACY, options = {'maxiter': 50}, method='COBYLA') # Works with COBYLA, but not with SLSQP (misses the boundaries) or trust-constr (oscillates)
         threshold = float(result['x'])
         approximate_E = sparsification_mp2_energy(threshold = threshold)
-        print('<i> MP2 energy error in the truncation', approximate_E-exact_E)
 
         two_body_integrals[abs(two_body_integrals) < threshold] = 0.
         one_body_integrals[abs(one_body_integrals) < threshold] = 0.
@@ -394,15 +393,10 @@ class Molecule:
 
         def low_rank_truncation_mp2_energy(rank_threshold, sparsity_threshold):
         
-            print('<i> Rank trucation threshold =', rank_threshold)
-            print('<i> Sparsity threshold =', sparsity_threshold)
-
             lambda_ls, one_body_squares, one_body_correction, truncation_value = low_rank_two_body_decomposition(two_body_integrals,
                                                                                                     truncation_threshold=rank_threshold,
                                                                                                     final_rank=None,
                                                                                                     spin_basis=False)
-
-            print('<i> Rank =', len(lambda_ls))
 
             # Electronic Repulsion Integral
             eri = np.einsum('l,lpq,lrs->pqrs',lambda_ls, (one_body_squares + np.transpose(one_body_squares, (0,2,1)))/2, (one_body_squares + np.transpose(one_body_squares, (0,2,1)))/2)
@@ -489,8 +483,6 @@ class Molecule:
             l = abs(np.array(list(JW_op.terms.values())))
             lambda_value = sum(l)
 
-            print('<i> lambda', lambda_value)
-
             return lambda_value
         
         exact_E = low_rank_truncation_mp2_energy(rank_threshold = 0, sparsity_threshold = 0)
@@ -509,7 +501,6 @@ class Molecule:
             sparsity_threshold = 0.
 
         approximate_E = low_rank_truncation_mp2_energy(rank_threshold = rank_threshold, sparsity_threshold = sparsity_threshold)
-        print('<i> MP2 energy error in the truncation', approximate_E-exact_E)
 
         lambda_ls, one_body_squares, one_body_correction, truncation_value = low_rank_two_body_decomposition(new_two_body_integrals,
                                                                                                             truncation_threshold=rank_threshold,

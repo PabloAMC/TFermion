@@ -203,7 +203,7 @@ class Cost_calculator:
 
         elif method == 'linear_t' or method == 'sparsity_low_rank':
 
-            methods_qrom = qrom_methods.QROM_methods()
+            methods_qrom = qrom_methods.QROM_methods(self.tools)
 
             if method == 'linear_t':
                 
@@ -225,15 +225,15 @@ class Cost_calculator:
             elif method == 'sparsity_low_rank':
                 
                 #todo: how to select the sparsify option here appropriately
-                molecular_hamiltonian, final_rank = self.molecule.low_rank_approximation(occupied_indices = self.molecule.occupied_indices, active_indices = self.molecule.active_indices, virtual_indices = self.molecule.virtual_indices, sparsify = True)
+                molecular_hamiltonian, final_rank = self.molecule.low_rank_approximation(sparsify = True)
                 self.molecule.get_basic_parameters(molecular_hamiltonian = molecular_hamiltonian)
 
                 N = self.molecule.N
                 lambda_value = self.molecule.lambda_value
                 H_norm_lambda_ratio = self.molecule.H_norm_lambda_ratio 
 
-                arguments = (N, lambda_value, H_norm_lambda_ratio)
-
+                arguments = (N, lambda_value, final_rank, H_norm_lambda_ratio)
+                
                 # generate value for errors epsilon_PEA, epsilon_S
                 optimized_errors = self.calculate_optimized_errors(2, methods_qrom.sparsity_low_rank, arguments)
 
@@ -247,6 +247,9 @@ class Cost_calculator:
         elif method == 'interaction_picture' or method == 'sublinear_scaling':
 
             methods_interaction_picture = interaction_picture.Interaction_picture()
+
+            grid_length = int((self.molecule.N * 100) ** 1/3)
+            self.molecule.build_grid(grid_length).volume
 
             if method == 'interaction_picture':
 
