@@ -17,7 +17,7 @@ class Plane_waves_methods:
         epsilon_S = epsilons[2]
         
         t = 4.7/epsilon_PEA
-        sum_1_nu = 4*np.pi(np.sqrt(3)*N**(1/3)/2 - 1) + 3 - 3/N**(1/3) + 3*self.tools.I(N**(1/3))
+        sum_1_nu = 4*np.pi*(np.sqrt(3)*N**(1/3)/2 - 1) + 3 - 3/N**(1/3) + 3*self.tools.I(N**(1/3))
         max_V = eta**2/(2*np.pi*Omega**(1/3))*sum_1_nu
         max_U = eta**2/(np.pi*Omega**(1/3))*sum_1_nu
         nu_max = np.sqrt(3*(N**(1/3))**2)
@@ -29,10 +29,10 @@ class Plane_waves_methods:
         single_qubit_rotations = 8*N + 8*N*(8*N-1) + 8*N + N*np.log(N/2) # U, V, T and FFFT single rotations
         epsilon_SS = epsilon_S/single_qubit_rotations
         
-        exp_UV_cost = (8*N*(8*N-1) + 8*N)*self.tools.z_rotation_synthesis(epsilon_SS)
-        exp_T_cost = 8*N**self.tools.z_rotation_synthesis(epsilon_SS)
+        exp_UV_cost = (8*N*(8*N-1) + 8*N)*self.tools.pauli_rotation_synthesis(epsilon_SS)
+        exp_T_cost = 8*N**self.tools.pauli_rotation_synthesis(epsilon_SS)
         F2 = 2
-        FFFT_cost = N/2*np.log2(N)*F2 + N/2*(np.log2(N)-1)*self.tools.z_rotation_synthesis(epsilon_SS) 
+        FFFT_cost = N/2*np.log2(N)*F2 + N/2*(np.log2(N)-1)*self.tools.pauli_rotation_synthesis(epsilon_SS) 
         
         return r*(exp_UV_cost + exp_T_cost + 2*FFFT_cost )
 
@@ -69,8 +69,8 @@ class Plane_waves_methods:
 
         def QROM_cost(N): return 4*N
 
-        compare = self.tools.compare(mu)
-        sum = self.tools.compare(D*np.log2(M))
+        compare = self.tools.compare_cost(mu)
+        sum = self.tools.compare_cost(D*np.log2(M))
         Fredkin_cost = 4 # The controlled swaps
 
         Subprepare = QROM_cost(3*M**D) + uniform_cost(3) + D*uniform_cost(M) + 2*compare + (3+D*np.log2(M))*Fredkin_cost
@@ -98,8 +98,8 @@ class Plane_waves_methods:
         '''To be used in plane wave basis
         J: Number of atoms
         '''
-        sum_1_nu = 4*np.pi(np.sqrt(3)*N**(1/3)/2 - 1) + 3 - 3/N**(1/3) + 3*self.tools.I(N**(1/3))
-        sum_nu = self.quadratic_sum(int(N^{1/3}))
+        sum_1_nu = 4*np.pi*(np.sqrt(3)*N**(1/3)/2 - 1) + 3 - 3/N**(1/3) + 3*self.tools.I(N**(1/3))
+        sum_nu = self.quadratic_sum(int(N**(1/3)))
         lambda_value = (2*eta+1)/(8*Omega**(1/3)*np.pi)*(Omega**(2/3)*8*N/(2*np.pi)**2)*sum_1_nu*((2*eta+1)*np.pi/(2*Omega) + (8*N-1)*np.pi/(4*Omega)) + 8*N/2*(np.pi**2* sum_nu/(N*Omega**(2/3))+4) 
         t = 4.7/epsilon_PEA
         r = t*lambda_value/np.log(2)
@@ -113,9 +113,9 @@ class Plane_waves_methods:
         K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1))
         epsilon_SS = epsilon_S / (2*K*2*3*r) # Due to the theta angles c-rotation in prepare_beta
 
-        number_taylor_series = r* 3* 2*2*K(J+1)
+        number_taylor_series = r* 3* 2*2*K*(J+1)
         eps_tay_s = eps_tay / number_taylor_series
-        cos_order = self.tools.order_find(function = math.cos(x), function_name = 'cos', e = eps_tay_s, xeval = x_max)
+        cos_order = self.tools.order_find(lambda x: math.cos(x), function_name = 'cos', e = eps_tay_s, xeval = x_max)
 
         n = np.ceil(np.ceil(np.log2(mu))/3) #each coordinate is a third
         M = lambda_value*r*3*2*K/epsilon_H
@@ -127,7 +127,7 @@ class Plane_waves_methods:
         angle_to_0_2pi_interval = div + mult + sum # angle <- angle - lceil angle/2pi rceil * 2pi
         cordic = 2*cos_order + mult 
 
-        prepare_p_equal_q = (3*mult) + (3*sum) (3*mult+2*sum)+((3*mult+2*sum) + (cordic+angle_to_0_2pi_interval))*J + (mult+div + J*(mult+div)) 
+        prepare_p_equal_q = (3*mult) + (3*sum) + (3*mult+2*sum)+((3*mult+2*sum) + (cordic+angle_to_0_2pi_interval))*J + (mult+div + J*(mult+div)) 
         prepare_p_neq_q = (3*mult) + (3*mult+2*sum) + cordic+angle_to_0_2pi_interval + div +mult
         prepare_p_q_0 = 2*mult
 

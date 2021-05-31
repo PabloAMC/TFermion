@@ -137,6 +137,7 @@ class Cost_calculator:
             if method == 'low_depth_trotter':
 
                 grid_length = int((self.molecule.N * 100) ** 1/3)
+                grid_length = 5
                 Omega = self.molecule.build_grid(grid_length).volume
 
                 N = self.molecule.N
@@ -154,6 +155,10 @@ class Cost_calculator:
                     Omega)
 
             elif method == 'low_depth_taylor':
+
+                grid_length = int((self.molecule.N * 100) ** 1/3)
+                grid_length = 5
+                Omega = self.molecule.build_grid(grid_length).volume
 
                 N = self.molecule.N
                 lambda_value = self.molecule.lambda_value
@@ -175,6 +180,7 @@ class Cost_calculator:
             elif method == 'low_depth_taylor_on_the_fly':
 
                 grid_length = int((self.molecule.N * 100) ** 1/3)
+                grid_length = 5
                 Omega = self.molecule.build_grid(grid_length).volume
 
                 N = self.molecule.N
@@ -206,6 +212,11 @@ class Cost_calculator:
             methods_qrom = qrom_methods.QROM_methods(self.tools)
 
             if method == 'linear_t':
+
+                grid_length = int((self.molecule.N * 100) ** 1/3)
+                grid_length = 5
+                Omega = self.molecule.build_grid(grid_length).volume
+
                 
                 N = self.molecule.N
                 lambda_value = self.molecule.lambda_value
@@ -246,10 +257,7 @@ class Cost_calculator:
         
         elif method == 'interaction_picture' or method == 'sublinear_scaling':
 
-            methods_interaction_picture = interaction_picture.Interaction_picture()
-
-            grid_length = int((self.molecule.N * 100) ** 1/3)
-            self.molecule.build_grid(grid_length).volume
+            methods_interaction_picture = interaction_picture.Interaction_picture(self.tools)
 
             if method == 'interaction_picture':
 
@@ -257,6 +265,7 @@ class Cost_calculator:
                 Gamma = self.molecule.Gamma
             
                 grid_length = int((self.molecule.N * 100) ** 1/3)
+                grid_length = 5
                 lambda_value_T, lambda_value_U_V = self.molecule.lambda_of_Hamiltonian_terms_2nd(self.molecule.build_grid(grid_length))
 
                 arguments = (N, Gamma, lambda_value_T, lambda_value_U_V)
@@ -275,16 +284,20 @@ class Cost_calculator:
             
             elif method == 'sublinear_scaling':
 
+                grid_length = int((self.molecule.N * 100) ** 1/3)
+                grid_length = 5
+                self.molecule.build_grid(grid_length).volume
+
                 N = self.molecule.N
                 eta = self.molecule.eta
                 Gamma = self.molecule.Gamma
                 
                 grid_length = int((self.molecule.N * 100) ** 1/3)
+                grid_length = 5
                 Omega = self.molecule.build_grid(grid_length).volume
 
                 J = len(self.molecule.molecule_geometry) #is the number of atoms in the molecule
 
-                _ = self.molecule.build_grid()
                 Omega = self.molecule.Omega
                 lambda_value_T, lambda_value_U_V = self.molecule.lambda_of_Hamiltonian_terms_1st(eta, Omega, N)
 
@@ -301,6 +314,9 @@ class Cost_calculator:
                     lambda_value_T, 
                     lambda_value_U_V,
                     J)
+
+        else:
+            print('<*> ERROR: method', method, 'not implemented or not existing')
 
     def calculate_optimized_errors(self, number_errors, cost_method, arguments):
 
