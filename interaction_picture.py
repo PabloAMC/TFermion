@@ -2,8 +2,8 @@ import numpy as np
 
 class Interaction_picture:
 
-    def __init__(self):
-        pass
+    def __init__(self, tools):
+        self.tools = tools
 
     def interaction_picture(self, epsilons, N, Gamma, lambd_T, lambd_U_V):
 
@@ -54,7 +54,7 @@ class Interaction_picture:
         # Rotations U+V
         ADD = self.tools.sum_cost(np.ceil(np.log2(8*N)))
         F2 = 2
-        FFFT_cost = N/2*np.log2(N)*F2 + N/2*(np.log2(N)-1)*self.tools.z_rotation_synthesis(epsilon_SS)
+        FFFT_cost = N/2*np.log2(N)*F2 + N/2*(np.log2(N)-1)*self.tools.pauli_rotation_synthesis(epsilon_SS)
         NORM = self.tools.multiplication_cost(np.ceil(np.log2(8*N)))
         mult = self.tools.multiplication_cost(2*np.ceil(np.log2(8*N))) # Vk multiplication
 
@@ -122,15 +122,13 @@ class Interaction_picture:
         '''
         
         ### Initial state antisymmetrization
-        comparison_eta = self.tools.comparison_cost(np.ceil(np.log2(eta**2)))
-        comparison_N = self.tools.comparison_cost(np.ceil(np.log2(N)))
+        comparison_eta = self.tools.compare_cost(np.ceil(np.log2(eta**2)))
+        comparison_N = self.tools.compare_cost(np.ceil(np.log2(N)))
         swaps_eta = 4*np.ceil(np.log(eta**2))
         swaps_N = 4*np.ceil(np.log(N))
         Step_2 = eta*np.log2(eta)*(np.log2(eta)-1)/4* (comparison_eta + swaps_eta)
         Step_4 = eta*np.log2(eta)*(np.log2(eta)-1)/4* (comparison_N + swaps_N)
         antisymmetrization = Step_2*2 + Step_4
-        antisymmetrization_alt = 3*eta*np.log2(eta)*(np.log2(eta)-1)*(2* np.ceil(np.log2(eta**2)) + np.log(N))
-        assert(antisymmetrization == antisymmetrization_alt)
 
         ### Main algorithm
 

@@ -179,7 +179,7 @@ class Molecule:
         self.Lambda_value = max(l)
         self.Gamma = np.count_nonzero(l >= 0)
 
-        self.H_norm_lambda_ratio = max(H_NORM_LAMBDA_RATIO,self.H_norm/self.lambd)
+        self.H_norm_lambda_ratio = max(H_NORM_LAMBDA_RATIO,self.H_norm/self.lambda_value)
 
         self.Omega = grid.volume
 
@@ -736,7 +736,7 @@ class Molecule:
         
         def quadratic_sum(N): return N*(N+1)*(2*N + 1)**3
         
-        sum_nu = quadratic_sum(int(N^{1/3}))
+        sum_nu = quadratic_sum(int(N**(1/3)))
 
         lambda_U_V = (2*np.sqrt(3)*eta*(3*eta-1))*(N/Omega)**(1/3)
 
