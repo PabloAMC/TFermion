@@ -189,11 +189,11 @@ class Taylor_based_methods:
         K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1)) 
 
         delta = epsilon_H/(3*r*K)
-        mu = np.max(
+        mu = np.max([
             np.ceil(((K2*phi_max**4*x_max**5/delta) * (1/alpha*np.log(K2*phi_max**4*x_max**5/delta))**7)**6),
             np.ceil(((K1*Zq*phi_max**2*x_max**2/delta) * (2/alpha*np.log(K1*Zq*phi_max**2*x_max**2/delta))**4)**3),
             np.ceil(((K0*phi_max**2*x_max/delta) * (2/alpha*np.log(K0*phi_max**2*x_max/delta))**4)**3)
-        )
+        ])
         zeta = epsilon_H/(r*Gamma*mu)
         M = mu_M_zeta/(epsilon_H/r*Gamma) # = mu_M_zeta/(mu*zeta)
 
@@ -221,7 +221,7 @@ class Taylor_based_methods:
         tay = exp_order*sum + (exp_order-1)*(mult + div) # For the exp
         babylon = sqrt_order*(div +  sum) # For the sqrt
 
-        Q = N*d((3*sum) + (3*mult +2*sum) + (mult) + tay + (3*mult)) #In parenthesis each step in the list
+        Q = N*d*((3*sum) + (3*mult +2*sum) + (mult) + tay + (3*mult)) #In parenthesis each step in the list
         Qnabla = Q + N*d*(4*sum+mult+div)
         R = 2*mult + sum + babylon
         xi = 3*sum
@@ -255,3 +255,5 @@ class Taylor_based_methods:
 
         R = self.tools.multi_controlled_not((K+1)*np.log2(Gamma) + N) # The prepare qubits and the select qubits (in Jordan-Wigner there are N)
         result = r*(3*(2*Prepare_beta + Select_V) + 2*R)
+
+        return result
