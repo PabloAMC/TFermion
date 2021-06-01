@@ -150,8 +150,8 @@ class Utils():
         return 2*2**(np.ceil(np.log2(N)))-2
 
     def pauli_rotation_synthesis(self, epsilon_SS):
-        return 10 + 4*np.log2(1/epsilon_SS)
-
+        result = 10 + 4*np.log2(1/epsilon_SS)
+        return result
     def c_pauli_rotation_synthesis(self, epsilon_SS):
         return 2*self.pauli_rotation_synthesis(epsilon_SS)
 

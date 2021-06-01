@@ -47,7 +47,7 @@ print('********************************************************\n\n')
 # Taylor naive: python3 main.py water taylor_naive 'C 2p' OK
 # Taylor on the fly: python3 main.py water taylor_on_the_fly 'C 2p' OK
 # Configuration interaction: python3 main.py water configuration_interaction 'C 2p' OK
-# Low Depth Trotter: python3 main.py water low_depth_trotter 'C 2p' FAIL
+# Low Depth Trotter: python3 main.py water low_depth_trotter 'C 2p' OK
 # Low Depth Taylor: python3 main.py water low_depth_taylor 'C 2p' OK
 # Low Depth On The Fly: python3 main.py water low_depth_taylor_on_the_fly 'C 2p' OK
 # Linear T: python3 main.py water linear_t 'C 2p' OK

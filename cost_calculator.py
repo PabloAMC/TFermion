@@ -261,12 +261,13 @@ class Cost_calculator:
 
             if method == 'interaction_picture':
 
-                N = self.molecule.N
-                Gamma = self.molecule.Gamma
             
                 grid_length = int((self.molecule.N * 100) ** 1/3)
                 grid_length = 5
                 lambda_value_T, lambda_value_U_V = self.molecule.lambda_of_Hamiltonian_terms_2nd(self.molecule.build_grid(grid_length))
+
+                N = self.molecule.N
+                Gamma = self.molecule.Gamma
 
                 arguments = (N, Gamma, lambda_value_T, lambda_value_U_V)
 

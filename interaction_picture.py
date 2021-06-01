@@ -121,15 +121,6 @@ class Interaction_picture:
         The algorithm follows a very similar structure to that of the interaction_picture one.
         '''
         
-        ### Initial state antisymmetrization
-        comparison_eta = self.tools.compare_cost(np.ceil(np.log2(eta**2)))
-        comparison_N = self.tools.compare_cost(np.ceil(np.log2(N)))
-        swaps_eta = 4*np.ceil(np.log(eta**2))
-        swaps_N = 4*np.ceil(np.log(N))
-        Step_2 = eta*np.log2(eta)*(np.log2(eta)-1)/4* (comparison_eta + swaps_eta)
-        Step_4 = eta*np.log2(eta)*(np.log2(eta)-1)/4* (comparison_N + swaps_N)
-        antisymmetrization = Step_2*2 + Step_4
-
         ### Main algorithm
 
         t = 4.7/epsilon_PEA
@@ -137,7 +128,11 @@ class Interaction_picture:
         
         # Notice that K is a bit different than in other articles 
         K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1))  # Same as in the previous function
-        M = np.max(16*t*np.log(2)/epsilon_HS * (lambd_U_V + 2*lambd_T), K**2) # Changes from the M in the previous function in T<->U+V
+
+        first_term = 16*t*np.log(2)/epsilon_HS * (lambd_U_V + 2*lambd_T)
+        second_term = K**2
+
+        M = np.max(first_term, second_term) # Changes from the M in the previous function in T<->U+V
 
         # Deltas
         delta_M0 = epsilon_M0/ (3*2*K*3*r) # Number of times prep_nu is used bottom up counting
