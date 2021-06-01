@@ -120,7 +120,15 @@ class Interaction_picture:
             
         The algorithm follows a very similar structure to that of the interaction_picture one.
         '''
-        
+        ### Initial state antisymmetrization
+        comparison_eta = self.tools.compare_cost(np.ceil(np.log2(eta**2)))
+        comparison_N = self.tools.compare_cost(np.ceil(np.log2(N)))
+        swaps_eta = 4*np.ceil(np.log(eta**2))
+        swaps_N = 4*np.ceil(np.log(N))
+        Step_2 = eta*np.log2(eta)*(np.log2(eta)-1)/4* (comparison_eta + swaps_eta)
+        Step_4 = eta*np.log2(eta)*(np.log2(eta)-1)/4* (comparison_N + swaps_N)
+        antisymmetrization = Step_2*2 + Step_4
+
         ### Main algorithm
 
         t = 4.7/epsilon_PEA
@@ -128,11 +136,7 @@ class Interaction_picture:
         
         # Notice that K is a bit different than in other articles 
         K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1))  # Same as in the previous function
-
-        first_term = 16*t*np.log(2)/epsilon_HS * (lambd_U_V + 2*lambd_T)
-        second_term = K**2
-
-        M = np.max(first_term, second_term) # Changes from the M in the previous function in T<->U+V
+        M = np.max([16*t*np.log(2)/epsilon_HS * (lambd_U_V + 2*lambd_T), K**2]) # Changes from the M in the previous function in T<->U+V
 
         # Deltas
         delta_M0 = epsilon_M0/ (3*2*K*3*r) # Number of times prep_nu is used bottom up counting
@@ -152,7 +156,7 @@ class Interaction_picture:
         rot_COEF = self.tools.arbitrary_state_synthesis(K)
 
         # A prefactor of x2 indicates controlled rotation
-        num_rotations = 2*rot_exp_T* r*(1+3*K*2) + 2*rot_select_U* r*3*K + rot_Uniform* r*3*(4*K+2) + rot_Subprepare *r*3*K*2*1 + rot_Prepare_cube **r*3*K*2*3 + rot_COEF* r*3*2
+        num_rotations = 2*rot_exp_T* r*(1+3*K*2) + 2*rot_select_U* r*3*K + rot_Uniform* r*3*(4*K+2) + rot_Subprepare *r*3*K*2*1 + rot_Prepare_cube*r*3*K*2*3 + rot_COEF* r*3*2
         epsilon_SS = epsilon_S / num_rotations
 
         # Uniform
@@ -165,10 +169,10 @@ class Interaction_picture:
         Uniform = uniform_cost(np.ceil(np.log2(M)))
 
         # Exp_T
-        mult = self.tools.multiply_cost(np.ceil(np.log2(N**(1/3))))
+        mult = self.tools.multiplication_cost(np.ceil(np.log2(N**(1/3))))
         sum = self.tools.sum_cost(2*np.ceil(np.log2(N**(1/3))))
         # There is one extra multiplication for the (2pi)^2/Omega^(2/3) coefficient
-        phase = rot_exp_T*self.tools.c_z_rotation(epsilon_SS) + mult
+        phase = rot_exp_T*self.tools.c_pauli_rotation_synthesis(epsilon_SS) + mult
         exp_T = (3*eta)*mult + (3*eta)*sum + phase 
 
         # Prep_nu
@@ -198,10 +202,10 @@ class Interaction_picture:
         Select_V = 2*eta*(c_vec_sum + 2*equality)
 
         sum = self.tools.sum_cost(np.ceil(2*np.log2(N**(1/3))))
-        max_digits = np.ceil(np.max(2*np.log2(N**(1/3)),1/delta_R))
+        max_digits = np.ceil(np.max([2*np.log2(N**(1/3)),1/delta_R]))
         mult = self.tools.multiplication_cost(max_digits)
         dot_prod = 3*mult + 2*sum + mult
-        phase = rot_select_U*self.tools.c_z_rotation(epsilon_SS)
+        phase = rot_select_U*self.tools.c_pauli_rotation_synthesis(epsilon_SS)
         Select_U = 2*QROM_cost(J) + 2*dot_prod + phase  + eta*(c_vec_sum + 2*equality)
 
         CRz_on_x = 3*4 # 3 Toffolis are enough

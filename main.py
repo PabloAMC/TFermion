@@ -53,4 +53,4 @@ print('********************************************************\n\n')
 # Linear T: python3 main.py water linear_t 'C 2p' OK
 # Sparsity Low Rank: python3 main.py water sparsity_low_rank 'C 2p' OK
 # Interaction Picture: python3 main.py water interaction_picture 'C 2p' FAIL
-# Sublinear Scaling: python3 main.py water sublinear_scaling 'C 2p' FAIL
+# Sublinear Scaling: python3 main.py water sublinear_scaling 'C 2p' OK
