@@ -237,4 +237,4 @@ class Interaction_picture:
         TDS = 2*R + 3*TDS_2
 
         cost = r*(exp_T + TDS)
-        return cost
+        return cost + antisymmetrization

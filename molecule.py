@@ -11,7 +11,10 @@ from openfermion.utils import Grid
 import openfermion.ops.representations as reps
 from openfermion.chem import geometry_from_pubchem, MolecularData
 from openfermion.chem.molecular_data import spinorb_from_spatial
-from openfermion.hamiltonians import plane_wave_hamiltonian, jordan_wigner_dual_basis_hamiltonian
+from openfermion.hamiltonians import plane_wave_hamiltonian, jordan_wigner_dual_basis_hamiltonian 
+from openfermion.hamiltonians import dual_basis_external_potential, plane_wave_external_potential
+from openfermion.hamiltonians import dual_basis_potential, plane_wave_potential
+from openfermion.hamiltonians import dual_basis_kinetic, plane_wave_kinetic
 from openfermion.transforms  import  get_fermion_operator, get_diagonal_coulomb_hamiltonian, jordan_wigner
 from openfermion.circuits import low_rank_two_body_decomposition
 
@@ -707,13 +710,13 @@ class Molecule:
 
         molecular_hamiltonian = self.molecule_data.get_molecular_hamiltonian(occupied_indices=self.occupied_indices, active_indices=self.active_indices)
 
-        #T_dual = molecular_hamiltonian.dual_basis_kinetic(grid, spinless = spinless) 
-        V_dual = molecular_hamiltonian.dual_basis_potential(grid = grid, spinless = spinless, non_periodic = non_periodic) # diagonal
-        U_dual = molecular_hamiltonian.dual_basis_external_potential(grid = grid, geometry = self.molecule_geometry, spinless = spinless, non_periodic = non_periodic) # diagonal
+        #T_dual = dual_basis_kinetic(grid, spinless = spinless) 
+        V_dual = dual_basis_potential(grid = grid, spinless = spinless, non_periodic = non_periodic) # diagonal
+        U_dual = dual_basis_external_potential(grid = grid, geometry = self.molecule_geometry, spinless = spinless, non_periodic = non_periodic) # diagonal
 
-        T_primal = molecular_hamiltonian.plane_wave_kinetic(grid, spinless = spinless) # diagonal
-        #V_primal = molecular_hamiltonian.plane_wave_potential(grid, spinless = spinless, non_periodic = non_periodic)
-        #U_primal = molecular_hamiltonian.plane_wave_external_potential(grid, spinless = spinless, non_periodic = non_periodic)
+        T_primal = plane_wave_kinetic(grid, spinless = spinless) # diagonal
+        #V_primal = plane_wave_potential(grid, spinless = spinless, non_periodic = non_periodic)
+        #U_primal = plane_wave_external_potential(grid, spinless = spinless, non_periodic = non_periodic)
         
         JW_op = jordan_wigner(V_dual)
         l = abs(np.array(list(JW_op.terms.values())))
