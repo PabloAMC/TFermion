@@ -36,7 +36,7 @@ class Interaction_picture:
         r = lambd_T*t/np.log(2) # lambd_T is necessary to take tau = 1
         
         K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1)) 
-        M = np.max(16*t*np.log(2)/epsilon_HS * (2*lambd_U_V + lambd_T), K**2)
+        M = np.max([16*t*np.log(2)/epsilon_HS * (2*lambd_U_V + lambd_T), K**2])
         
         # Now we count the number of individual rotations from each source: 
         rot_FFFT = N/2*np.log2(N/2) 
@@ -58,9 +58,9 @@ class Interaction_picture:
         NORM = self.tools.multiplication_cost(np.ceil(np.log2(8*N)))
         mult = self.tools.multiplication_cost(2*np.ceil(np.log2(8*N))) # Vk multiplication
 
-        PHASE = rot_PHASE* self.tools.c_z_rotation(epsilon_SS)
+        PHASE = rot_PHASE* self.tools.c_pauli_rotation_synthesis(epsilon_SS)
         exp_V = 2*(ADD+FFFT_cost + NORM + mult) + PHASE
-        exp_U = rot_U * self.tools.c_z_rotation(epsilon_SS)
+        exp_U = rot_U * self.tools.c_pauli_rotation_synthesis(epsilon_SS)
         exp_U_V = exp_V+exp_U
 
         # Qubitization of T
