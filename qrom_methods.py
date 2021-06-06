@@ -49,6 +49,7 @@ class QROM_methods:
 
         epsilon_PEA = epsilons[0]
         epsilon_S = epsilons[1]
+        N = 2*N # In this article N means spin orbitals, not orbitals
 
         t = 4.7/epsilon_PEA
         r = lambd*t
