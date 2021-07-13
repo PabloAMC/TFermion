@@ -42,7 +42,8 @@ print('#########################################################################
 molecule = molecule.Molecule(args.molecule_name, tools)
 
 #Active space
-ne_act_cas = molecule.active_space(args.ao_labels)
+if args.ao_labels:
+    ne_act_cas = molecule.active_space(args.ao_labels)
 
 #Get_basic_parameters -> in the method, since the low rank approximation may modify it
 
