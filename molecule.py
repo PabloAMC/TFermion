@@ -287,6 +287,7 @@ class Molecule:
         return ne_act_cas
 
     def sparsify(self, occupied_indices, virtual_indices):
+        '''Unused, see low_rank approximation'''
 
         pyscf_scf = self.molecule_data._pyscf_data['scf']
         pyscf_mol = self.molecule_data._pyscf_data['mol']
@@ -307,6 +308,7 @@ class Molecule:
             mf.get_ovlp = lambda *args: pyscf_scf.get_ovlp()
             # ao2mo.restore(8, eri, n) to get 8-fold permutation symmetry of the integrals
             # ._eri only supports the two-electron integrals in 4-fold or 8-fold symmetry.
+            # See http://vergil.chemistry.gatech.edu/notes/permsymm/permsymm.pdf
 
             eri = pyscf_scf._eri
             eri[eri < threshold] = 0.
@@ -407,8 +409,11 @@ class Molecule:
         # From here------------------------------------------------
 
         def low_rank_truncation_mp2_energy(rank_threshold, sparsity_threshold):
+
+            two_b_integrals = copy.copy(new_two_body_integrals)
+            two_b_integrals[np.abs(two_b_integrals) < sparsity_threshold] = 0.
         
-            lambda_ls, one_body_squares, one_body_correction, truncation_value = low_rank_two_body_decomposition(two_body_integrals,
+            lambda_ls, one_body_squares, one_body_correction, truncation_value = low_rank_two_body_decomposition(two_b_integrals,
                                                                                                     truncation_threshold=rank_threshold,
                                                                                                     final_rank=None,
                                                                                                     spin_basis=False)
@@ -432,8 +437,8 @@ class Molecule:
             one_body_correction = one_body_correction.reshape(n_spatial_orbitals,2,n_spatial_orbitals,2).sum(axis=(1,3))
             eri = eri.reshape(n_spatial_orbitals,2,n_spatial_orbitals,2,n_spatial_orbitals,2,n_spatial_orbitals,2).sum(axis = (1,3,5,7))
             
-            # Checking some of the symmetries
-            assert(np.isclose(eri, np.transpose(eri, (3,2,1,0)), rtol = 1).all() and np.isclose(eri, np.transpose(eri, (2,3,0,1)), rtol = 1).all())
+            # Checking some of the symmetries: http://vergil.chemistry.gatech.edu/notes/permsymm/permsymm.pdf
+            assert(np.isclose(eri, np.transpose(eri, (3,2,1,0)), rtol = 1).all() and np.isclose(eri, np.transpose(eri, (2,3,0,1)), rtol = 1).all() and np.isclose(eri, np.transpose(eri, (1,0,3,2)), rtol = 1).all())
 
             mol = gto.M()
             mol.nelectron = self.molecule_pyscf.n_electrons
@@ -448,7 +453,6 @@ class Molecule:
             # ao2mo.restore(8, eri, n) to get 8-fold permutation symmetry of the integrals
             # ._eri only supports the two-electron integrals in 4-fold or 8-fold symmetry.
 
-            eri[np.abs(eri) < sparsity_threshold] = 0.
             mf._eri = eri # ao2mo.restore(8, eri, mol.nelectron)
 
             mf.kernel()
@@ -472,16 +476,18 @@ class Molecule:
             rank_threshold = threshold[0]
             sparsity_threshold = threshold[1]
 
-            lambda_ls, one_body_squares, one_body_correction, truncation_value = low_rank_two_body_decomposition(new_two_body_integrals,
+            two_b_integrals = copy.copy(new_two_body_integrals)
+            two_b_integrals[abs(two_b_integrals) < sparsity_threshold] = 0.
+
+            lambda_ls, one_body_squares, one_body_correction, truncation_value = low_rank_two_body_decomposition(two_b_integrals,
                                                                                                             truncation_threshold=rank_threshold,
                                                                                                             final_rank=None,
                                                                                                             spin_basis=False)
 
 
             two_body_coefficients = np.einsum('l,lpr,lqs->pqrs',lambda_ls, one_body_squares, one_body_squares)
-            two_body_coefficients[abs(two_body_coefficients) < sparsity_threshold] = 0.
 
-            one_body_coefficients, _ = spinorb_from_spatial(new_one_body_integrals, new_two_body_integrals)
+            one_body_coefficients, _ = spinorb_from_spatial(new_one_body_integrals, two_b_integrals)
             one_body_coefficients = one_body_correction + one_body_coefficients
             one_body_coefficients[abs(one_body_coefficients) < sparsity_threshold] = 0.
 
@@ -517,6 +523,9 @@ class Molecule:
 
         approximate_E = low_rank_truncation_mp2_energy(rank_threshold = rank_threshold, sparsity_threshold = sparsity_threshold)
 
+        if sparsify:
+            new_two_body_integrals[abs(new_two_body_integrals) < sparsity_threshold] = 0.
+
         lambda_ls, one_body_squares, one_body_correction, truncation_value = low_rank_two_body_decomposition(new_two_body_integrals,
                                                                                                             truncation_threshold=rank_threshold,
                                                                                                             final_rank=None,
@@ -524,9 +533,10 @@ class Molecule:
 
         final_rank = len(lambda_ls)
 
+        # The original formula is (2L+1)*(N^4/8+ N/4). Here we have to count only the non-zero elements
+        self.sparsity_d = (2*np.count_nonzero(lambda_ls) + 1)*(np.count_nonzero(one_body_squares-np.diag(np.diag(one_body_squares)))/2 + np.count_nonzero(np.diag(np.diag(one_body_squares))))
+
         two_body_coefficients = np.einsum('l,lpr,lqs->pqrs',lambda_ls, one_body_squares, one_body_squares)
-        if sparsify:
-            two_body_coefficients[abs(two_body_coefficients) < sparsity_threshold] = 0.
 
         one_body_coefficients, _ = spinorb_from_spatial(new_one_body_integrals, new_two_body_integrals)
         one_body_coefficients = one_body_correction + one_body_coefficients

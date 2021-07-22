@@ -241,9 +241,10 @@ class Cost_calculator:
 
                 N = self.molecule.N
                 lambda_value = self.molecule.lambda_value
-                H_norm_lambda_ratio = self.molecule.H_norm_lambda_ratio 
+                H_norm_lambda_ratio = self.molecule.H_norm_lambda_ratio
+                sparsity_d = self.molecule.sparsity_d 
 
-                arguments = (N, lambda_value, final_rank, H_norm_lambda_ratio)
+                arguments = (N, lambda_value, final_rank, H_norm_lambda_ratio, sparsity_d)
                 
                 # generate value for errors epsilon_PEA, epsilon_S
                 optimized_errors = self.calculate_optimized_errors(2, methods_qrom.sparsity_low_rank, arguments)
@@ -253,7 +254,8 @@ class Cost_calculator:
                     N, 
                     lambda_value,
                     final_rank, 
-                    H_norm_lambda_ratio)
+                    H_norm_lambda_ratio,
+                    sparsity_d)
         
         elif method == 'interaction_picture' or method == 'sublinear_scaling':
 
