@@ -2,6 +2,7 @@ import itertools
 import openfermion
 import copy
 import json
+import ast
 
 from openfermionpsi4 import run_psi4
 from openfermionpyscf import run_pyscf
@@ -234,21 +235,11 @@ class Molecule:
         These indices can be used in self.get_basic_parameters(). 
         Also modifies self.molecule_data and self.molecule_pyscf in place.
         '''
+        ao_labels = ast.literal_eval(ao_labels)
 
         # Selecting the active space
         pyscf_scf = self.molecule_pyscf._pyscf_data['scf'] #similar to https://github.com/quantumlib/OpenFermion-PySCF/blob/8b8de945db41db2b39d588ff0396a93566855247/openfermionpyscf/_pyscf_molecular_data.py#L47
-        
-        # if the length of the ao_labels is greather than 1, it is necessary to parse the string (first and last position)
-        if len(ao_labels) > 1:
-    
-            # remove first [ and ,
-            ao_labels[0] = ao_labels[0].replace('[', '')
-            ao_labels[0] = ao_labels[0].replace(',', '')
 
-            # remove last ]
-            last_position = len(ao_labels)-1
-            ao_labels[last_position] = ao_labels[last_position].replace(']', '')
-    
         ncas, ne_act_cas, mo_coeff, (n_mocore, n_mocas, n_movir) = avas.avas(pyscf_scf, ao_labels, canonicalize=False)
         # IMPORTANT: Line 191 from avas.py now reads. Modify it 
         #    return ncas, nelecas, mo, (mocore.shape[1], mocas.shape[1], movir.shape[1])
