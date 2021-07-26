@@ -108,6 +108,14 @@ class Molecule:
 
         self.eta = self.molecule_data.n_electrons
 
+        # alternative way of calculating lambda
+        H1 = molecular_hamiltonian.one_body_tensor
+        eri = molecular_hamiltonian.two_body_tensor
+        T = H1 - 0.5 * np.einsum("pqqs->ps", eri) + np.einsum("pqrr->pq", eri)
+        lambda_V = 0.5 * np.sum(np.abs(eri))
+        lambda_T = np.sum(np.abs(T))
+        print(lambda_V + lambda_T)
+
         if molecular_hamiltonian is None:
             molecular_hamiltonian = self.molecule_data.get_molecular_hamiltonian(occupied_indices=self.occupied_indices, active_indices=self.active_indices)
         fermion_operator = get_fermion_operator(molecular_hamiltonian)
@@ -388,7 +396,7 @@ class Molecule:
 
         pyscf_scf = self.molecule_data._pyscf_data['scf']
         pyscf_mol = self.molecule_data._pyscf_data['mol']
-        two_body_integrals = self.molecule_data.two_body_integrals         # electronic repulsion integrals
+        two_body_integrals = self.molecule_data.two_body_integrals          # electronic repulsion integrals
 
         if occupied_indices or virtual_indices:
             new_core_constant, new_one_body_integrals, new_two_body_integrals = self.molecule_data.get_active_space_integrals(occupied_indices = occupied_indices, active_indices = active_indices)
@@ -525,7 +533,10 @@ class Molecule:
         final_rank = len(lambda_ls)
 
         # The original formula is (2L+1)*(N^4/8+ N/4). Here we have to count only the non-zero elements
-        self.sparsity_d = (2*np.count_nonzero(lambda_ls) + 1)*(np.count_nonzero(one_body_squares-np.diag(np.diag(one_body_squares)))/2 + np.count_nonzero(np.diag(np.diag(one_body_squares))))
+        self.sparsity_d = 0
+        for i in range(len(lambda_ls)):
+            self.sparsity_d += np.count_nonzero(one_body_squares[i,:,:]-np.diag(np.diag(one_body_squares[i,:,:])))/2 + np.count_nonzero(np.diag(np.diag(one_body_squares[i,:,:])))
+        self.sparsity_d *= (2*np.count_nonzero(lambda_ls) + 1)
 
         two_body_coefficients = np.einsum('l,lpr,lqs->pqrs',lambda_ls, one_body_squares, one_body_squares)
 
