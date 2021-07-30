@@ -82,7 +82,7 @@ class QROM_methods:
             d = sparsity_d
         else:
             d = (2*L+1)*(N**2/8 + N/4)
-        M = np.log(N**2) + mu
+        M = np.ceil(np.log2(N**2) + mu)
         kc = 2**closest_power(np.sqrt(d/M))
         ku = 2**closest_power(np.sqrt(d))
         QROAM = 4*(np.ceil(d/kc)+4*M*(kc-1)+2*np.ceil(d/ku) + 4*ku)

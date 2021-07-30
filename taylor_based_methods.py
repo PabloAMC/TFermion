@@ -52,7 +52,7 @@ class Taylor_based_methods:
         
         return result
 
-    def taylor_on_the_fly(self, epsilons, Gamma, N, phi_max, dphi_max, zeta_max_i, J):
+    def taylor_on_the_fly(self, epsilons, N, lambda_value, Lambda_value, Gamma, phi_max, dphi_max, zeta_max_i, J):
         
         epsilon_PEA = epsilons[0]
         epsilon_HS = epsilons[1]
@@ -77,7 +77,7 @@ class Taylor_based_methods:
         t = 4.7/epsilon_PEA
         x_max = np.log(N * t/ epsilon_H)
         
-        lambda_value = Gamma*phi_max**4 * x_max**5
+        #lambda_value = Gamma*phi_max**4 * x_max**5 # It is more precise to recover it from the molecule, this is closer to lambda = Lambda*Gamma
         r = lambda_value* t / np.log(2)
 
         K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1)) 
@@ -93,7 +93,7 @@ class Taylor_based_methods:
         
         mu = ( r*3*2*K/epsilon_H *2*(4*dphi_max + phi_max/x_max)*phi_max**3 * x_max**6 )**6
         n = np.ceil(np.ceil(np.log2(mu))/3) #each coordinate is a third
-        M = lambda_value*r*3*2*K/epsilon_H
+        M = Lambda_value*Gamma*r*3*2*K/epsilon_H
 
         sum = self.tools.sum_cost(n)
         mult = self.tools.multiplication_cost(n)
@@ -198,15 +198,15 @@ class Taylor_based_methods:
             np.ceil(((K1*Zq*phi_max**2*x_max**2/delta) * (2/alpha*np.log(K1*Zq*phi_max**2*x_max**2/delta))**4)**3),
             np.ceil(((K0*phi_max**2*x_max/delta) * (2/alpha*np.log(K0*phi_max**2*x_max/delta))**4)**3)
         ])
-        zeta = epsilon_H/(r*Gamma*mu)
-        M = mu_M_zeta/(epsilon_H/r*Gamma) # = mu_M_zeta/(mu*zeta)
+        zeta = epsilon_H/(r*Gamma*mu*3*2*K)
+        M = mu_M_zeta/(mu*zeta)
 
         epsilon_SS = epsilon_S / (r*3*2*(2*K)) # 3 from AA, 2 Prepare_beta for Prepare and Prepare^+, 2K T gates in the initial theta rotations
         crot_synt = self.tools.c_pauli_rotation_synthesis(epsilon_SS)
         Prepare_beta = crot_synt*K
 
         #### Qval cost computation
-        n = np.log(mu)/3
+        n = np.ceil(np.log2(mu)/3)
         x = sympy.Symbol('x')
 
         number_of_taylor_expansions = (((2*4+2+2)*d*N + (J+1))*K*2*3*r) #2*4+2+2 = 2*two_body + kinetic + external_potential

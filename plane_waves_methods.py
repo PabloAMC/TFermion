@@ -26,7 +26,7 @@ class Plane_waves_methods:
         r = np.sqrt(2*t**3/epsilon_HS *(max_T**2*(max_U + max_V) + max_T*(max_U + max_V)**2))
 
         # Arbitrary precision rotations, does not include the Ry gates in F_2
-        single_qubit_rotations = 8*N + 8*N*(8*N-1) + 8*N + N*np.log(N/2) # U, V, T and FFFT single rotations
+        single_qubit_rotations = 8*N + 8*N*(8*N-1) + 8*N + N*np.log2(N/2) # U, V, T and FFFT single rotations
         epsilon_SS = epsilon_S/single_qubit_rotations
         
         exp_UV_cost = (8*N*(8*N-1) + 8*N)*self.tools.pauli_rotation_synthesis(epsilon_SS)
@@ -53,7 +53,6 @@ class Plane_waves_methods:
 
         K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1)) 
 
-        #todo: revise the count to make it more readable once I get over Linear T   
         epsilon_SS = epsilon_S /(r*3*2*K*(2+4*D+2)) # In the sum the first 2 is due to Uniform_3, next 2D are due to 2 uses of Uniform_M^{otimes D}, and the final two due to the controlled rotation theta angles
         
         mu = np.ceil(np.log(2*np.sqrt(2)*Lambda_value/epsilon_PEA) + np.log(1 + epsilon_PEA/(8*lambda_value)) + np.log(1 - (H_norm_lambda_ratio)**2))
@@ -104,21 +103,20 @@ class Plane_waves_methods:
         t = 4.7/epsilon_PEA
         r = t*lambda_value/np.log(2)
         
-        zeta = epsilon_H/(r*Gamma)
+        K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1))
+        zeta = epsilon_H/(r*Gamma*3*2*K)
         max_W = (2*eta+1)/(8*Omega**(1/3)*np.pi)
-        mu = max_W/zeta
+        M = max_W/zeta #the alternative was something like  M = Lambda_value*Gamma*r*3*2*K/epsilon_H with Lambda = max_W
 
         # x_max = max value of one dimension
         x = sympy.Symbol('x')
-        K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1))
         epsilon_SS = epsilon_S / (2*K*2*3*r) # Due to the theta angles c-rotation in prepare_beta
 
         number_taylor_series = r* 3* 2*2*K*(J+1)
         eps_tay_s = eps_tay / number_taylor_series
         cos_order = self.tools.order_find(lambda x: math.cos(x), function_name = 'cos', e = eps_tay_s, xeval = x_max)
 
-        n = np.ceil(np.ceil(np.log2(mu))/3) #each coordinate is a third
-        M = lambda_value*r*3*2*K/epsilon_H
+        n = np.ceil(np.ceil(np.log2(M))/3) #each coordinate is a third
 
         sum = self.tools.sum_cost(n)
         mult = self.tools.multiplication_cost(n)
@@ -133,12 +131,12 @@ class Plane_waves_methods:
 
         sample_w = prepare_p_equal_q + prepare_p_neq_q + prepare_p_q_0
 
-        kickback = 32*np.log(mu)
+        kickback = 2*(self.tools.sum_cost(np.log2(M)) + self.tools.compare_cost(np.log2(M))) # The 2 accounts for unpreparing the ancilla
 
         prepare_W = 2*sample_w + kickback
         crot_synt = self.tools.c_pauli_rotation_synthesis(epsilon_SS)
         prepare_beta = K*(prepare_W + crot_synt)
-        select_H = (12*N + 8*np.log(N))
+        select_H = (12*N + 8*np.log2(N))
         select_V = K*select_H
 
         R = self.tools.multi_controlled_not((K+1)*np.log2(Gamma) + N) # The prepare qubits and the select qubits (in Jordan-Wigner there are N)

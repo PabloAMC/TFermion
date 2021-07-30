@@ -81,15 +81,17 @@ class Cost_calculator:
                 zeta_max_i = self.molecule.calculate_zeta_i_max()
                 J = len(self.molecule.molecule_geometry) #is the number of atoms in the molecule
 
-                arguments = (self.molecule.Gamma, self.molecule.N, phi_max, dphi_max, zeta_max_i, J)
+                arguments = (self.molecule.N, self.molecule.lambda_value, self.molecule.Lambda_value, self.molecule.Gamma, phi_max, dphi_max, zeta_max_i, J)
 
                 # generate values for errors epsilon_PEA, epsilon_HS, epsilon_S, eps_H, eps_taylor
                 optimized_errors = self.calculate_optimized_errors(5, methods_taylor.taylor_on_the_fly, arguments)
 
                 self.costs['taylor_on_the_fly'] = methods_taylor.taylor_on_the_fly(
                     optimized_errors.x,
-                    self.molecule.Gamma,
                     self.molecule.N,
+                    self.molecule.lambda_value,
+                    self.molecule.Lambda_value,
+                    self.molecule.Gamma,
                     phi_max,
                     dphi_max,
                     zeta_max_i,
