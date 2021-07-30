@@ -33,10 +33,12 @@ class Taylor_based_methods:
         r = t*lambda_value / np.log(2) # Number of time segments
     
         K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1)) 
-        arb_state_synt = self.tools.arbitrary_state_synthesis(Gamma)
+        arb_state_synt = self.tools.arbitrary_state_synthesis(4*np.ceil(np.log2(N)))
         epsilon_SS = epsilon_S /(r*3*2*(K*arb_state_synt + 2*K) ) # 3 from AA, 2 for for Prepare and Prepare^+, then Prepare_beta_1 and Prepare_beta_2, finally r
 
-        Select_H = 2*self.tools.multi_controlled_not(np.ceil(np.log2(Gamma) +1)+3)* 2**4 * (N/2) # The first two is because we multi-control to an ancilla, rotate and uncompute the ancilla. The (N/2) is the average number of number of Paulis in each creation/annihilation operator
+        Select_j = 4*N*self.tools.multi_controlled_not(np.ceil(np.log2(N))+2) + 4*N + N*self.tools.multi_controlled_not(np.ceil(np.log2(N)))
+        # The 4 comes from values of q, the N from values of j; the 4N comes from the Toffolis in the C-Z; the third term deactivates the accumulator
+        Select_H = 4*Select_j
         Select_V = Select_H * K
 
         crot_synt = self.tools.c_pauli_rotation_synthesis(epsilon_SS)
@@ -124,7 +126,9 @@ class Taylor_based_methods:
         Prepare_beta_2 = ( 2*sample + kickback )*K
         Prepare_beta = Prepare_beta_1 + Prepare_beta_2
 
-        Select_H = 2*self.tools.multi_controlled_not(np.ceil(np.log2(Gamma) +1)+3)* 2**4 * (N/2) # The first two is because we multi-control to an ancilla, rotate and uncompute the ancilla. The (N/2) is the average number of number of Paulis in each creation/annihilation operator
+        Select_j = 4*N*self.tools.multi_controlled_not(np.ceil(np.log2(N))+2) + 4*N + N*self.tools.multi_controlled_not(np.ceil(np.log2(N)))
+        # The 4 comes from values of q, the N from values of j; the 4N comes from the Toffolis in the C-Z; the third term deactivates the accumulator
+        Select_H = 4*Select_j
         Select_V = Select_H * K
 
         R = self.tools.multi_controlled_not((K+1)*np.log2(Gamma) + N) # The prepare qubits and the select qubits (in Jordan-Wigner there are N)

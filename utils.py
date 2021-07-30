@@ -142,12 +142,13 @@ class Utils():
     def sum_constraint(self, x):
         return sum(x)
 
-    def arbitrary_state_synthesis(self, N):
+    def arbitrary_state_synthesis(self, n):
         '''
         Number of rotations in arbitrary state synthesis
         Use theorems 8 and 9 from https://ieeexplore.ieee.org/abstract/document/1629135
+        n is the size of the register
         '''
-        return 2*2**(np.ceil(np.log2(N)))-2
+        return 2*2**(n)-2
 
     def pauli_rotation_synthesis(self, epsilon_SS):
         result = 10 + 4*np.log2(1/epsilon_SS)

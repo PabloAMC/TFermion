@@ -41,8 +41,8 @@ class Interaction_picture:
         # Now we count the number of individual rotations from each source: 
         rot_FFFT = N/2*np.log2(N/2) 
         rot_U = 8*N # controlled
-        rot_COEF = self.tools.arbitrary_state_synthesis(K)
-        rot_prep = self.tools.arbitrary_state_synthesis(8*N) 
+        rot_COEF = self.tools.arbitrary_state_synthesis(np.ceil(np.log2(K)))
+        rot_prep = self.tools.arbitrary_state_synthesis(np.ceil(np.log2(8*N))) 
         rot_PHASE = np.ceil(np.log2(8*N)) # controlled
         rot_uniform = 2
 
@@ -152,8 +152,8 @@ class Interaction_picture:
         rot_select_U = np.ceil((1/3)*np.log2(N))+np.ceil(np.log2(delta_R)) + 2 # Controlled. The length of the registers is (1/3)*np.log2(N) (each coord) + log delta_R +  2 (2 sums) 
         rot_Uniform = 2 # Those not included in Subprepare
         rot_Subprepare = 2 # Only the two rotations from Uniform in Subprepare (cube weighting and the Subprepare in Prepare)
-        rot_Prepare_cube = self.tools.arbitrary_state_synthesis(n)
-        rot_COEF = self.tools.arbitrary_state_synthesis(K)
+        rot_Prepare_cube = self.tools.arbitrary_state_synthesis(np.ceil(np.log2(n)))
+        rot_COEF = self.tools.arbitrary_state_synthesis(np.ceil(np.log2(K)))
 
         # A prefactor of x2 indicates controlled rotation
         num_rotations = 2*rot_exp_T* r*(1+3*K*2) + 2*rot_select_U* r*3*K + rot_Uniform* r*3*(4*K+2) + rot_Subprepare *r*3*K*2*1 + rot_Prepare_cube*r*3*K*2*3 + rot_COEF* r*3*2
