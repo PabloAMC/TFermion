@@ -78,7 +78,8 @@ class Plane_waves_methods:
         Select = 3*QROM_cost(N) + 2*np.log2(N)*Fredkin_cost
         crot_synt = self.tools.c_pauli_rotation_synthesis(epsilon_SS) # due to the preparation of the theta angles
         prepare_beta = K*(Prepare + crot_synt) # The 2*rot_synt is due to the preparation of the theta angles
-        select_V = K*(Select)
+        QPE_adaptation = self.tools.multi_controlled_not(np.ceil(K/2) + 1) 
+        select_V = K*(Select) + QPE_adaptation
 
         R = self.tools.multi_controlled_not(2*np.log2(N)+2*mu+N) # Based on the number qubits needed in the Linear T QRom article
         result = r*(3*(2*prepare_beta + select_V) + 2*R)
@@ -137,7 +138,8 @@ class Plane_waves_methods:
         crot_synt = self.tools.c_pauli_rotation_synthesis(epsilon_SS)
         prepare_beta = K*(prepare_W + crot_synt)
         select_H = (12*N + 8*np.log2(N))
-        select_V = K*select_H
+        QPE_adaptation = self.tools.multi_controlled_not(np.ceil(K/2) + 1) 
+        select_V = K*select_H + QPE_adaptation
 
         R = self.tools.multi_controlled_not((K+1)*np.log2(Gamma) + N) # The prepare qubits and the select qubits (in Jordan-Wigner there are N)
         result = r*(3*(2*prepare_beta + select_V) + 2*R)

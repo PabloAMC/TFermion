@@ -39,7 +39,8 @@ class Taylor_based_methods:
         Select_j = 4*N*self.tools.multi_controlled_not(np.ceil(np.log2(N))+2) + 4*N + N*self.tools.multi_controlled_not(np.ceil(np.log2(N)))
         # The 4 comes from values of q, the N from values of j; the 4N comes from the Toffolis in the C-Z; the third term deactivates the accumulator
         Select_H = 4*Select_j
-        Select_V = Select_H * K
+        QPE_adaptation = self.tools.multi_controlled_not(np.ceil(K/2) + 1) 
+        Select_V = Select_H * K + QPE_adaptation
 
         crot_synt = self.tools.c_pauli_rotation_synthesis(epsilon_SS)
         rot_synt = self.tools.pauli_rotation_synthesis(epsilon_SS)
@@ -129,7 +130,8 @@ class Taylor_based_methods:
         Select_j = 4*N*self.tools.multi_controlled_not(np.ceil(np.log2(N))+2) + 4*N + N*self.tools.multi_controlled_not(np.ceil(np.log2(N)))
         # The 4 comes from values of q, the N from values of j; the 4N comes from the Toffolis in the C-Z; the third term deactivates the accumulator
         Select_H = 4*Select_j
-        Select_V = Select_H * K
+        QPE_adaptation = self.tools.multi_controlled_not(np.ceil(K/2) + 1) 
+        Select_V = Select_H * K + QPE_adaptation
 
         R = self.tools.multi_controlled_not((K+1)*np.log2(Gamma) + N) # The prepare qubits and the select qubits (in Jordan-Wigner there are N)
         result = r*(3*(2*Prepare_beta + Select_V) + 2*R)
@@ -255,7 +257,8 @@ class Taylor_based_methods:
         Q_col = 2*find_alphas + 2*find_gammas_2y4
         
         Select_H = Q_val + 2*Q_col # +swaps, but they are Clifford
-        Select_V = K*Select_H
+        QPE_adaptation = self.tools.multi_controlled_not(np.ceil(K/2) + 1) 
+        Select_V = K*Select_H + QPE_adaptation
 
         R = self.tools.multi_controlled_not((K+1)*np.log2(Gamma) + N) # The prepare qubits and the select qubits (in Jordan-Wigner there are N)
         result = r*(3*(2*Prepare_beta + Select_V) + 2*R)
