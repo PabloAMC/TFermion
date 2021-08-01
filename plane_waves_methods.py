@@ -99,7 +99,7 @@ class Plane_waves_methods:
         '''
         sum_1_nu = 4*np.pi*(np.sqrt(3)*N**(1/3)/2 - 1) + 3 - 3/N**(1/3) + 3*self.tools.I(N**(1/3))
         sum_nu = self.quadratic_sum(int(N**(1/3)))
-        lambda_value = (2*eta+1)/(8*Omega**(1/3)*np.pi)*(Omega**(2/3)*8*N/(2*np.pi)**2)*sum_1_nu*((2*eta+1)*np.pi/(2*Omega) + (8*N-1)*np.pi/(4*Omega)) + 8*N/2*(np.pi**2* sum_nu/(N*Omega**(2/3))+4) 
+        lambda_value = ((2*eta+1)/(4*np.pi*Omega**(1/3)) - (np.pi**2)/(N*Omega**(2/3)))*(8*N)**3 
         t = 4.7/epsilon_PEA
         r = t*lambda_value/np.log(2)
         
