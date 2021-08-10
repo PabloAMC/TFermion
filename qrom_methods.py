@@ -13,7 +13,7 @@ class QROM_methods:
 
         '''To be used in plane wave basis'''
         t = 4.7/epsilon_PEA
-        r = lambd*t
+        r = np.e*lambd*t
         
         mu = np.ceil(np.log(2*np.sqrt(2)*lambd/epsilon_PEA) + np.log(1 + epsilon_PEA/(8*lambd)) + np.log(1 - (H_norm_lambda_ratio)**2))
         
@@ -52,7 +52,7 @@ class QROM_methods:
         N = 2*N # In this article N means spin orbitals, not orbitals
 
         t = 4.7/epsilon_PEA
-        r = lambd*t
+        r = np.e*lambd*t
         
         mu = np.ceil(np.log(2*np.sqrt(2)*lambd/epsilon_PEA) + np.log(1 + epsilon_PEA/(8*lambd)) + np.log(1 - (H_norm_lambda_ratio)**2))
 

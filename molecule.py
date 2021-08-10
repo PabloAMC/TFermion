@@ -46,7 +46,7 @@ Nevertheless, some important links for the periodic boundary condition (not used
 
 CHEMICAL_ACCURACY = 0.0015 #in Hartrees, according to http://greif.geo.berkeley.edu/~driver/conversions.html
 H_NORM_LAMBDA_RATIO = .75
-wigner_seitz_radius = 5. # Chosen as in https://quantumai.google/openfermion/tutorials/circuits_2_diagonal_coulomb_trotter, but may not make sense
+#wigner_seitz_radius = 5. # Chosen as in https://quantumai.google/openfermion/tutorials/circuits_2_diagonal_coulomb_trotter, but may not make sense
 
 class Molecule:
 
@@ -620,7 +620,6 @@ class Molecule:
         hess_max = np.max(mo_hess_norms)
 
         return phi_max, dphi_max, grad_max, hess_max
-
 
     def calculate_zeta_i_max(self):
         '''Returns the charge of the larger atom in the molecule'''
