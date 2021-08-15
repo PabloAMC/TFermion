@@ -107,7 +107,7 @@ class Molecule:
     def get_basic_parameters(self, threshold = 0, molecular_hamiltonian = None):
 
         self.eta = self.molecule_data.n_electrons
-
+        '''
         # alternative way of calculating lambda
         H1 = molecular_hamiltonian.one_body_tensor
         eri = molecular_hamiltonian.two_body_tensor
@@ -115,6 +115,8 @@ class Molecule:
         lambda_V = 0.5 * np.sum(np.abs(eri))
         lambda_T = np.sum(np.abs(T))
         print(lambda_V + lambda_T)
+        print(np.sum(np.abs(H1))+0.5*np.sum(np.abs(eri)))
+        '''
 
         if molecular_hamiltonian is None:
             molecular_hamiltonian = self.molecule_data.get_molecular_hamiltonian(occupied_indices=self.occupied_indices, active_indices=self.active_indices)
@@ -135,6 +137,7 @@ class Molecule:
 
         l = abs(np.array(list(JW_op.terms.values())))
         self.lambda_value = sum(l)
+        print(self.lambda_value)
         self.Lambda_value = max(l)
         self.Gamma = np.count_nonzero(l >= threshold)
 
@@ -329,8 +332,8 @@ class Molecule:
         # Until here------------------------------------ Iterate to see how high can we put the threshold without damaging the energy estimates (error up to chemical precision)
         exact_E = sparsification_mp2_energy(threshold = 0)
 
-        nconstraint = scipy.optimize.NonlinearConstraint(fun = lambda threshold: sparsification_mp2_energy(threshold) - exact_E, lb = -CHEMICAL_ACCURACY, ub = +CHEMICAL_ACCURACY, keep_feasible = True)
-        lconstraint = scipy.optimize.LinearConstraint(A = np.array([1]), lb = 1e-10, ub = 1, keep_feasible = True)
+        nconstraint = scipy.optimize.NonlinearConstraint(fun = lambda threshold: sparsification_mp2_energy(threshold) - exact_E, lb = -CHEMICAL_ACCURACY, ub = +CHEMICAL_ACCURACY)
+        lconstraint = scipy.optimize.LinearConstraint(A = np.array([1]), lb = 1e-10, ub = 1)
         result = scipy.optimize.minimize(fun = lambda threshold: 1e-2/(threshold+1e-4), x0 = 1e-4, constraints = [nconstraint, lconstraint], tol = .01*CHEMICAL_ACCURACY, options = {'maxiter': 50}, method='COBYLA') # Works with COBYLA, but not with SLSQP (misses the boundaries) or trust-constr (oscillates)
         threshold = float(result['x'])
         approximate_E = sparsification_mp2_energy(threshold = threshold)
@@ -508,14 +511,14 @@ class Molecule:
         exact_E = low_rank_truncation_mp2_energy(rank_threshold = 0, sparsity_threshold = 0)
 
         if sparsify: 
-            nconstraint = scipy.optimize.NonlinearConstraint(fun = lambda threshold: low_rank_truncation_mp2_energy(threshold[0], threshold[1]) - exact_E, lb = -CHEMICAL_ACCURACY, ub = +CHEMICAL_ACCURACY, keep_feasible = True)
-            lconstraint = scipy.optimize.LinearConstraint(A = np.array([[1,0],[0,1]]), lb = [1e-10,1e-10], ub = [1,1], keep_feasible = True)
-            result = scipy.optimize.minimize(fun = compute_lambda, x0 = [1e-1, 1e-6], constraints = [nconstraint, lconstraint], options = {'maxiter': 50, 'catol': .01*CHEMICAL_ACCURACY}, tol = 0.1, method='COBYLA') # Works with COBYLA, but not with SLSQP (misses the boundaries) or trust-constr (oscillates)
+            nconstraint = scipy.optimize.NonlinearConstraint(fun = lambda threshold: low_rank_truncation_mp2_energy(threshold[0], threshold[1]) - exact_E, lb = -CHEMICAL_ACCURACY, ub = +CHEMICAL_ACCURACY)
+            lconstraint = scipy.optimize.LinearConstraint(A = np.array([[1,0],[0,1]]), lb = [1e-10,1e-10], ub = [1,1])
+            result = scipy.optimize.minimize(fun = compute_lambda, x0 = [1e-8, 1e-10], constraints = [nconstraint, lconstraint], options = {'maxiter': 50, 'catol': .01*CHEMICAL_ACCURACY}, tol = 0.1, method='COBYLA') # Works with COBYLA, but not with SLSQP (misses the boundaries) or trust-constr (oscillates)
             rank_threshold = float(result['x'][0])
             sparsity_threshold = float(result['x'][1])
         else:
-            nconstraint = scipy.optimize.NonlinearConstraint(fun = lambda rank_threshold: low_rank_truncation_mp2_energy(rank_threshold, 0) - exact_E, lb = -CHEMICAL_ACCURACY, ub = +CHEMICAL_ACCURACY, keep_feasible = True)
-            lconstraint = scipy.optimize.LinearConstraint(A = np.array([1]), lb = 1e-10, ub = 1, keep_feasible = True)
+            nconstraint = scipy.optimize.NonlinearConstraint(fun = lambda rank_threshold: low_rank_truncation_mp2_energy(rank_threshold, 0) - exact_E, lb = -CHEMICAL_ACCURACY, ub = +CHEMICAL_ACCURACY)
+            lconstraint = scipy.optimize.LinearConstraint(A = np.array([1]), lb = 1e-10, ub = 1)
             result = scipy.optimize.minimize(fun = lambda rank_threshold: 1e-2/(rank_threshold+1e-4), x0 = 1e-4, constraints = [nconstraint, lconstraint], tol = 0.1, options = {'maxiter': 50, 'catol': .01*CHEMICAL_ACCURACY}, method='COBYLA') # Works with COBYLA, but not with SLSQP (misses the boundaries) or trust-constr (oscillates)
             rank_threshold = float(result['x'])
             sparsity_threshold = 0.

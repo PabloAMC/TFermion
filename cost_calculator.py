@@ -70,7 +70,7 @@ class Cost_calculator:
 
                 self.costs['taylor_naive'] = methods_taylor.taylor_naive(
                     optimized_errors.x,
-                    self.molecule.Lambda_value,
+                    self.molecule.lambda_value,
                     self.molecule.Gamma,
                     self.molecule.N)
 
