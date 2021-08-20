@@ -50,14 +50,21 @@ H_NORM_LAMBDA_RATIO = .75
 
 class Molecule:
 
-    def __init__(self, name, tools, charge = 0, program = 'pyscf'):
+    def __init__(self, molecule_info, tools, charge = 0, program = 'pyscf'):
 
-        self.molecule_name = name
+        self.molecule_info = molecule_info
         self.tools = tools
         self.program = program
 
         self.gamma_threshold = self.tools.config_variables['gamma_threshold']
-        self.molecule_geometry = geometry_from_pubchem(self.molecule_name) # We prefer pyscf because of functionality.
+
+        # molecule info could be a name, geometry information or hamiltonian description
+        self.molecule_info_type = self.check_molecule_info(self.molecule_info)
+
+        if self.molecule_info_type == 'name':
+            self.molecule_geometry = geometry_from_pubchem(self.molecule_info) # We prefer pyscf because of functionality.
+        elif self.molecule_info_type == 'geometry':
+            self.molecule_geometry = self.tools.parse_geometry_file(self.molecule_info)
 
         ## Center the molecule so that coords can be put in a box
 
@@ -772,3 +779,27 @@ class Molecule:
         lambda_T = eta/2 * (2*np.pi/Omega**(1/3))**2 * sum_nu
 
         return lambda_T, lambda_U_V
+
+    def check_molecule_info(self, molecule_info):
+
+        index_last_dot = molecule_info[::-1].find('.')
+
+        # there is no dot, so no extension. Therefore, it is a name
+        if index_last_dot == -1:
+            return 'name'
+        
+        # there is a dot, so it is a file with extension
+        else:
+
+            # get the extension of the file taking the character from last dot
+            extension = molecule_info[-index_last_dot:]
+
+            if extension == 'chem':
+                return 'geometry'
+
+            elif extension == 'h5' or extension == 'hdf5':
+                return 'hamiltonian'
+
+            else:
+                print('<*> ERROR: extension in molecule information not recognized. It should be .chem (geometry) or .h5/.hdf5 (hamiltonian). The molecule name can not contain dots')
+
