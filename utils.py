@@ -213,26 +213,4 @@ class Utils():
 
     def parse_geometry_file(self, molecule_info):
 
-        atomId = 0
-        with open(molecule_info, 'r') as filehandle:
-
-            isDataLine = False
-            atoms = []
-            for line in filehandle:
-
-                #if line is an empty string after reading data
-                if isDataLine and line.isspace():
-                    break
-                
-                # Data has ------ and it is necessary to avoid it
-                if isDataLine and not '--' in line:
-
-                    lineChunks = line.split()
-
-                    atoms.append([lineChunks[0], [float(lineChunks[1]), float(lineChunks[2]), float(lineChunks[3])]])
-                    atomId += 1
-
-                if 'Center' in line:
-                    isDataLine = True
-                        
-        return atoms
+        with open(molecule_info) as json_file: return json.load(json_file['atoms'])
