@@ -25,7 +25,7 @@ if args.charge == None: args.charge = 0
 # More complex examples (beware the time): https://pubchem.ncbi.nlm.nih.gov/compound/7966 (cyclohexanol, MA's choosing)
 # https://pubchem.ncbi.nlm.nih.gov/compound/25000034 (Tetrahedral, 1.66 Amstrong), https://pubchem.ncbi.nlm.nih.gov/compound/167316 (table 1 in https://chemistry-europe.onlinelibrary.wiley.com/doi/full/10.1002/cphc.200700128?casa_token=fYXpuPMymU4AAAAA%3Ao0dz2LXXn8yVq56nOt5ZrV92HiuzItsffXm6Nn_O9z3hXt2d2Sm2qVX-GZwQsnQ_z4PPPPrN2jSqfIg)
 #molecule = Molecule(name = 'H', tools = tools)
-molecule = Molecule(name = args.molecule_name, tools = tools, charge = args.charge)
+molecule = Molecule(molecule_info = args.molecule_info, tools = tools, charge = args.charge)
 
 #Active space
 if args.ao_labels:

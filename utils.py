@@ -31,7 +31,7 @@ class Utils():
 
         parser = argparse.ArgumentParser(description="Tool to estimate the T gates cost of many quantum energy calculator methods.\n Example: python qphase.py methane qdrift")
 
-        parser.add_argument("molecule_name", help="name of the molecule to analyze", type=str)
+        parser.add_argument("molecule_info", help="information about molecule to analyze. It could be a name, a geometry file (with .chem extension) or a hamiltonian file (with .h5 or .hdf5 extension)", type=str)
         parser.add_argument("method", help="method to calculate the energy of the molecule", type=str)
         parser.add_argument("ao_labels", nargs='*', default=[], help="atomic orbital labels for the avas method to select the active space. Example: ['Fe 3d', 'C 2pz']")
         
@@ -210,3 +210,7 @@ class Utils():
         minimum_value = maximum_value/2
 
         return [rnd.uniform(minimum_value, maximum_value) for _ in range(number_errors)]
+
+    def parse_geometry_file(self, molecule_info):
+
+        with open(molecule_info) as json_file: return json.load(json_file['atoms'])

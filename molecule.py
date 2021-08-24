@@ -50,42 +50,26 @@ H_NORM_LAMBDA_RATIO = .75
 
 class Molecule:
 
-    def __init__(self, name, tools, charge = 0, program = 'pyscf'):
+    def __init__(self, molecule_info, tools, charge = 0, program = 'pyscf'):
 
-        self.molecule_name = name
+        self.molecule_info = molecule_info
         self.tools = tools
         self.program = program
 
         self.gamma_threshold = self.tools.config_variables['gamma_threshold']
-        self.molecule_geometry = geometry_from_pubchem(self.molecule_name) # We prefer pyscf because of functionality.
 
-        ## Center the molecule so that coords can be put in a box
+        # molecule info could be a name, geometry information or hamiltonian description
+        self.molecule_info_type = self.check_molecule_info(self.molecule_info)
 
-        # Tuple to list
-        for i, (at, coord) in zip(range(len(self.molecule_geometry)), self.molecule_geometry):
-            self.molecule_geometry[i] = (at, list(coord))
+        if self.molecule_info_type == 'name':
+            molecule_geometry = geometry_from_pubchem(self.molecule_info) # We prefer pyscf because of functionality.
 
-        self.xmax = 0
+        elif self.molecule_info_type == 'geometry':
+            molecule_geometry = None
+            with open(molecule_info) as json_file: 
+                molecule_geometry = json.load(json_file)['atoms']
 
-        # Shift each coordinate
-        for j in range(3):
-            maximum = max([self.molecule_geometry[i][1][j] for i in range(len(self.molecule_geometry))])
-            minimum = min([self.molecule_geometry[i][1][j] for i in range(len(self.molecule_geometry))])
-
-            avg = (maximum + minimum)/2
-
-            for i in range(len(self.molecule_geometry)):
-                self.molecule_geometry[i][1][j] -= avg
-
-            maximum = max([self.molecule_geometry[i][1][j] for i in range(len(self.molecule_geometry))])
-            self.xmax = max(self.xmax,maximum) 
-        
-        # List to tuple
-        for i, (at, coord) in zip(range(len(self.molecule_geometry)), self.molecule_geometry):
-            self.molecule_geometry[i] = (at, tuple(coord))
-
-        #From OpenFermion
-        self.molecule_data = MolecularData(self.molecule_geometry, self.tools.config_variables['basis'], charge = charge, multiplicity = 1, filename = 'name')
+        [self.molecule_geometry, self.molecule_data] = self.calculte_geometry_params(molecule_geometry, charge)
 
         #Add possibility of boundary conditions https://sunqm.github.io/pyscf/tutorial.html#initializing-a-crystal -> Seems quite complicated and not straightforward
         if program == 'psi4': 
@@ -103,6 +87,37 @@ class Molecule:
 
         #self.build_grid()
         #self.get_basic_parameters()
+
+    def calculte_geometry_params(self, molecule_geometry, charge):
+
+        ## Center the molecule so that coords can be put in a box
+
+        # Tuple to list
+        for i, (at, coord) in zip(range(len(molecule_geometry)), molecule_geometry):
+            molecule_geometry[i] = (at, list(coord))
+
+        self.xmax = 0
+
+        # Shift each coordinate
+        for j in range(3):
+            maximum = max([molecule_geometry[i][1][j] for i in range(len(molecule_geometry))])
+            minimum = min([molecule_geometry[i][1][j] for i in range(len(molecule_geometry))])
+
+            avg = (maximum + minimum)/2
+
+            for i in range(len(molecule_geometry)):
+                molecule_geometry[i][1][j] -= avg
+
+            maximum = max([molecule_geometry[i][1][j] for i in range(len(molecule_geometry))])
+            self.xmax = max(self.xmax, maximum) 
+        
+        # List to tuple
+        for i, (at, coord) in zip(range(len(molecule_geometry)), molecule_geometry):
+            molecule_geometry[i] = (at, tuple(coord))
+
+        #From OpenFermion
+        return [molecule_geometry, MolecularData(molecule_geometry, self.tools.config_variables['basis'], charge = charge, multiplicity = 1, filename = 'name')]
+    
 
     def get_basic_parameters(self, threshold = 0, molecular_hamiltonian = None):
 
@@ -771,3 +786,27 @@ class Molecule:
         lambda_T = eta/2 * (2*np.pi/Omega**(1/3))**2 * sum_nu
 
         return lambda_T, lambda_U_V
+
+    def check_molecule_info(self, molecule_info):
+
+        index_last_dot = molecule_info[::-1].find('.')
+
+        # there is no dot, so no extension. Therefore, it is a name
+        if index_last_dot == -1:
+            return 'name'
+        
+        # there is a dot, so it is a file with extension
+        else:
+
+            # get the extension of the file taking the character from last dot
+            extension = molecule_info[-index_last_dot:]
+
+            if extension == 'geo':
+                return 'geometry'
+
+            elif extension == 'h5' or extension == 'hdf5':
+                return 'hamiltonian'
+
+            else:
+                print('<*> ERROR: extension in molecule information not recognized. It should be .chem (geometry) or .h5/.hdf5 (hamiltonian). The molecule name can not contain dots')
+
