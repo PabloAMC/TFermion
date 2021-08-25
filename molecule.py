@@ -1,8 +1,9 @@
-import itertools
 import openfermion
 import copy
 import json
 import ast
+import importlib
+import sys
 
 from openfermionpsi4 import run_psi4
 from openfermionpyscf import run_pyscf
@@ -265,10 +266,11 @@ class Molecule:
 
         # Selecting the active space
         pyscf_scf = self.molecule_pyscf._pyscf_data['scf'] #similar to https://github.com/quantumlib/OpenFermion-PySCF/blob/8b8de945db41db2b39d588ff0396a93566855247/openfermionpyscf/_pyscf_molecular_data.py#L47
+        my_avas = avas.AVAS(pyscf_scf, ao_labels, canonicalize=False)
+        n_mocas, ne_act_cas, mo_coeff = my_avas.kernel()
 
-        ncas, ne_act_cas, mo_coeff, (n_mocore, n_mocas, n_movir) = avas.avas(pyscf_scf, ao_labels, canonicalize=False)
-        # IMPORTANT: Line 191 from avas.py now reads. Modify it 
-        #    return ncas, nelecas, mo, (mocore.shape[1], mocas.shape[1], movir.shape[1])
+        n_mocore = my_avas.occ_weights.shape[0] - n_mocas
+        n_movir = my_avas.vir_weights.shape[0]
 
         pyscf_scf.mo_coeff = mo_coeff
         # mo_occ = pyscf_scf.mo_occ contains some information on the occupation
@@ -289,7 +291,7 @@ class Molecule:
         # This does not give the natural orbitals. If those are wanted check https://github.com/pyscf/pyscf/blob/7be5e015b2b40181755c71d888449db936604660/pyscf/mcscf/__init__.py#L172
         # Complete Active Space Self Consistent Field (CASSCF), an option of Multi-Configuration Self Consistent Field (MCSCF) calculation. A more expensive alternative would be Complete Active Space Configuration Interaction (CASCI)
         #todo: check whether we want natural orbitals or not
-        pyscf_mcscf = mcscf.CASSCF(pyscf_scf, ncas, ne_act_cas).run(mo_coeff) #Inspired by the mini-example in avas documentation link above
+        pyscf_mcscf = mcscf.CASSCF(pyscf_scf, n_mocas, ne_act_cas).run(mo_coeff) #Inspired by the mini-example in avas documentation link above
 
         self.molecule_data._pyscf_data['mcscf'] = pyscf_mcscf
         self.molecule_data.mcscf_energy = pyscf_mcscf.e_tot

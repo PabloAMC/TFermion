@@ -36,7 +36,7 @@ if args.ao_labels:
 
 c_calculator = cost_calculator.Cost_calculator(molecule, tools)
 c_calculator.calculate_cost(args.method)
-print('The cost to calculate the energy of', args.molecule_name,'with method', args.method, 'is', "{:e}".format(c_calculator.costs[args.method]))
+print('The cost to calculate the energy of', args.molecule_info,'with method', args.method, 'is', "{:e}".format(c_calculator.costs[args.method]))
 
 execution_time = time.time() - start_time
 
