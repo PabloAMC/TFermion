@@ -552,12 +552,6 @@ class Molecule:
 
         final_rank = len(lambda_ls)
 
-        # The original formula is (2L+1)*(N^4/8+ N/4). Here we have to count only the non-zero elements
-        self.sparsity_d = 0
-        for i in range(len(lambda_ls)):
-            self.sparsity_d += np.count_nonzero(one_body_squares[i,:,:]-np.diag(np.diag(one_body_squares[i,:,:])))/2 + np.count_nonzero(np.diag(np.diag(one_body_squares[i,:,:])))
-        self.sparsity_d *= (2*np.count_nonzero(lambda_ls) + 1)
-
         two_body_coefficients = np.einsum('l,lpr,lqs->pqrs',lambda_ls, one_body_squares, one_body_squares)
 
         one_body_coefficients, _ = spinorb_from_spatial(new_one_body_integrals, new_two_body_integrals)
@@ -570,6 +564,11 @@ class Molecule:
         #todo: the 1/2 term in front of the two_body_coefficients should be there? -> Check the definition of get_molecular_hamiltonian https://github.com/quantumlib/OpenFermion/blob/40f4dd293d3ac7759e39b0d4c061b391e9663246/src/openfermion/chem/molecular_data.py#L878
         # There is a 1/2 term because spinorb_from_spatial (used in get_molecular_hamiltonian) duplicates the coefficients for spin orbitals, so they need to be divided between two
         molecular_hamiltonian = reps.InteractionOperator(constant, one_body_coefficients, 1/2 * two_body_coefficients)
+
+        # The original formula is (2L+1)*(N^4/8+ N/4). Here we have to count only the non-zero elements
+        self.sparsity_d = np.count_nonzero(molecular_hamiltonian.one_body_integrals-np.diag(np.diag(molecular_hamiltonian.one_body_integrals)))/2 + np.count_nonzero(np.diag(np.diag(molecular_hamiltonian.one_body_integrals)))
+        for i in range(len(lambda_ls)):
+            self.sparsity_d += 2*np.all(lambda_ls[i])*( np.count_nonzero(one_body_squares[i,:,:]-np.diag(np.diag(one_body_squares[i,:,:])))/2 + np.count_nonzero(np.diag(np.diag(one_body_squares[i,:,:]))))
 
         return molecular_hamiltonian, final_rank
 
