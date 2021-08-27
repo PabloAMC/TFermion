@@ -51,7 +51,7 @@ H_NORM_LAMBDA_RATIO = .75
 
 class Molecule:
 
-    def __init__(self, molecule_info, tools, charge = 0, program = 'pyscf'):
+    def __init__(self, molecule_info, molecule_info_type, tools, charge = 0, program = 'pyscf'):
 
         self.molecule_info = molecule_info
         self.tools = tools
@@ -153,7 +153,6 @@ class Molecule:
 
         l = abs(np.array(list(JW_op.terms.values())))
         self.lambda_value = sum(l)
-        print(self.lambda_value)
         self.Lambda_value = max(l)
         self.Gamma = np.count_nonzero(l >= threshold)
 
@@ -789,26 +788,129 @@ class Molecule:
 
         return lambda_T, lambda_U_V
 
-    def check_molecule_info(self, molecule_info):
+import numpy
+import h5py
+import math
+import itertools
+from itertools import combinations
+class Molecule_Hamiltonian:
 
-        index_last_dot = molecule_info[::-1].find('.')
+    def __init__(self, molecule_info, tools):
 
-        # there is no dot, so no extension. Therefore, it is a name
-        if index_last_dot == -1:
-            return 'name'
-        
-        # there is a dot, so it is a file with extension
-        else:
+        self.molecule_info = molecule_info
+        self.tools = tools
 
-            # get the extension of the file taking the character from last dot
-            extension = molecule_info[-index_last_dot:]
+    # code extracted from https://doi.org/10.5281/zenodo.4248322
+    def get_basic_parameters(self):
 
-            if extension == 'geo':
-                return 'geometry'
+        f = h5py.File(self.molecule_info+"eri_li.h5", "r")
+        eri = f['eri'][()]
+        h0 = f['h0'][()]
+        f.close()
 
-            elif extension == 'h5' or extension == 'hdf5':
-                return 'hamiltonian'
+        f = h5py.File(self.molecule_info+"eri_li_cholesky.h5", "r")
+        gval = f["gval"][()]
+        gvec = f["gvec"][()]
+        f.close()
 
-            else:
-                print('<*> ERROR: extension in molecule information not recognized. It should be .chem (geometry) or .h5/.hdf5 (hamiltonian). The molecule name can not contain dots')
+        norb = h0.shape[1]
+        nchol_max = gval.shape[0]
+        thresh = 3.5e-5 # set threshold
 
+        L = numpy.einsum("ij,j->ij",gvec,numpy.sqrt(gval))
+        L = L.T.copy()
+        L = L.reshape(nchol_max, norb, norb)
+
+        T = h0 - 0.5 * numpy.einsum("pqqs->ps", eri, optimize=True) + numpy.einsum("pqrr->pq", eri, optimize = True)
+
+        lambda_T = numpy.sum(numpy.abs(T))
+
+        R = 275 # set cholesky dimension
+
+        LR = L[:R,:,:].copy()
+
+        lambda_W = 0.25 * numpy.einsum("xij,xkl->",numpy.abs(LR), numpy.abs(LR), optimize=True)
+
+        # compute one-body
+        T = h0 - 0.5 * numpy.einsum("pqqs->ps", eri) + numpy.einsum("pqrr->pq", eri)
+
+        orbs = [i for i in range(norb)]
+
+        lambda_T = numpy.sum(numpy.abs(T))
+
+
+        pqrs = list(combinations(orbs, 4))
+        pqr = list(combinations(orbs, 3))
+        pq = list(combinations(orbs, 2))
+
+
+        eri_sparse = eri.copy()
+        eri_sparse[numpy.abs(eri) < thresh] = 0.0 # zero out all elements below threshold
+
+        lambda_V = 0.5 * numpy.sum(numpy.abs(eri_sparse))
+
+        nnzs = 0.0
+        for p,q,r,s in pqrs:
+            # pqrs
+            if numpy.abs(eri_sparse[p,q,r,s]) >= thresh:
+                nnzs += 1.0
+            # prqs
+            if numpy.abs(eri_sparse[p,r,q,s]) >= thresh:
+                nnzs += 1.0
+            # psqr
+            if numpy.abs(eri_sparse[p,s,q,r]) >= thresh:
+                nnzs += 1.0
+
+
+        for p,q,r in pqr:
+            # ppqr, pqpr
+            # qqpr, qrpq
+            # rrpq, rpqr
+            if numpy.abs(eri_sparse[p,p,q,r]) >= thresh:
+                nnzs += 1.0
+            if numpy.abs(eri_sparse[p,q,p,r]) >= thresh:
+                nnzs += 1.0
+            if numpy.abs(eri_sparse[q,q,p,r]) >= thresh:
+                nnzs += 1.0
+            if numpy.abs(eri_sparse[q,r,p,q]) >= thresh:
+                nnzs += 1.0
+            if numpy.abs(eri_sparse[r,r,p,q]) >= thresh:
+                nnzs += 1.0
+            if numpy.abs(eri_sparse[r,p,q,r]) >= thresh:
+                nnzs += 1.0
+
+        for p,q in pq:
+            # ppqq
+            # pqpq
+            # pppq
+            # qqqp
+            if numpy.abs(eri_sparse[p,p,q,q]) >= thresh:
+                nnzs += 1.0
+            if numpy.abs(eri_sparse[p,q,p,q]) >= thresh:
+                nnzs += 1.0
+            if numpy.abs(eri_sparse[p,p,p,q]) >= thresh:
+                nnzs += 1.0
+            if numpy.abs(eri_sparse[q,q,q,p]) >= thresh:
+                nnzs += 1.0
+
+        for p in orbs:
+            if numpy.abs(eri_sparse[p,p,p,p]) >= thresh:
+                nnzs += 1.0
+
+        nnzs += norb *(norb+1.)/2.
+
+        # save parameters to cost_methods
+        self.lambda_value = lambda_T + lambda_W
+
+        # Lambda_value is the max of all summed coefficients of T and LR
+        V = 0.25 * numpy.einsum("xij,xkl->ijkl",numpy.abs(LR), numpy.abs(LR), optimize=True) 
+        max_LR = max(numpy.abs(V).flatten())
+        max_T = max(numpy.abs(T).flatten())
+
+        self.Lambda_value = max(max_LR, max_T)
+
+        # Gamma is the number of values over the threshold
+        self.Gamma = np.count_nonzero( numpy.abs(T).flatten() >= thresh) + np.count_nonzero( numpy.abs(V).flatten() >= thresh)
+
+        # number orbitals
+        self.N = norb

@@ -1,8 +1,10 @@
 import utils
-from molecule import Molecule
 import cost_calculator
 import datetime
 import time
+
+from molecule import Molecule
+from molecule import Molecule_Hamiltonian
 
 print('\n###################################################################')
 print('##                             QPHASE                            ##')
@@ -25,7 +27,16 @@ if args.charge == None: args.charge = 0
 # More complex examples (beware the time): https://pubchem.ncbi.nlm.nih.gov/compound/7966 (cyclohexanol, MA's choosing)
 # https://pubchem.ncbi.nlm.nih.gov/compound/25000034 (Tetrahedral, 1.66 Amstrong), https://pubchem.ncbi.nlm.nih.gov/compound/167316 (table 1 in https://chemistry-europe.onlinelibrary.wiley.com/doi/full/10.1002/cphc.200700128?casa_token=fYXpuPMymU4AAAAA%3Ao0dz2LXXn8yVq56nOt5ZrV92HiuzItsffXm6Nn_O9z3hXt2d2Sm2qVX-GZwQsnQ_z4PPPPrN2jSqfIg)
 #molecule = Molecule(name = 'H', tools = tools)
-molecule = Molecule(molecule_info = args.molecule_info, tools = tools, charge = args.charge)
+
+molecule_info_type = tools.check_molecule_info(args.molecule_info)
+
+molecule = None
+if molecule_info_type == 'name' or molecule_info_type == 'geometry':
+    molecule = Molecule(molecule_info = args.molecule_info, molecule_info_type = molecule_info_type, tools = tools, charge = args.charge)
+elif molecule_info_type == 'hamiltonian':
+    molecule = Molecule_Hamiltonian(molecule_info = args.molecule_info, tools = tools)
+else: # if there is no match between the input file extension and the requiered, finish the program
+    exit()
 
 #Active space
 if args.ao_labels:

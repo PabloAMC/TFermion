@@ -286,7 +286,7 @@ class Cost_calculator:
                     lambda_value_U_V)
             
             
-            
+            # TO BE DELETED
             elif method == 'sublinear_scaling':
 
                 grid_length = int((self.molecule.N * 100) ** 1/3)
