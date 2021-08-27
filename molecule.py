@@ -804,8 +804,11 @@ class Molecule_Hamiltonian:
         self.molecule_info = molecule_info
         self.tools = tools
 
+        # it is necessary to set to None to indicate to some methods that it is necessary to recalculate
+        self.sparsity_d = None
+
     # code extracted from https://doi.org/10.5281/zenodo.4248322
-    def get_basic_parameters(self):
+    def get_basic_parameters(self, molecular_rank):
 
         f = h5py.File(self.molecule_info+"eri_li.h5", "r")
         eri = f['eri'][()]
@@ -829,9 +832,9 @@ class Molecule_Hamiltonian:
 
         lambda_T = numpy.sum(numpy.abs(T))
 
-        R = 275 # set cholesky dimension
+        self.R = 275 # set cholesky dimension
 
-        LR = L[:R,:,:].copy()
+        LR = L[:self.R,:,:].copy()
 
         lambda_W = 0.25 * numpy.einsum("xij,xkl->",numpy.abs(LR), numpy.abs(LR), optimize=True)
 
@@ -918,3 +921,7 @@ class Molecule_Hamiltonian:
 
         # number orbitals
         self.N = norb
+
+    def low_rank_approximation(self, sparsify):
+
+        return None, self.R
