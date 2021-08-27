@@ -144,12 +144,14 @@ class Molecule:
         #dense_operator = sparse_mat.todense()
         #max_eig, _ = scipy.sparse.linalg.eigsh(sparse_mat, k=1, which="LM")       
 
+        '''
         if self.molecule_pyscf.ccsd_energy:
             self.H_norm = abs(self.molecule_data.nuclear_repulsion + self.molecule_pyscf.ccsd_energy + (self.molecule_pyscf.ccsd_energy - self.molecule_pyscf.hf_energy))
         elif self.molecule_pyscf.mp2_energy:
             self.H_norm = abs(self.molecule_pyscf.mp2_energy + (self.molecule_pyscf.mp2_energy - self.molecule_pyscf.hf_energy))
         else:
             self.H_norm = abs(self.molecule_pyscf.hf_energy)
+        '''
 
         l = abs(np.array(list(JW_op.terms.values())))
         self.lambda_value = sum(l)
@@ -172,7 +174,7 @@ class Molecule:
         self.weighted_avg_Z_per_unitary = weighted_avg_Z_per_unitary/self.lambda_value
         self.weighted_avg_XY_per_unitary = weighted_avg_XY_per_unitary/self.lambda_value
         '''
-        self.H_norm_lambda_ratio = max(H_NORM_LAMBDA_RATIO,self.H_norm/self.lambda_value)
+        #self.H_norm_lambda_ratio = max(H_NORM_LAMBDA_RATIO,self.H_norm/self.lambda_value)
 
     def build_grid(self, grid_length: int = 7):
         '''
@@ -196,12 +198,14 @@ class Molecule:
 
         JW_op = jordan_wigner_dual_basis_hamiltonian(grid, self.molecule_geometry, spinless = True)
         
+        '''
         if self.molecule_pyscf.ccsd_energy:
             self.H_norm = abs(self.molecule_data.nuclear_repulsion + self.molecule_pyscf.ccsd_energy + (self.molecule_pyscf.ccsd_energy - self.molecule_pyscf.hf_energy))
         elif self.molecule_pyscf.mp2_energy:
             self.H_norm = abs(self.molecule_pyscf.mp2_energy + (self.molecule_pyscf.mp2_energy - self.molecule_pyscf.hf_energy))
         else:
             self.H_norm = abs(self.molecule_pyscf.hf_energy)
+        '''
 
         l = abs(np.array(list(JW_op.terms.values())))
 

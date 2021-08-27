@@ -165,7 +165,7 @@ class Cost_calculator:
                 N = self.molecule.N
                 lambda_value = self.molecule.lambda_value
                 Lambda_value = self.molecule.Lambda_value
-                H_norm_lambda_ratio = self.molecule.H_norm_lambda_ratio 
+                H_norm_lambda_ratio = self.tools.config_variables['H_norm_lambda_ratio']
 
                 arguments = (N, lambda_value, Lambda_value, H_norm_lambda_ratio)
 
@@ -222,7 +222,7 @@ class Cost_calculator:
                 
                 N = self.molecule.N
                 lambda_value = self.molecule.lambda_value
-                H_norm_lambda_ratio = self.molecule.H_norm_lambda_ratio 
+                H_norm_lambda_ratio = self.tools.config_variables['H_norm_lambda_ratio']
 
                 arguments = (N, lambda_value, H_norm_lambda_ratio)
 
@@ -243,7 +243,7 @@ class Cost_calculator:
 
                 N = self.molecule.N
                 lambda_value = self.molecule.lambda_value
-                H_norm_lambda_ratio = self.molecule.H_norm_lambda_ratio
+                H_norm_lambda_ratio = self.tools.config_variables['H_norm_lambda_ratio']
                 sparsity_d = self.molecule.sparsity_d 
 
                 arguments = (N, lambda_value, final_rank, H_norm_lambda_ratio, sparsity_d)
