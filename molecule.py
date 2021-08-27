@@ -807,8 +807,12 @@ class Molecule_Hamiltonian:
         # it is necessary to set to None to indicate to some methods that it is necessary to recalculate
         self.sparsity_d = None
 
+        # set r value or final rank
+        self.R = 275 # set cholesky dimension
+
+
     # code extracted from https://doi.org/10.5281/zenodo.4248322
-    def get_basic_parameters(self, molecular_rank):
+    def get_basic_parameters(self, molecular_hamiltonian=None):
 
         f = h5py.File(self.molecule_info+"eri_li.h5", "r")
         eri = f['eri'][()]
@@ -831,8 +835,6 @@ class Molecule_Hamiltonian:
         T = h0 - 0.5 * numpy.einsum("pqqs->ps", eri, optimize=True) + numpy.einsum("pqrr->pq", eri, optimize = True)
 
         lambda_T = numpy.sum(numpy.abs(T))
-
-        self.R = 275 # set cholesky dimension
 
         LR = L[:self.R,:,:].copy()
 
