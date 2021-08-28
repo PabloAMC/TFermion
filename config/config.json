@@ -2,6 +2,7 @@
     "basis": "sto-3g",
     "gamma_threshold": 0,
     "optimization_method": "SLSQP",
-    "maximum_cost": 1e30
+    "maximum_cost": 1e30, 
+    "h_norm_lambda_ratio": 0.7
 }
 

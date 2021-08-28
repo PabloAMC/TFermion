@@ -1,8 +1,9 @@
-import itertools
 import openfermion
 import copy
 import json
 import ast
+import importlib
+import sys
 
 from openfermionpsi4 import run_psi4
 from openfermionpyscf import run_pyscf
@@ -50,7 +51,7 @@ H_NORM_LAMBDA_RATIO = .75
 
 class Molecule:
 
-    def __init__(self, molecule_info, tools, charge = 0, program = 'pyscf'):
+    def __init__(self, molecule_info, molecule_info_type, tools, charge = 0, program = 'pyscf'):
 
         self.molecule_info = molecule_info
         self.tools = tools
@@ -143,16 +144,17 @@ class Molecule:
         #dense_operator = sparse_mat.todense()
         #max_eig, _ = scipy.sparse.linalg.eigsh(sparse_mat, k=1, which="LM")       
 
+        '''
         if self.molecule_pyscf.ccsd_energy:
             self.H_norm = abs(self.molecule_data.nuclear_repulsion + self.molecule_pyscf.ccsd_energy + (self.molecule_pyscf.ccsd_energy - self.molecule_pyscf.hf_energy))
         elif self.molecule_pyscf.mp2_energy:
             self.H_norm = abs(self.molecule_pyscf.mp2_energy + (self.molecule_pyscf.mp2_energy - self.molecule_pyscf.hf_energy))
         else:
             self.H_norm = abs(self.molecule_pyscf.hf_energy)
+        '''
 
         l = abs(np.array(list(JW_op.terms.values())))
         self.lambda_value = sum(l)
-        print(self.lambda_value)
         self.Lambda_value = max(l)
         self.Gamma = np.count_nonzero(l >= threshold)
 
@@ -172,7 +174,7 @@ class Molecule:
         self.weighted_avg_Z_per_unitary = weighted_avg_Z_per_unitary/self.lambda_value
         self.weighted_avg_XY_per_unitary = weighted_avg_XY_per_unitary/self.lambda_value
         '''
-        self.H_norm_lambda_ratio = max(H_NORM_LAMBDA_RATIO,self.H_norm/self.lambda_value)
+        #self.H_norm_lambda_ratio = max(H_NORM_LAMBDA_RATIO,self.H_norm/self.lambda_value)
 
     def build_grid(self, grid_length: int = 7):
         '''
@@ -196,12 +198,14 @@ class Molecule:
 
         JW_op = jordan_wigner_dual_basis_hamiltonian(grid, self.molecule_geometry, spinless = True)
         
+        '''
         if self.molecule_pyscf.ccsd_energy:
             self.H_norm = abs(self.molecule_data.nuclear_repulsion + self.molecule_pyscf.ccsd_energy + (self.molecule_pyscf.ccsd_energy - self.molecule_pyscf.hf_energy))
         elif self.molecule_pyscf.mp2_energy:
             self.H_norm = abs(self.molecule_pyscf.mp2_energy + (self.molecule_pyscf.mp2_energy - self.molecule_pyscf.hf_energy))
         else:
             self.H_norm = abs(self.molecule_pyscf.hf_energy)
+        '''
 
         l = abs(np.array(list(JW_op.terms.values())))
 
@@ -265,10 +269,11 @@ class Molecule:
 
         # Selecting the active space
         pyscf_scf = self.molecule_pyscf._pyscf_data['scf'] #similar to https://github.com/quantumlib/OpenFermion-PySCF/blob/8b8de945db41db2b39d588ff0396a93566855247/openfermionpyscf/_pyscf_molecular_data.py#L47
+        my_avas = avas.AVAS(pyscf_scf, ao_labels, canonicalize=False)
+        n_mocas, ne_act_cas, mo_coeff = my_avas.kernel()
 
-        ncas, ne_act_cas, mo_coeff, (n_mocore, n_mocas, n_movir) = avas.avas(pyscf_scf, ao_labels, canonicalize=False)
-        # IMPORTANT: Line 191 from avas.py now reads. Modify it 
-        #    return ncas, nelecas, mo, (mocore.shape[1], mocas.shape[1], movir.shape[1])
+        n_mocore = my_avas.occ_weights.shape[0] - n_mocas
+        n_movir = my_avas.vir_weights.shape[0]
 
         pyscf_scf.mo_coeff = mo_coeff
         # mo_occ = pyscf_scf.mo_occ contains some information on the occupation
@@ -289,7 +294,7 @@ class Molecule:
         # This does not give the natural orbitals. If those are wanted check https://github.com/pyscf/pyscf/blob/7be5e015b2b40181755c71d888449db936604660/pyscf/mcscf/__init__.py#L172
         # Complete Active Space Self Consistent Field (CASSCF), an option of Multi-Configuration Self Consistent Field (MCSCF) calculation. A more expensive alternative would be Complete Active Space Configuration Interaction (CASCI)
         #todo: check whether we want natural orbitals or not
-        pyscf_mcscf = mcscf.CASSCF(pyscf_scf, ncas, ne_act_cas).run(mo_coeff) #Inspired by the mini-example in avas documentation link above
+        pyscf_mcscf = mcscf.CASSCF(pyscf_scf, n_mocas, ne_act_cas).run(mo_coeff) #Inspired by the mini-example in avas documentation link above
 
         self.molecule_data._pyscf_data['mcscf'] = pyscf_mcscf
         self.molecule_data.mcscf_energy = pyscf_mcscf.e_tot
@@ -787,26 +792,138 @@ class Molecule:
 
         return lambda_T, lambda_U_V
 
-    def check_molecule_info(self, molecule_info):
+import numpy
+import h5py
+import math
+import itertools
+from itertools import combinations
+class Molecule_Hamiltonian:
 
-        index_last_dot = molecule_info[::-1].find('.')
+    def __init__(self, molecule_info, tools):
 
-        # there is no dot, so no extension. Therefore, it is a name
-        if index_last_dot == -1:
-            return 'name'
-        
-        # there is a dot, so it is a file with extension
-        else:
+        self.molecule_info = molecule_info
+        self.tools = tools
 
-            # get the extension of the file taking the character from last dot
-            extension = molecule_info[-index_last_dot:]
+        # it is necessary to set to None to indicate to some methods that it is necessary to recalculate
+        self.sparsity_d = None
 
-            if extension == 'geo':
-                return 'geometry'
+        # set r value or final rank
+        self.R = 275 # set cholesky dimension
 
-            elif extension == 'h5' or extension == 'hdf5':
-                return 'hamiltonian'
 
-            else:
-                print('<*> ERROR: extension in molecule information not recognized. It should be .chem (geometry) or .h5/.hdf5 (hamiltonian). The molecule name can not contain dots')
+    # code extracted from https://doi.org/10.5281/zenodo.4248322
+    def get_basic_parameters(self, molecular_hamiltonian=None):
 
+        f = h5py.File(self.molecule_info+"eri_li.h5", "r")
+        eri = f['eri'][()]
+        h0 = f['h0'][()]
+        f.close()
+
+        f = h5py.File(self.molecule_info+"eri_li_cholesky.h5", "r")
+        gval = f["gval"][()]
+        gvec = f["gvec"][()]
+        f.close()
+
+        norb = h0.shape[1]
+        nchol_max = gval.shape[0]
+        thresh = 3.5e-5 # set threshold
+
+        L = numpy.einsum("ij,j->ij",gvec,numpy.sqrt(gval))
+        L = L.T.copy()
+        L = L.reshape(nchol_max, norb, norb)
+
+        T = h0 - 0.5 * numpy.einsum("pqqs->ps", eri, optimize=True) + numpy.einsum("pqrr->pq", eri, optimize = True)
+
+        lambda_T = numpy.sum(numpy.abs(T))
+
+        LR = L[:self.R,:,:].copy()
+
+        lambda_W = 0.25 * numpy.einsum("xij,xkl->",numpy.abs(LR), numpy.abs(LR), optimize=True)
+
+        # compute one-body
+        T = h0 - 0.5 * numpy.einsum("pqqs->ps", eri) + numpy.einsum("pqrr->pq", eri)
+
+        orbs = [i for i in range(norb)]
+
+        lambda_T = numpy.sum(numpy.abs(T))
+
+
+        pqrs = list(combinations(orbs, 4))
+        pqr = list(combinations(orbs, 3))
+        pq = list(combinations(orbs, 2))
+
+
+        eri_sparse = eri.copy()
+        eri_sparse[numpy.abs(eri) < thresh] = 0.0 # zero out all elements below threshold
+
+        lambda_V = 0.5 * numpy.sum(numpy.abs(eri_sparse))
+
+        nnzs = 0.0
+        for p,q,r,s in pqrs:
+            # pqrs
+            if numpy.abs(eri_sparse[p,q,r,s]) >= thresh:
+                nnzs += 1.0
+            # prqs
+            if numpy.abs(eri_sparse[p,r,q,s]) >= thresh:
+                nnzs += 1.0
+            # psqr
+            if numpy.abs(eri_sparse[p,s,q,r]) >= thresh:
+                nnzs += 1.0
+
+
+        for p,q,r in pqr:
+            # ppqr, pqpr
+            # qqpr, qrpq
+            # rrpq, rpqr
+            if numpy.abs(eri_sparse[p,p,q,r]) >= thresh:
+                nnzs += 1.0
+            if numpy.abs(eri_sparse[p,q,p,r]) >= thresh:
+                nnzs += 1.0
+            if numpy.abs(eri_sparse[q,q,p,r]) >= thresh:
+                nnzs += 1.0
+            if numpy.abs(eri_sparse[q,r,p,q]) >= thresh:
+                nnzs += 1.0
+            if numpy.abs(eri_sparse[r,r,p,q]) >= thresh:
+                nnzs += 1.0
+            if numpy.abs(eri_sparse[r,p,q,r]) >= thresh:
+                nnzs += 1.0
+
+        for p,q in pq:
+            # ppqq
+            # pqpq
+            # pppq
+            # qqqp
+            if numpy.abs(eri_sparse[p,p,q,q]) >= thresh:
+                nnzs += 1.0
+            if numpy.abs(eri_sparse[p,q,p,q]) >= thresh:
+                nnzs += 1.0
+            if numpy.abs(eri_sparse[p,p,p,q]) >= thresh:
+                nnzs += 1.0
+            if numpy.abs(eri_sparse[q,q,q,p]) >= thresh:
+                nnzs += 1.0
+
+        for p in orbs:
+            if numpy.abs(eri_sparse[p,p,p,p]) >= thresh:
+                nnzs += 1.0
+
+        nnzs += norb *(norb+1.)/2.
+
+        # save parameters to cost_methods
+        self.lambda_value = lambda_T + lambda_W
+
+        # Lambda_value is the max of all summed coefficients of T and LR
+        V = 0.25 * numpy.einsum("xij,xkl->ijkl",numpy.abs(LR), numpy.abs(LR), optimize=True) 
+        max_LR = max(numpy.abs(V).flatten())
+        max_T = max(numpy.abs(T).flatten())
+
+        self.Lambda_value = max(max_LR, max_T)
+
+        # Gamma is the number of values over the threshold
+        self.Gamma = np.count_nonzero( numpy.abs(T).flatten() >= thresh) + np.count_nonzero( numpy.abs(V).flatten() >= thresh)
+
+        # number orbitals
+        self.N = norb
+
+    def low_rank_approximation(self, sparsify):
+
+        return None, self.R

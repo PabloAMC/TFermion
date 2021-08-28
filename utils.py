@@ -8,6 +8,7 @@ import sympy
 from scipy import integrate
 from scipy.optimize import NonlinearConstraint, LinearConstraint
 from itertools import groupby
+import os
 
 class Utils():
 
@@ -214,3 +215,34 @@ class Utils():
     def parse_geometry_file(self, molecule_info):
 
         with open(molecule_info) as json_file: return json.load(json_file['atoms'])
+
+    def check_molecule_info(self, molecule_info):
+
+        # the hamiltonian is given by a path containing files eri_li.h5 and eri_li_cholesky.h5
+        if os.path.isdir(molecule_info):
+
+            if os.path.isfile(molecule_info + 'eri_li.h5') and os.path.isfile(molecule_info + 'eri_li_cholesky.h5'):
+                return "hamiltonian"
+            else:
+                print("<*> ERROR: The given path does not contain the files eri_li.h5 and eri_li_cholesky.h5 needed for hamiltonian input")
+                return "error"
+
+        else:
+
+            index_last_dot = molecule_info[::-1].find('.')
+
+            # there is no dot, so no extension. Therefore, it is a name
+            if index_last_dot == -1:
+                return 'name'
+
+            # there is a dot, so it is a file with extension
+            else:
+
+                # get the extension of the file taking the character from last dot
+                extension = molecule_info[-index_last_dot:]
+
+                if extension == 'geo':
+                    return 'geometry'
+
+                else:
+                    print('<*> ERROR: extension in molecule information not recognized. It should be .chem (geometry) or .h5/.hdf5 (hamiltonian). The molecule name can not contain dots')
