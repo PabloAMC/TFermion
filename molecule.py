@@ -69,7 +69,7 @@ class Molecule:
             with open(molecule_info) as json_file: 
                 molecule_geometry = json.load(json_file)['atoms']
 
-        [self.molecule_geometry, self.molecule_data] = self.calculte_geometry_params(molecule_geometry, charge)
+        [self.molecule_geometry, self.molecule_data] = self.calculate_geometry_params(molecule_geometry, charge)
 
         #Add possibility of boundary conditions https://sunqm.github.io/pyscf/tutorial.html#initializing-a-crystal -> Seems quite complicated and not straightforward
         if program == 'psi4': 
@@ -88,7 +88,7 @@ class Molecule:
         #self.build_grid()
         #self.get_basic_parameters()
 
-    def calculte_geometry_params(self, molecule_geometry, charge):
+    def calculate_geometry_params(self, molecule_geometry, charge):
 
         ## Center the molecule so that coords can be put in a box
 
