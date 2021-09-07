@@ -60,7 +60,7 @@ print('********************************************************\n\n')
 #### TESTS ###
 
 # QDRIFT: python3 main.py water qdrift 'C 2p' OK
-# RAND-HAM: python3 main.py water rand_ham 'C 2p' OK 
+# RAND-HAM: python3 main.py water rand_ham 'C 2p' OK
 # Taylor naive: python3 main.py water taylor_naive 'C 2p' OK
 # Taylor on the fly: python3 main.py water taylor_on_the_fly 'C 2p' OK
 # Configuration interaction: python3 main.py water configuration_interaction 'C 2p' OK
@@ -68,6 +68,6 @@ print('********************************************************\n\n')
 # Low Depth Taylor: python3 main.py water low_depth_taylor 'C 2p' OK
 # Low Depth On The Fly: python3 main.py water low_depth_taylor_on_the_fly 'C 2p' OK
 # Linear T: python3 main.py water linear_t 'C 2p' OK
-# Sparsity Low Rank: python3 main.py water sparsity_low_rank 'C 2p' OK
-# Interaction Picture: python3 main.py water interaction_picture 'C 2p' FAIL
-# Sublinear Scaling: python3 main.py water sublinear_scaling 'C 2p' OK
+# Sparsity Low Rank: python3 main.py water sparsity_low_rank 'C 2p'
+# Interaction Picture: python3 main.py water interaction_picture 'C 2p' 
+# Sublinear Scaling: python3 main.py water sublinear_scaling 'C 2p'DEPRECATED

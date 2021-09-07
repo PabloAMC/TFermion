@@ -60,7 +60,7 @@ class Molecule:
         self.gamma_threshold = self.tools.config_variables['gamma_threshold']
 
         # molecule info could be a name, geometry information or hamiltonian description
-        self.molecule_info_type = self.check_molecule_info(self.molecule_info)
+        self.molecule_info_type = molecule_info_type
 
         if self.molecule_info_type == 'name':
             molecule_geometry = geometry_from_pubchem(self.molecule_info) # We prefer pyscf because of functionality.
@@ -213,8 +213,9 @@ class Molecule:
         self.Lambda_value = max(l)
         self.Gamma = np.count_nonzero(l >= 0)
 
-        self.H_norm_lambda_ratio = max(H_NORM_LAMBDA_RATIO,self.H_norm/self.lambda_value)
-
+        #self.H_norm_lambda_ratio = max(H_NORM_LAMBDA_RATIO,self.H_norm/self.lambda_value)
+        self.H_norm_lambda_ratio = H_NORM_LAMBDA_RATIO
+        
         self.Omega = grid.volume
 
         '''
