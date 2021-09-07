@@ -139,7 +139,6 @@ class Cost_calculator:
             if method == 'low_depth_trotter':
 
                 grid_length = int((self.molecule.N * 100) ** 1/3)
-                grid_length = 5
                 Omega = self.molecule.build_grid(grid_length).volume
 
                 N = self.molecule.N
@@ -159,7 +158,6 @@ class Cost_calculator:
             elif method == 'low_depth_taylor':
 
                 grid_length = int((self.molecule.N * 100) ** 1/3)
-                grid_length = 5
                 Omega = self.molecule.build_grid(grid_length).volume
 
                 N = self.molecule.N
@@ -265,7 +263,6 @@ class Cost_calculator:
 
             
                 grid_length = int((self.molecule.N * 100) ** 1/3)
-                grid_length = 5
                 lambda_value_T, lambda_value_U_V = self.molecule.lambda_of_Hamiltonian_terms_2nd(self.molecule.build_grid(grid_length))
 
                 N = self.molecule.N
@@ -288,16 +285,12 @@ class Cost_calculator:
             elif method == 'sublinear_scaling':
 
                 grid_length = int((self.molecule.N * 100) ** 1/3)
-                grid_length = 5
-                self.molecule.build_grid(grid_length).volume
+                Omega = self.molecule.build_grid(grid_length).volume
 
                 N = self.molecule.N
                 eta = self.molecule.eta
                 Gamma = self.molecule.Gamma
                 
-                grid_length = int((self.molecule.N * 100) ** 1/3)
-                grid_length = 5
-                Omega = self.molecule.build_grid(grid_length).volume
 
                 J = len(self.molecule.molecule_geometry) #is the number of atoms in the molecule
 
