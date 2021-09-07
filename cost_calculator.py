@@ -182,7 +182,6 @@ class Cost_calculator:
             elif method == 'low_depth_taylor_on_the_fly':
 
                 grid_length = int((self.molecule.N * 100) ** 1/3)
-                grid_length = 5
                 Omega = self.molecule.build_grid(grid_length).volume
 
                 N = self.molecule.N
@@ -216,7 +215,6 @@ class Cost_calculator:
             if method == 'linear_t':
 
                 grid_length = int((self.molecule.N * 100) ** 1/3)
-                grid_length = 5
                 Omega = self.molecule.build_grid(grid_length).volume
 
                 
