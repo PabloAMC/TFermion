@@ -36,7 +36,7 @@ class Cost_calculator:
             methods_trotter = trotter_based_methods.Trotter_based_methods(self.tools)
 
             # calculate the basis of the molecule (and its parameters)
-            if not(self.molecule.lambda_value) or not(self.molecule.Lambda_value) or not(self.molecule.eta) or not(self.molecule.Gamma):
+            if not hasattr(self.molecule, 'lambda_value') or not hasattr(self.molecule, 'Lambda_value') or not hasattr(self.molecule, 'eta') or not hasattr(self.molecule, 'Gamma'):
                 self.molecule.get_basic_parameters()
 
             if method == 'qdrift': 
@@ -72,7 +72,7 @@ class Cost_calculator:
             methods_taylor = taylor_based_methods.Taylor_based_methods(self.tools)
 
             # calculate the basis of the molecule (and its parameters)
-            if not(self.molecule.lambda_value) or not(self.molecule.Lambda_value) or not(self.molecule.eta) or not(self.molecule.Gamma):
+            if not hasattr(self.molecule, 'lambda_value') or not hasattr(self.molecule, 'Lambda_value') or not hasattr(self.molecule, 'eta') or not hasattr(self.molecule, 'Gamma'):
                 self.molecule.get_basic_parameters()
 
             lambda_value = self.molecule.lambda_value
@@ -96,9 +96,9 @@ class Cost_calculator:
 
             elif method == 'taylor_on_the_fly':
 
-                if not(self.molecule.phi_max) or not(self.molecule.dphi_max):
+                if not hasattr(self.molecule, 'phi_max') or not hasattr(self.molecule, 'dphi_max'):
                     self.molecule.molecular_orbital_parameters()
-                if not self.molecule.zeta_max_i:
+                if not hasattr(self.molecule, 'zeta_max_i'):
                     self.molecule.calculate_zeta_i_max()
 
                 zeta_max_i = self.molecule.zeta_i_max
@@ -123,11 +123,11 @@ class Cost_calculator:
                     J)
             
             elif method == 'configuration_interaction':
-                if not(self.molecule.phi_max) or not(self.molecule.dphi_max) or not(self.molecule.grad_max):
+                if not hasattr(self.molecule, 'phi_max') or not hasattr(self.molecule, 'dphi_max') or not hasattr(self.molecule, 'grad_max'):
                     self.molecule.molecular_orbital_parameters()
-                if not(self.molecule.alpha):
+                if not hasattr(self.molecule, 'alpha'):
                     self.molecule.min_alpha()
-                if not(self.molecule.zeta_max_i):
+                if not hasattr(self.molecule, 'zeta_max_i'):
                     self.molecule.calculate_zeta_i_max()
 
                 N = self.molecule.N # computed from initialising the molecule
@@ -172,7 +172,7 @@ class Cost_calculator:
             if method == 'low_depth_trotter':
 
                 grid_length = int((self.molecule.N * 100) ** 1/3)
-                if not(self.molecule.eta) or not(self.molecule.Omega) or not(self.molecule.N_grid):
+                if not hasattr(self.molecule, 'eta') or not hasattr(self.molecule, 'Omega') or not hasattr(self.molecule, 'N_grid'):
                     grid = self.molecule.build_grid(grid_length)
 
                 N_grid = self.molecule.N_grid
@@ -193,15 +193,15 @@ class Cost_calculator:
             elif method == 'low_depth_taylor':
 
                 grid_length = int((self.molecule.N * 100) ** 1/3)
-                if not(self.molecule.lambda_value) or not(self.molecule.Lambda_value) or not(self.molecule.N_grid):
+                if not hasattr(self.molecule, 'lambda_value_grid') or not hasattr(self.molecule, 'Lambda_value_grid') or not hasattr(self.molecule, 'N_grid'):
                     grid = self.molecule.build_grid(grid_length)
 
                 N_grid = self.molecule.N_grid
-                lambda_value = self.molecule.lambda_value
-                Lambda_value = self.molecule.Lambda_value
+                lambda_value_grid  = self.molecule.lambda_value_grid 
+                Lambda_value_grid  = self.molecule.Lambda_value_grid 
                 H_norm_lambda_ratio = self.tools.config_variables['h_norm_lambda_ratio']
 
-                arguments = (N_grid, lambda_value, Lambda_value, H_norm_lambda_ratio)
+                arguments = (N_grid, lambda_value_grid, Lambda_value_grid, H_norm_lambda_ratio)
 
                 # generate value for errors epsilon_PEA, epsilon_HS, epsilon_S
                 optimized_errors = self.calculate_optimized_errors(3, methods_plane_waves.low_depth_taylor, arguments)
@@ -209,26 +209,26 @@ class Cost_calculator:
                 self.costs['low_depth_taylor'] = methods_plane_waves.low_depth_taylor(
                     optimized_errors.x,
                     N_grid, 
-                    lambda_value, 
-                    Lambda_value, 
+                    lambda_value_grid, 
+                    Lambda_value_grid, 
                     H_norm_lambda_ratio)
 
             elif method == 'low_depth_taylor_on_the_fly':
 
                 grid_length = int((self.molecule.N * 100) ** 1/3)
-                if not(self.molecule.lambda_value) or not(self.molecule.Omega) or not(self.molecule.Gamma) or not(self.molecule.eta) or not(self.molecule.N_grid):
+                if not hasattr(self.molecule, 'lambda_value_grid') or not hasattr(self.molecule, 'Omega') or not hasattr(self.molecule, 'Gamma_grid') or not hasattr(self.molecule, 'eta') or not hasattr(self.molecule, 'N_grid'):
                     grid = self.molecule.build_grid(grid_length)
 
                 N_grid = self.molecule.N_grid
                 eta = self.molecule.eta
-                Gamma = self.molecule.Gamma
-                lambda_value = self.molecule.lambda_value
+                Gamma_grid = self.molecule.Gamma_grid 
+                lambda_value_grid = self.molecule.lambda_value_grid 
                 Omega = self.molecule.Omega
                 
                 x_max = self.molecule.xmax
                 J = len(self.molecule.molecule_geometry) #is the number of atoms in the molecule
 
-                arguments = (N_grid, eta, Gamma, lambda_value, Omega, J, x_max)
+                arguments = (N_grid, eta, Gamma_grid, lambda_value_grid, Omega, J, x_max)
 
                 # generate value for errors epsilon_PEA, epsilon_HS, epsilon_S, epsilon_H, epsilon_tay
                 optimized_errors = self.calculate_optimized_errors(5, methods_plane_waves.low_depth_taylor_on_the_fly, arguments)
@@ -238,8 +238,8 @@ class Cost_calculator:
                     optimized_errors.x,
                     N_grid, 
                     eta,
-                    Gamma,
-                    lambda_value, 
+                    Gamma_grid,
+                    lambda_value_grid , 
                     Omega,
                     J, 
                     x_max)
@@ -251,14 +251,14 @@ class Cost_calculator:
             if method == 'linear_t':
 
                 grid_length = int((self.molecule.N * 100) ** 1/3)
-                if not(self.molecule.lambda_value):
+                if not hasattr(self.molecule, 'lambda_value_grid') or not hasattr(self.molecule, 'N_grid'):
                     grid = self.molecule.build_grid(grid_length)
 
                 N_grid = self.molecule.N_grid
-                lambda_value = self.molecule.lambda_value
+                lambda_value_grid = self.molecule.lambda_value_grid
                 H_norm_lambda_ratio = self.tools.config_variables['h_norm_lambda_ratio']
 
-                arguments = (N_grid, lambda_value, H_norm_lambda_ratio)
+                arguments = (N_grid, lambda_value_grid, H_norm_lambda_ratio)
 
                 # generate value for errors epsilon_PEA, epsilon_S
                 optimized_errors = self.calculate_optimized_errors(2, methods_qrom.linear_T, arguments)
@@ -266,12 +266,12 @@ class Cost_calculator:
                 self.costs['linear_t'] = methods_qrom.linear_T(
                     optimized_errors.x,
                     N_grid, 
-                    lambda_value,
+                    lambda_value_grid ,
                     H_norm_lambda_ratio)
 
             elif method == 'sparsity_low_rank':
 
-                if not(self.molecule.sparsity_d) or not(self.molecule.final_rank) or not not(self.molecule.lambda_value):
+                if not hasattr(self.molecule, 'sparsity_d') or not hasattr(self.molecule, 'final_rank') or not not hasattr(self.molecule, 'lambda_value'):
                     molecular_hamiltonian= self.molecule.low_rank_approximation(sparsify = True)
                     self.molecule.get_basic_parameters(molecular_hamiltonian = molecular_hamiltonian)
 
@@ -302,7 +302,7 @@ class Cost_calculator:
 
                 grid_length = int((self.molecule.N * 100) ** 1/3)
                 
-                if not(self.molecule.lambda_value_T) or not(self.molecule.lambda_value_U_V) or not(self.molecule.Gamma) or not(self.molecule.N_grid):
+                if not hasattr(self.molecule, 'lambda_value_T') or not hasattr(self.molecule, 'lambda_value_U_V') or not hasattr(self.molecule, 'Gamma_grid') or not hasattr(self.molecule, 'N_grid'):
                     grid = self.molecule.build_grid(grid_length)
                     self.molecule.lambda_of_Hamiltonian_terms_2nd(grid)
 
@@ -310,9 +310,9 @@ class Cost_calculator:
                 lambda_value_U_V = self.molecule.lambda_value_U_V
 
                 N_grid = self.molecule.N_grid
-                Gamma = self.molecule.Gamma
+                Gamma_grid  = self.molecule.Gamma_grid 
 
-                arguments = (N_grid, Gamma, lambda_value_T, lambda_value_U_V)
+                arguments = (N_grid, Gamma_grid, lambda_value_T, lambda_value_U_V)
 
                 # generate value for errors epsilon_S, epsilon_HS, epsilon_PEA
                 optimized_errors = self.calculate_optimized_errors(3, methods_interaction_picture.interaction_picture, arguments)
@@ -320,7 +320,7 @@ class Cost_calculator:
                 self.costs['interaction_picture'] = methods_interaction_picture.interaction_picture(
                     optimized_errors.x,
                     N_grid, 
-                    Gamma, 
+                    Gamma_grid, 
                     lambda_value_T, 
                     lambda_value_U_V)
             
@@ -329,11 +329,13 @@ class Cost_calculator:
             elif method == 'sublinear_scaling':
 
                 grid_length = int((self.molecule.N * 100) ** 1/3)
-                Omega = self.molecule.build_grid(grid_length).volume
+                if not hasattr(self.molecule, 'lambda_value_T') or not hasattr(self.molecule, 'lambda_value_U_V') or not hasattr(self.molecule, 'Gamma_grid') or not hasattr(self.molecule, 'N_grid'):
+                    grid = self.molecule.build_grid(grid_length)
 
                 N_grid = self.molecule.N_grid
                 eta = self.molecule.eta
-                Gamma = self.molecule.Gamma
+                Gamma_grid  = self.molecule.Gamma_grid 
+                Omega = self.molecule.Omega
                 
 
                 J = len(self.molecule.molecule_geometry) #is the number of atoms in the molecule
@@ -342,7 +344,7 @@ class Cost_calculator:
                 self.molecule.lambda_of_Hamiltonian_terms_1st(eta, Omega, N_grid)
                 lambda_value_T, lambda_value_U_V = self.molecule.lambda_value_T, self.molecule.lambda_value_U_V
 
-                arguments = (N_grid, eta, Gamma, lambda_value_T, lambda_value_U_V, J)
+                arguments = (N_grid, eta, Gamma_grid , lambda_value_T, lambda_value_U_V, J)
 
                 # generate value for errors epsilon_S, epsilon_HS, epsilon_PEA, epsilon_mu, epsilon_M_0, epsilon_R
                 optimized_errors = self.calculate_optimized_errors(6, methods_interaction_picture.sublinear_scaling_interaction, arguments)
@@ -351,7 +353,7 @@ class Cost_calculator:
                     optimized_errors.x,
                     N_grid, 
                     eta, 
-                    Gamma, 
+                    Gamma_grid, 
                     lambda_value_T, 
                     lambda_value_U_V,
                     J)

@@ -209,9 +209,9 @@ class Molecule:
 
         l = abs(np.array(list(JW_op.terms.values())))
 
-        self.lambda_value = sum(l)
-        self.Lambda_value = max(l)
-        self.Gamma = np.count_nonzero(l >= 0)
+        self.lambda_value_grid = sum(l)
+        self.Lambda_value_grid = max(l)
+        self.Gamma_grid = np.count_nonzero(l >= 0)
 
         #self.H_norm_lambda_ratio = max(H_NORM_LAMBDA_RATIO,self.H_norm/self.lambda_value)
         self.H_norm_lambda_ratio = H_NORM_LAMBDA_RATIO
@@ -709,8 +709,11 @@ class Molecule:
         if self.N: molecule_properties["N"] = self.N
         if self.N_grid: molecule_properties["N_grid"] = self.N_grid
         if self.lambda_value: molecule_properties["lambda_value"] = self.lambda_value
+        if self.lambda_value_grid: molecule_properties["lambda_value_grid"] = self.lambda_value_grid
         if self.Lambda_value: molecule_properties["Lambda_value"] = self.Lambda_value
+        if self.Lambda_value_grid: molecule_properties["Lambda_value_grid"] = self.Lambda_value_grid
         if self.Gamma: molecule_properties["Gamma"] = self.Gamma
+        if self.Gamma_grid: molecule_properties["Gamma_grid"] = self.Gamma_grid
         if self.eta: molecule_properties["eta"] = self.eta
         if self.Omega: molecule_properties["Omega"] = self.Omega
         if self.zeta_i: molecule_properties["zeta_i"] = self.zeta_i
@@ -749,37 +752,44 @@ class Molecule:
         #The function takes MolecularData from file 'filename.hdf5' where filename is self.name
         self.molecule_data.load()
 
-        molecule_properties = json.loads(json_name)
+        try:
+            molecule_properties = json.loads(json_name)
 
-        if 'N' in molecule_properties.keys(): self.N = molecule_properties["N"]
-        if 'N_grid' in molecule_properties.keys(): self.N_grid = molecule_properties["N_grid"]
-        if 'lambda_value' in molecule_properties.keys(): self.lambda_value = molecule_properties["lambda_value"]
-        if 'Lambda_value' in molecule_properties.keys(): self.Lambda_value = molecule_properties["Lambda_value"]
-        if 'Gamma' in molecule_properties.keys(): self.Gamma = molecule_properties["Gamma"]
-        if 'eta' in molecule_properties.keys(): self.eta = molecule_properties["eta"]
-        if 'Omega' in molecule_properties.keys(): self.Omega = molecule_properties["Omega"]
-        if 'zeta_i' in molecule_properties.keys(): self.zeta_i = molecule_properties["zeta_i"]
+            if 'N' in molecule_properties.keys(): self.N = molecule_properties["N"]
+            if 'N_grid' in molecule_properties.keys(): self.N_grid = molecule_properties["N_grid"]
+            if 'lambda_value' in molecule_properties.keys(): self.lambda_value = molecule_properties["lambda_value"]
+            if 'Lambda_value' in molecule_properties.keys(): self.Lambda_value = molecule_properties["Lambda_value"]
+            if 'Gamma' in molecule_properties.keys(): self.Gamma = molecule_properties["Gamma"]
+            if 'lambda_value_grid' in molecule_properties.keys(): self.lambda_value_grid = molecule_properties["lambda_value_grid"]
+            if 'Lambda_value_grid' in molecule_properties.keys(): self.Lambda_value_grid = molecule_properties["Lambda_value_grid"]
+            if 'Gamma_grid' in molecule_properties.keys(): self.Gamma_grid = molecule_properties["Gamma_grid"]
+            if 'eta' in molecule_properties.keys(): self.eta = molecule_properties["eta"]
+            if 'Omega' in molecule_properties.keys(): self.Omega = molecule_properties["Omega"]
+            if 'zeta_i' in molecule_properties.keys(): self.zeta_i = molecule_properties["zeta_i"]
 
-        if 'alpha' in molecule_properties.keys(): self.alpha = molecule_properties["alpha"]
-        if 'phi_max' in molecule_properties.keys(): self.phi_max = molecule_properties["phi_max"]
-        if 'dphi_max' in molecule_properties.keys(): self.dphi_max = molecule_properties["dphi_max"]
-        if 'grad_max' in molecule_properties.keys(): self.grad_max = molecule_properties["grad_max"]
-        if 'hess_max' in molecule_properties.keys(): self.hess_max = molecule_properties["hess_max"]
+            if 'alpha' in molecule_properties.keys(): self.alpha = molecule_properties["alpha"]
+            if 'phi_max' in molecule_properties.keys(): self.phi_max = molecule_properties["phi_max"]
+            if 'dphi_max' in molecule_properties.keys(): self.dphi_max = molecule_properties["dphi_max"]
+            if 'grad_max' in molecule_properties.keys(): self.grad_max = molecule_properties["grad_max"]
+            if 'hess_max' in molecule_properties.keys(): self.hess_max = molecule_properties["hess_max"]
 
-        if 'final_rank' in molecule_properties.keys(): self.final_rank = molecule_properties["final_rank"]
-        if 'sparsity_d' in molecule_properties.keys(): self.sparsity_d = molecule_properties["sparsity_d"]
-        if 'lambda_value_T' in molecule_properties.keys(): self.lambda_value_T = molecule_properties["lambda_value_T"]
-        if 'lambda_value_U_V' in molecule_properties.keys(): self.lambda_value_U_V = molecule_properties["lambda_value_U_V"]
-        if 'xmax' in molecule_properties.keys(): self.xmax = molecule_properties["xmax"]
+            if 'final_rank' in molecule_properties.keys(): self.final_rank = molecule_properties["final_rank"]
+            if 'sparsity_d' in molecule_properties.keys(): self.sparsity_d = molecule_properties["sparsity_d"]
+            if 'lambda_value_T' in molecule_properties.keys(): self.lambda_value_T = molecule_properties["lambda_value_T"]
+            if 'lambda_value_U_V' in molecule_properties.keys(): self.lambda_value_U_V = molecule_properties["lambda_value_U_V"]
+            if 'xmax' in molecule_properties.keys(): self.xmax = molecule_properties["xmax"]
 
-        '''
-        self.avg_Z_per_unitary = molecule_properties["avg_Z_per_unitary"]
-        self.avg_XY_per_unitary = molecule_properties["avg_XY_per_unitary"]
-        self.weighted_avg_Z_per_unitary = molecule_properties["weighted_avg_Z_per_unitary"]
-        self.weighted_avg_XY_per_unitary = molecule_properties["weighted_avg_XY_per_unitary"]
-        '''
+            '''
+            self.avg_Z_per_unitary = molecule_properties["avg_Z_per_unitary"]
+            self.avg_XY_per_unitary = molecule_properties["avg_XY_per_unitary"]
+            self.weighted_avg_Z_per_unitary = molecule_properties["weighted_avg_Z_per_unitary"]
+            self.weighted_avg_XY_per_unitary = molecule_properties["weighted_avg_XY_per_unitary"]
+            '''
 
-        #JW_op_terms = molecule_properties["JW_op_terms"]
+            #JW_op_terms = molecule_properties["JW_op_terms"]
+
+        except:
+            pass
 
         return 
 
