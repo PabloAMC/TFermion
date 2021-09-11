@@ -181,7 +181,7 @@ class Molecule:
         non_periodic: If True, impose periodic boundary conditions
         '''
 
-        self.N = grid_length**3*2
+        self.N_grid = grid_length**3*2
         self.eta = self.molecule_data.n_electrons
 
         # Figure out length scale based on Wigner-Seitz radius and construct a basis grid.
@@ -574,7 +574,9 @@ class Molecule:
         for i in range(len(lambda_ls)):
             self.sparsity_d += 2*np.all(lambda_ls[i])*( np.count_nonzero(one_body_squares[i,:,:]-np.diag(np.diag(one_body_squares[i,:,:])))/2 + np.count_nonzero(np.diag(np.diag(one_body_squares[i,:,:]))))
 
-        return molecular_hamiltonian, final_rank
+        self.final_rank = final_rank
+
+        return molecular_hamiltonian
 
     def molecular_orbital_parameters(self):
         '''
@@ -633,20 +635,20 @@ class Molecule:
 
             return np.linalg.norm(A, ord = 2)
 
-        phi_max = np.max(np.abs(mo))
-        dphi_max = np.max(np.abs(mo_grad))
+        self.phi_max = np.max(np.abs(mo))
+        self.dphi_max = np.max(np.abs(mo_grad))
 
         mo_grads_norms = np.apply_along_axis(func1d = np.linalg.norm, axis = 0, arr = mo_grad)
         mo_hess_norms = np.apply_along_axis(func1d = hessian_vector_norm, axis = 0, arr = mo_hess)
 
-        grad_max = np.max(mo_grads_norms)
-        hess_max = np.max(mo_hess_norms)
+        self.grad_max = np.max(mo_grads_norms)
+        self.hess_max = np.max(mo_hess_norms)
 
-        return phi_max, dphi_max, grad_max, hess_max
+        return
 
     def calculate_zeta_i_max(self):
         '''Returns the charge of the larger atom in the molecule'''
-        zeta_i_max = 0
+        zeta_max_i = 0
 
         # The Periodic Table as a python list and dictionary.
         periodic_table = [  #
@@ -662,9 +664,9 @@ class Molecule:
         ]
 
         for item in self.molecule_geometry:
-            zeta_i = max(zeta_i_max, periodic_table.index(item[0]))
+            zeta_max_i = max(zeta_max_i, periodic_table.index(item[0]))
 
-        return zeta_i
+        self.zeta_max_i = zeta_max_i
 
     def min_alpha(self):
         '''
@@ -686,10 +688,10 @@ class Molecule:
         alphas = [list(pyscf_mol.bas_exp(i)) for i in range(pyscf_mol.nbas)]
         alphas_func = lambda alphas: [item for sublist in alphas for item in sublist]
 
-        alpha = np.min(alphas_func(alphas))
-        return alpha
+        self.alpha = np.min(alphas_func(alphas))
+        return
 
-    def save(self,json_name,JW_op_terms): 
+    def save(self,json_name): 
         '''
         To save pyscf files: 
         https://github.com/pyscf/pyscf/blob/1de8c145abb3e1a7392df9118e8062e6fe6bde00/examples/ao2mo/01-outcore.py
@@ -704,11 +706,27 @@ class Molecule:
 
         molecule_properties = {}
 
-        molecule_properties["N"] = self.N
-        molecule_properties["lambda_value"] = self.lambda_value
-        molecule_properties["Lambda_value"] = self.Lambda_value
-        molecule_properties["Gamma"] = self.Gamma
-        molecule_properties["eta"] = self.eta
+        if self.N: molecule_properties["N"] = self.N
+        if self.N_grid: molecule_properties["N_grid"] = self.N_grid
+        if self.lambda_value: molecule_properties["lambda_value"] = self.lambda_value
+        if self.Lambda_value: molecule_properties["Lambda_value"] = self.Lambda_value
+        if self.Gamma: molecule_properties["Gamma"] = self.Gamma
+        if self.eta: molecule_properties["eta"] = self.eta
+        if self.Omega: molecule_properties["Omega"] = self.Omega
+        if self.zeta_i: molecule_properties["zeta_i"] = self.zeta_i
+
+        if self.alpha: molecule_properties["alpha"] = self.alpha
+        if self.phi_max: molecule_properties["phi_max"] = self.phi_max
+        if self.dphi_max: molecule_properties["dphi_max"] = self.dphi_max
+        if self.grad_max: molecule_properties["grad_max"] = self.grad_max
+        if self.hess_max: molecule_properties["hess_max"] = self.hess_max
+
+        if self.final_rank: molecule_properties["final_rank"] = self.final_rank
+        if self.sparsity_d: molecule_properties["sparsity_d"] = self.sparsity_d
+        if self.lambda_value_T: molecule_properties["lambda_value_T"] = self.lambda_value_T
+        if self.lambda_value_U_V: molecule_properties["lambda_value_U_V"] = self.lambda_value_U_V
+        if self.xmax: molecule_properties["xmax"] = self.xmax
+
 
         '''
         molecule_properties["avg_Z_per_unitary"] = self.avg_Z_per_unitary
@@ -716,9 +734,9 @@ class Molecule:
         molecule_properties["weighted_avg_Z_per_unitary"] = self.weighted_avg_Z_per_unitary
         molecule_properties["weighted_avg_XY_per_unitary"] = self.weighted_avg_XY_per_unitary
         '''
-        molecule_properties["xmax"] = self.xmax
 
-        molecule_properties["JW_op_terms"] = JW_op_terms
+
+        #molecule_properties["JW_op_terms"] = JW_op_terms
 
         with open(json_name, "w") as fp:
             json.dump(molecule_properties,fp) 
@@ -733,11 +751,26 @@ class Molecule:
 
         molecule_properties = json.loads(json_name)
 
-        self.N = molecule_properties["N"]
-        self.lambda_value = molecule_properties["lambda_value"]
-        self.Lambda_value = molecule_properties["Lambda_value"]
-        self.Gamma = molecule_properties["Gamma"]
-        self.eta = molecule_properties["eta"]
+        if 'N' in molecule_properties.keys(): self.N = molecule_properties["N"]
+        if 'N_grid' in molecule_properties.keys(): self.N_grid = molecule_properties["N_grid"]
+        if 'lambda_value' in molecule_properties.keys(): self.lambda_value = molecule_properties["lambda_value"]
+        if 'Lambda_value' in molecule_properties.keys(): self.Lambda_value = molecule_properties["Lambda_value"]
+        if 'Gamma' in molecule_properties.keys(): self.Gamma = molecule_properties["Gamma"]
+        if 'eta' in molecule_properties.keys(): self.eta = molecule_properties["eta"]
+        if 'Omega' in molecule_properties.keys(): self.Omega = molecule_properties["Omega"]
+        if 'zeta_i' in molecule_properties.keys(): self.zeta_i = molecule_properties["zeta_i"]
+
+        if 'alpha' in molecule_properties.keys(): self.alpha = molecule_properties["alpha"]
+        if 'phi_max' in molecule_properties.keys(): self.phi_max = molecule_properties["phi_max"]
+        if 'dphi_max' in molecule_properties.keys(): self.dphi_max = molecule_properties["dphi_max"]
+        if 'grad_max' in molecule_properties.keys(): self.grad_max = molecule_properties["grad_max"]
+        if 'hess_max' in molecule_properties.keys(): self.hess_max = molecule_properties["hess_max"]
+
+        if 'final_rank' in molecule_properties.keys(): self.final_rank = molecule_properties["final_rank"]
+        if 'sparsity_d' in molecule_properties.keys(): self.sparsity_d = molecule_properties["sparsity_d"]
+        if 'lambda_value_T' in molecule_properties.keys(): self.lambda_value_T = molecule_properties["lambda_value_T"]
+        if 'lambda_value_U_V' in molecule_properties.keys(): self.lambda_value_U_V = molecule_properties["lambda_value_U_V"]
+        if 'xmax' in molecule_properties.keys(): self.xmax = molecule_properties["xmax"]
 
         '''
         self.avg_Z_per_unitary = molecule_properties["avg_Z_per_unitary"]
@@ -745,11 +778,10 @@ class Molecule:
         self.weighted_avg_Z_per_unitary = molecule_properties["weighted_avg_Z_per_unitary"]
         self.weighted_avg_XY_per_unitary = molecule_properties["weighted_avg_XY_per_unitary"]
         '''
-        self.xmax = molecule_properties["xmax"]
 
-        JW_op_terms = molecule_properties["JW_op_terms"]
+        #JW_op_terms = molecule_properties["JW_op_terms"]
 
-        return JW_op_terms
+        return 
 
     def lambda_of_Hamiltonian_terms_2nd(self,grid, non_periodic = False, spinless = False):
         '''To be used in second quantization (interaction_picture) only'''
@@ -774,11 +806,11 @@ class Molecule:
 
         JW_op = jordan_wigner(T_primal)
         l = abs(np.array(list(JW_op.terms.values())))
-        lambda_T = sum(l)
+        self.lambda_T = sum(l)
 
-        lambda_U_V = lambda_U+lambda_V
+        self.lambda_U_V = lambda_U+lambda_V
 
-        return lambda_T, lambda_U_V
+        return
 
     def lambda_of_Hamiltonian_terms_1st(self, eta, Omega, N):
         '''To be used in first quantization'''
