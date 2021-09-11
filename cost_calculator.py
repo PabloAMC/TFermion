@@ -17,7 +17,8 @@ class Cost_calculator:
 
     def calculate_cost(self, method, ao_labels = None): 
 
-        self.molecule.load(json_name = str(self.molecule.molecule_info)+ '_' +  str(self.tools.config_variables['basis']))
+        json_name = str(self.molecule.molecule_info)+ '_' +  str(self.tools.config_variables['basis'])
+        self.molecule.load(json_name = json_name)
 
         '''
         if method in ['low_depth_trotter','low_depth_taylor','low_depth_taylor_on_the_fly','linear_t','interaction_picture']:
@@ -99,14 +100,14 @@ class Cost_calculator:
                 if not hasattr(self.molecule, 'phi_max') or not hasattr(self.molecule, 'dphi_max'):
                     self.molecule.molecular_orbital_parameters()
                 if not hasattr(self.molecule, 'zeta_max_i'):
-                    self.molecule.calculate_zeta_i_max()
+                    self.molecule.calculate_zeta_max_i()
 
-                zeta_max_i = self.molecule.zeta_i_max
+                zeta_max_i = self.molecule.zeta_max_i
                 phi_max = self.molecule.phi_max
                 dphi_max = self.molecule.dphi_max
                 J = len(self.molecule.molecule_geometry) #is the number of atoms in the molecule
 
-                arguments = (self.molecule.N, self.molecule.lambda_value, self.molecule.Lambda_value, self.molecule.Gamma, phi_max, dphi_max, zeta_max_i, J)
+                arguments = (N, lambda_value, Lambda_value, Gamma, phi_max, dphi_max, zeta_max_i, J)
 
                 # generate values for errors epsilon_PEA, epsilon_HS, epsilon_S, eps_H, eps_taylor
                 optimized_errors = self.calculate_optimized_errors(5, methods_taylor.taylor_on_the_fly, arguments)
@@ -128,7 +129,7 @@ class Cost_calculator:
                 if not hasattr(self.molecule, 'alpha'):
                     self.molecule.min_alpha()
                 if not hasattr(self.molecule, 'zeta_max_i'):
-                    self.molecule.calculate_zeta_i_max()
+                    self.molecule.calculate_zeta_max_i()
 
                 N = self.molecule.N # computed from initialising the molecule
                 x_max = self.molecule.xmax # computed from initialising the molecule
@@ -271,7 +272,7 @@ class Cost_calculator:
 
             elif method == 'sparsity_low_rank':
 
-                if not hasattr(self.molecule, 'sparsity_d') or not hasattr(self.molecule, 'final_rank') or not not hasattr(self.molecule, 'lambda_value'):
+                if not hasattr(self.molecule, 'sparsity_d') or not hasattr(self.molecule, 'final_rank') or not hasattr(self.molecule, 'lambda_value'):
                     molecular_hamiltonian= self.molecule.low_rank_approximation(sparsify = True)
                     self.molecule.get_basic_parameters(molecular_hamiltonian = molecular_hamiltonian)
 
@@ -361,7 +362,8 @@ class Cost_calculator:
         else:
             print('<*> ERROR: method', method, 'not implemented or not existing')
 
-        self.molecule.save(json_name = str(self.molecule.molecule_info)+ '_' +  str(self.tools.config_variables['basis']))
+        json_name = str(self.molecule.molecule_info)+ '_' +  str(self.tools.config_variables['basis'])
+        self.molecule.save(json_name = json_name)
         '''
         if method in ['low_depth_trotter','low_depth_taylor','low_depth_taylor_on_the_fly','linear_t','interaction_picture']:
             b = 'plane'

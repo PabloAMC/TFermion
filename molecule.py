@@ -646,7 +646,7 @@ class Molecule:
 
         return
 
-    def calculate_zeta_i_max(self):
+    def calculate_zeta_max_i(self):
         '''Returns the charge of the larger atom in the molecule'''
         zeta_max_i = 0
 
@@ -706,29 +706,29 @@ class Molecule:
 
         molecule_properties = {}
 
-        if self.N: molecule_properties["N"] = self.N
-        if self.N_grid: molecule_properties["N_grid"] = self.N_grid
-        if self.lambda_value: molecule_properties["lambda_value"] = self.lambda_value
-        if self.lambda_value_grid: molecule_properties["lambda_value_grid"] = self.lambda_value_grid
-        if self.Lambda_value: molecule_properties["Lambda_value"] = self.Lambda_value
-        if self.Lambda_value_grid: molecule_properties["Lambda_value_grid"] = self.Lambda_value_grid
-        if self.Gamma: molecule_properties["Gamma"] = self.Gamma
-        if self.Gamma_grid: molecule_properties["Gamma_grid"] = self.Gamma_grid
-        if self.eta: molecule_properties["eta"] = self.eta
-        if self.Omega: molecule_properties["Omega"] = self.Omega
-        if self.zeta_i: molecule_properties["zeta_i"] = self.zeta_i
+        molecule_properties["N"] = self.N
+        if hasattr(self, 'N_grid'): molecule_properties["N_grid"] = self.N_grid
+        if hasattr(self, 'lambda_value'): molecule_properties["lambda_value"] = self.lambda_value
+        if hasattr(self, 'lambda_value_grid'): molecule_properties["lambda_value_grid"] = self.lambda_value_grid
+        if hasattr(self, 'Lambda_value'): molecule_properties["Lambda_value"] = self.Lambda_value
+        if hasattr(self, 'Lambda_value_grid'): molecule_properties["Lambda_value_grid"] = self.Lambda_value_grid
+        if hasattr(self, 'Gamma'): molecule_properties["Gamma"] = self.Gamma
+        if hasattr(self, 'Gamma_grid'): molecule_properties["Gamma_grid"] = self.Gamma_grid
+        if hasattr(self, 'eta'): molecule_properties["eta"] = self.eta
+        if hasattr(self, 'Omega'): molecule_properties["Omega"] = self.Omega
+        if hasattr(self, 'zeta_max_i'): molecule_properties["zeta_i"] = self.zeta_max_i
 
-        if self.alpha: molecule_properties["alpha"] = self.alpha
-        if self.phi_max: molecule_properties["phi_max"] = self.phi_max
-        if self.dphi_max: molecule_properties["dphi_max"] = self.dphi_max
-        if self.grad_max: molecule_properties["grad_max"] = self.grad_max
-        if self.hess_max: molecule_properties["hess_max"] = self.hess_max
+        if hasattr(self, 'alpha'): molecule_properties["alpha"] = self.alpha
+        if hasattr(self, 'phi_max'): molecule_properties["phi_max"] = self.phi_max
+        if hasattr(self, 'dphi_max'): molecule_properties["dphi_max"] = self.dphi_max
+        if hasattr(self, 'grad_max'): molecule_properties["grad_max"] = self.grad_max
+        if hasattr(self, 'hess_max'): molecule_properties["hess_max"] = self.hess_max
 
-        if self.final_rank: molecule_properties["final_rank"] = self.final_rank
-        if self.sparsity_d: molecule_properties["sparsity_d"] = self.sparsity_d
-        if self.lambda_value_T: molecule_properties["lambda_value_T"] = self.lambda_value_T
-        if self.lambda_value_U_V: molecule_properties["lambda_value_U_V"] = self.lambda_value_U_V
-        if self.xmax: molecule_properties["xmax"] = self.xmax
+        if hasattr(self, 'final_rank'): molecule_properties["final_rank"] = self.final_rank
+        if hasattr(self, 'sparsity_d'): molecule_properties["sparsity_d"] = self.sparsity_d
+        if hasattr(self, 'lambda_value_T'): molecule_properties["lambda_value_T"] = self.lambda_value_T
+        if hasattr(self, 'lambda_value_U_V'): molecule_properties["lambda_value_U_V"] = self.lambda_value_U_V
+        molecule_properties["xmax"] = self.xmax
 
 
         '''
@@ -749,11 +749,12 @@ class Molecule:
         To load MolecularData: https://github.com/quantumlib/OpenFermion/blob/7c3581ad75716d1ff6a0043a516d271052a90e35/src/openfermion/chem/molecular_data.py#L719
         '''
         
-        #The function takes MolecularData from file 'filename.hdf5' where filename is self.name
-        self.molecule_data.load()
+        #self.molecule_data.load()
+
 
         try:
-            molecule_properties = json.loads(json_name)
+            with open(json_name, "r") as fp:
+                molecule_properties = json.load(fp)
 
             if 'N' in molecule_properties.keys(): self.N = molecule_properties["N"]
             if 'N_grid' in molecule_properties.keys(): self.N_grid = molecule_properties["N_grid"]
@@ -765,7 +766,7 @@ class Molecule:
             if 'Gamma_grid' in molecule_properties.keys(): self.Gamma_grid = molecule_properties["Gamma_grid"]
             if 'eta' in molecule_properties.keys(): self.eta = molecule_properties["eta"]
             if 'Omega' in molecule_properties.keys(): self.Omega = molecule_properties["Omega"]
-            if 'zeta_i' in molecule_properties.keys(): self.zeta_i = molecule_properties["zeta_i"]
+            if 'zeta_max_i' in molecule_properties.keys(): self.zeta_max_i = molecule_properties["zeta_max_i"]
 
             if 'alpha' in molecule_properties.keys(): self.alpha = molecule_properties["alpha"]
             if 'phi_max' in molecule_properties.keys(): self.phi_max = molecule_properties["phi_max"]
