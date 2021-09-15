@@ -1,5 +1,5 @@
 {
-    "basis": "sto-3g",
+    "basis": "6-31G",
     "gamma_threshold": 0,
     "optimization_method": "SLSQP",
     "maximum_cost": 1e30, 

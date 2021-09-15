@@ -47,7 +47,8 @@ if args.ao_labels:
 
 c_calculator = cost_calculator.Cost_calculator(molecule, tools)
 c_calculator.calculate_cost(args.method)
-print('The cost to calculate the energy of', args.molecule_info,'with method', args.method, 'is', "{:e}".format(c_calculator.costs[args.method]))
+print('The cost to calculate the energy of', args.molecule_info,'with method', args.method, 'is', "{:0.2e}".format(c_calculator.costs[args.method]), 'T gates')
+print('With the specified parameters, synthesising that many T gates should take', "{:0.2e}".format(c_calculator.calculate_time(c_calculator.costs[args.method])), 'seconds')
 
 execution_time = time.time() - start_time
 

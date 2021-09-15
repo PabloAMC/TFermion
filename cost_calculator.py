@@ -5,7 +5,7 @@ import plane_waves_methods
 import qrom_methods
 import interaction_picture
 import numpy as np
-from scipy.optimize import minimize
+from scipy.optimize import minimize, NonlinearConstraint
 
 class Cost_calculator:
 
@@ -389,3 +389,54 @@ class Cost_calculator:
         )
 
         return optimized_errors
+
+
+    def calculate_time(self, T_gates, p_fail = 1e-1, p_surface_step = 1e-3, P_inject = 5e-3, P_threshold = 5.7e-3, t_cycle = 2e-7, AAA_factories = 1e3):
+        '''
+        Calculates the time required to synthesise the T_gates.
+        Based on Appendix M from PHYSICAL REVIEW A 86, 032324 (2012); "Surface codes: Towards practical large-scale quantum computation" by Austin G. Fowler
+
+        Arguments:
+        T_gates: int; the numer of T gates that we have to synthesise
+        p_fail: int;  the probability of failure.
+        P_inject: float; the failure probability in injected states
+        P_threshold: float; the surface code failure probability
+        t_cycle: float; the time of one cycle of the surface code
+        AAA_factories: float; the number of AAA factories available working in parallel
+
+        Returns:
+        time: float; the time (seconds) required to synthesise the T_gates
+        '''
+
+        P_A = p_fail/T_gates
+
+        p_list = [P_inject]
+        assert(35*P_inject**3 < 1)
+        while p_list[-1] < P_A:
+            p = 35*p_list[-1]**3
+            p_list.append(p)
+
+        def distance_2_error(distance,ord):
+            de = np.floor((int(distance)+1)/2)
+            PL = 3e-2*(p_surface_step/P_threshold)**de
+            p_i = 15**ord*16*3*2*1.25*distance*PL
+            return p_i
+
+        vfunc = np.vectorize(distance_2_error)
+
+        constraints = NonlinearConstraint(fun = lambda distances: vfunc(distances, list(range(len(p_list)))), lb = -np.inf, ub = p_list)
+
+        x0 = [17]
+        for i in range(len(p_list)-1):
+            x0.append(x0[-1]*2)
+            
+        res = minimize(fun = lambda distances: distances.sum(), x0 = x0, method = 'SLSQP', constraints = constraints)
+        distances = res.x
+
+        distances = [int(d) for d in distances]
+
+        code_cycles = 8*1.25*sum(distances)
+
+        time = code_cycles*t_cycle*T_gates/AAA_factories
+
+        return time
