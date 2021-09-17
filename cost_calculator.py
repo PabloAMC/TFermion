@@ -172,7 +172,7 @@ class Cost_calculator:
 
             if method == 'low_depth_trotter':
 
-                grid_length = int((self.molecule.N * 100) ** (1/3))
+                grid_length = int(round((self.molecule.N * 100) ** (1/3)))
                 if not hasattr(self.molecule, 'eta') or not hasattr(self.molecule, 'Omega') or not hasattr(self.molecule, 'N_grid'):
                     grid = self.molecule.build_grid(grid_length)
 
@@ -193,7 +193,7 @@ class Cost_calculator:
 
             elif method == 'low_depth_taylor':
 
-                grid_length = int((self.molecule.N * 100) ** (1/3))
+                grid_length = int(round((self.molecule.N * 100) ** (1/3)))
                 if not hasattr(self.molecule, 'lambda_value_grid') or not hasattr(self.molecule, 'Lambda_value_grid') or not hasattr(self.molecule, 'N_grid'):
                     grid = self.molecule.build_grid(grid_length)
 
@@ -216,7 +216,7 @@ class Cost_calculator:
 
             elif method == 'low_depth_taylor_on_the_fly':
 
-                grid_length = int((self.molecule.N * 100) ** (1/3))
+                grid_length = int(round((self.molecule.N * 100) ** (1/3)))
                 if not hasattr(self.molecule, 'lambda_value_grid') or not hasattr(self.molecule, 'Omega') or not hasattr(self.molecule, 'Gamma_grid') or not hasattr(self.molecule, 'eta') or not hasattr(self.molecule, 'N_grid'):
                     grid = self.molecule.build_grid(grid_length)
 
@@ -251,7 +251,7 @@ class Cost_calculator:
 
             if method == 'linear_t':
 
-                grid_length = int((self.molecule.N * 100) ** (1/3))
+                grid_length = int(round((self.molecule.N * 100) ** (1/3)))
                 if not hasattr(self.molecule, 'lambda_value_grid') or not hasattr(self.molecule, 'N_grid'):
                     grid = self.molecule.build_grid(grid_length)
 
@@ -301,7 +301,7 @@ class Cost_calculator:
 
             if method == 'interaction_picture':
 
-                grid_length = int((self.molecule.N * 100) ** (1/3))
+                grid_length = int(round((self.molecule.N * 100) ** (1/3)))
                 
                 if not hasattr(self.molecule, 'lambda_value_T') or not hasattr(self.molecule, 'lambda_value_U_V') or not hasattr(self.molecule, 'Gamma_grid') or not hasattr(self.molecule, 'N_grid'):
                     grid = self.molecule.build_grid(grid_length)
@@ -329,7 +329,7 @@ class Cost_calculator:
             # TO BE DELETED
             elif method == 'sublinear_scaling':
 
-                grid_length = int((self.molecule.N * 100) ** (1/3))
+                grid_length = int(round((self.molecule.N * 100) ** (1/3)))
                 if not hasattr(self.molecule, 'lambda_value_T') or not hasattr(self.molecule, 'lambda_value_U_V') or not hasattr(self.molecule, 'Gamma_grid') or not hasattr(self.molecule, 'N_grid'):
                     grid = self.molecule.build_grid(grid_length)
 

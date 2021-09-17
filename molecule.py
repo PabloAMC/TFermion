@@ -817,9 +817,9 @@ class Molecule:
 
         JW_op = jordan_wigner(T_primal)
         l = abs(np.array(list(JW_op.terms.values())))
-        self.lambda_T = sum(l)
+        self.lambda_value_T = sum(l)
 
-        self.lambda_U_V = lambda_U+lambda_V
+        self.lambda_value_U_V = lambda_U+lambda_V
 
         return
 
