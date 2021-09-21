@@ -277,7 +277,7 @@ class Cost_calculator:
                     self.molecule.get_basic_parameters(molecular_hamiltonian = molecular_hamiltonian)
 
                 N = self.molecule.N
-                lambda_value = self.molecule.lambda_value
+                lambda_value = self.molecule.lambda_value_low_rank
                 sparsity_d = self.molecule.sparsity_d 
                 final_rank = self.molecule.final_rank
                 H_norm_lambda_ratio = self.tools.config_variables['h_norm_lambda_ratio']

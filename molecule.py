@@ -461,7 +461,7 @@ class Molecule:
             rank_threshold = float(result['x'])
             sparsity_threshold = 0.
             
-        self.lambda_value = compute_lambda([rank_threshold, sparsity_threshold])
+        self.lambda_value_low_rank = compute_lambda([rank_threshold, sparsity_threshold])
         #approximate_E = low_rank_truncation_mp2_energy(rank_threshold = rank_threshold, sparsity_threshold = sparsity_threshold)
 
         one_body_coefficients, two_b_tensor = spinorb_from_spatial(new_one_body_integrals, new_two_body_integrals)
@@ -624,6 +624,7 @@ class Molecule:
         if hasattr(self, 'N_grid'): molecule_properties["N_grid"] = self.N_grid
         if hasattr(self, 'lambda_value'): molecule_properties["lambda_value"] = self.lambda_value
         if hasattr(self, 'lambda_value_grid'): molecule_properties["lambda_value_grid"] = self.lambda_value_grid
+        if hasattr(self, 'lambda_value_low_rank'): molecule_properties["lambda_value_low_rank"] = self.lambda_value_low_rank
         if hasattr(self, 'Lambda_value'): molecule_properties["Lambda_value"] = self.Lambda_value
         if hasattr(self, 'Lambda_value_grid'): molecule_properties["Lambda_value_grid"] = self.Lambda_value_grid
         if hasattr(self, 'Gamma'): molecule_properties["Gamma"] = self.Gamma
@@ -663,6 +664,7 @@ class Molecule:
             if 'Gamma' in molecule_properties.keys(): self.Gamma = molecule_properties["Gamma"]
             if 'lambda_value_grid' in molecule_properties.keys(): self.lambda_value_grid = molecule_properties["lambda_value_grid"]
             if 'Lambda_value_grid' in molecule_properties.keys(): self.Lambda_value_grid = molecule_properties["Lambda_value_grid"]
+            if 'lambda_value_low_rank' in molecule_properties.keys(): self.lambda_value_low_rank = molecule_properties["lambda_value_low_rank"]
             if 'Gamma_grid' in molecule_properties.keys(): self.Gamma_grid = molecule_properties["Gamma_grid"]
             if 'eta' in molecule_properties.keys(): self.eta = molecule_properties["eta"]
             if 'Omega' in molecule_properties.keys(): self.Omega = molecule_properties["Omega"]
