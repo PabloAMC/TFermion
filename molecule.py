@@ -133,7 +133,11 @@ class Molecule:
         #maj_operator = get_majorana_operator(fermion_operator)
 
         # The 2 comes from the (1/2) in the two_body_coefficient in the molecular_hamiltonian https://github.com/quantumlib/OpenFermion/blob/40f4dd293d3ac7759e39b0d4c061b391e9663246/src/openfermion/chem/molecular_data.py#L906-L913
-        one_body_integrals, two_body_integrals = self.spatial_from_spinorb(molecular_hamiltonian.one_body_tensor, 2*molecular_hamiltonian.two_body_tensor)
+        two_body_tensor = np.real_if_close(2*molecular_hamiltonian.two_body_tensor)
+        assert(np.isreal(two_body_tensor).all())
+        one_body_tensor = np.real_if_close(molecular_hamiltonian.one_body_tensor)
+        assert(np.isreal(one_body_tensor).all())
+        one_body_integrals, two_body_integrals = self.spatial_from_spinorb(one_body_tensor, two_body_tensor)
         self.lambda_value, self.Lambda_value, self.Gamma = self.get_one_norm_int_woconst(one_body_integrals,
                                                                                         two_body_integrals)
 
