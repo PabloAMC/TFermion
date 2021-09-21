@@ -65,7 +65,8 @@ class Molecule:
         self.molecule_info_type = molecule_info_type
 
         if self.molecule_info_type == 'name':
-            molecule_geometry = geometry_from_pubchem(self.molecule_info) 
+            self.molecule_info = self.molecule_info.replace('_', ' ')
+            molecule_geometry = geometry_from_pubchem(self.molecule_info)
 
         elif self.molecule_info_type == 'geometry':
             molecule_geometry = None
