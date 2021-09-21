@@ -17,8 +17,9 @@ from openfermion.hamiltonians import plane_wave_hamiltonian, jordan_wigner_dual_
 from openfermion.hamiltonians import dual_basis_external_potential, plane_wave_external_potential
 from openfermion.hamiltonians import dual_basis_potential, plane_wave_potential
 from openfermion.hamiltonians import dual_basis_kinetic, plane_wave_kinetic
-from openfermion.transforms  import  get_fermion_operator, get_diagonal_coulomb_hamiltonian, jordan_wigner
+from openfermion.transforms  import  get_fermion_operator, get_diagonal_coulomb_hamiltonian, jordan_wigner, get_majorana_operator
 from openfermion.circuits import low_rank_two_body_decomposition
+from openfermion.ops.operators import fermion_operator
 
 
 from pyscf import gto, scf, mcscf, fci, ao2mo
@@ -47,6 +48,7 @@ Nevertheless, some important links for the periodic boundary condition (not used
 
 CHEMICAL_ACCURACY = 0.0015 #in Hartrees, according to http://greif.geo.berkeley.edu/~driver/conversions.html
 H_NORM_LAMBDA_RATIO = .75
+tol = 1e-8
 #wigner_seitz_radius = 5. # Chosen as in https://quantumai.google/openfermion/tutorials/circuits_2_diagonal_coulomb_trotter, but may not make sense
 
 class Molecule:
@@ -63,7 +65,7 @@ class Molecule:
         self.molecule_info_type = molecule_info_type
 
         if self.molecule_info_type == 'name':
-            molecule_geometry = geometry_from_pubchem(self.molecule_info) # We prefer pyscf because of functionality.
+            molecule_geometry = geometry_from_pubchem(self.molecule_info) 
 
         elif self.molecule_info_type == 'geometry':
             molecule_geometry = None
@@ -123,58 +125,17 @@ class Molecule:
     def get_basic_parameters(self, threshold = 0, molecular_hamiltonian = None):
 
         self.eta = self.molecule_data.n_electrons
-        '''
-        # alternative way of calculating lambda
-        H1 = molecular_hamiltonian.one_body_tensor
-        eri = molecular_hamiltonian.two_body_tensor
-        T = H1 - 0.5 * np.einsum("pqqs->ps", eri) + np.einsum("pqrr->pq", eri)
-        lambda_V = 0.5 * np.sum(np.abs(eri))
-        lambda_T = np.sum(np.abs(T))
-        print(lambda_V + lambda_T)
-        print(np.sum(np.abs(H1))+0.5*np.sum(np.abs(eri)))
-        '''
 
         if molecular_hamiltonian is None:
             molecular_hamiltonian = self.molecule_data.get_molecular_hamiltonian(occupied_indices=self.occupied_indices, active_indices=self.active_indices)
-        fermion_operator = get_fermion_operator(molecular_hamiltonian)
-        JW_op = jordan_wigner(fermion_operator)
-        #BK_op = openfermion.transforms.bravyi_kitaev(fermion_operator) #Results seem to be the same no matter what transform one uses
+        #fermion_operator = get_fermion_operator(molecular_hamiltonian)
+        #maj_operator = get_majorana_operator(fermion_operator)
 
-        #sparse_mat = openfermion.get_sparse_operator(JW_op)
-        #dense_operator = sparse_mat.todense()
-        #max_eig, _ = scipy.sparse.linalg.eigsh(sparse_mat, k=1, which="LM")       
+        # The 2 comes from the (1/2) in the two_body_coefficient in the molecular_hamiltonian https://github.com/quantumlib/OpenFermion/blob/40f4dd293d3ac7759e39b0d4c061b391e9663246/src/openfermion/chem/molecular_data.py#L906-L913
+        one_body_integrals, two_body_integrals = self.spatial_from_spinorb(molecular_hamiltonian.one_body_tensor, 2*molecular_hamiltonian.two_body_tensor)
+        self.lambda_value, self.Lambda_value, self.Gamma = self.get_one_norm_int_woconst(one_body_integrals,
+                                                                                        two_body_integrals)
 
-        '''
-        if self.molecule_pyscf.ccsd_energy:
-            self.H_norm = abs(self.molecule_data.nuclear_repulsion + self.molecule_pyscf.ccsd_energy + (self.molecule_pyscf.ccsd_energy - self.molecule_pyscf.hf_energy))
-        elif self.molecule_pyscf.mp2_energy:
-            self.H_norm = abs(self.molecule_pyscf.mp2_energy + (self.molecule_pyscf.mp2_energy - self.molecule_pyscf.hf_energy))
-        else:
-            self.H_norm = abs(self.molecule_pyscf.hf_energy)
-        '''
-
-        l = abs(np.array(list(JW_op.terms.values())))
-        self.lambda_value = sum(l)
-        self.Lambda_value = max(l)
-        self.Gamma = np.count_nonzero(l >= threshold)
-
-        '''
-        avg_Z_per_unitary = 0
-        avg_XY_per_unitary = 0
-        weighted_avg_Z_per_unitary = 0
-        weighted_avg_XY_per_unitary = 0
-        for unitary, weight in JW_op.terms.items():
-            avg_Z_per_unitary += len([P[1] for P in unitary if P[1] == 'Z'])
-            avg_XY_per_unitary += len([P[1] for P in unitary if (P[1] == 'X' or P[1] == 'Y')])
-            weighted_avg_Z_per_unitary += len([P[1] for P in unitary if P[1] == 'Z'])*float(abs(weight))
-            weighted_avg_XY_per_unitary += len([P[1] for P in unitary if P[1] == 'X' or P[1] == 'Y'])*float(abs(weight))
-
-        self.avg_Z_per_unitary = avg_Z_per_unitary/len(JW_op.terms)
-        self.avg_XY_per_unitary = avg_XY_per_unitary/len(JW_op.terms)
-        self.weighted_avg_Z_per_unitary = weighted_avg_Z_per_unitary/self.lambda_value
-        self.weighted_avg_XY_per_unitary = weighted_avg_XY_per_unitary/self.lambda_value
-        '''
-        #self.H_norm_lambda_ratio = max(H_NORM_LAMBDA_RATIO,self.H_norm/self.lambda_value)
 
     def build_grid(self, grid_length: int = 7):
         '''
@@ -183,57 +144,19 @@ class Molecule:
 
         self.N_grid = grid_length**3*2
         self.eta = self.molecule_data.n_electrons
-
-        # Figure out length scale based on Wigner-Seitz radius and construct a basis grid.
-        # Wigner_seitz_radius  https://en.wikipedia.org/wiki/Wigner%E2%80%93Seitz_radius
-
-        #Have to investigate better how is the grid created, and 
-        #length_scale = openfermion.wigner_seitz_length_scale(wigner_seitz_radius = wigner_seitz_radius, n_particles = self.eta, dimension = 3)
         
         length_scale = 4*self.xmax # We set a box whose length is 4 times the maximum coordinate value of any atom, as the box has to be twice as large as the maximum distance in each coord
         grid = Grid(dimensions = 3, length = grid_length, scale = length_scale) # Complexity is determined by lenght
 
-        #h_plane_wave = plane_wave_hamiltonian(grid, self.molecule_geometry, plane_wave = False, include_constant=False, non_periodic = non_periodic, spinless = True)
-        #DC_op = get_diagonal_coulomb_hamiltonian(h_plane_wave, n_qubits=None, ignore_incompatible_terms=False)
-
         JW_op = jordan_wigner_dual_basis_hamiltonian(grid, self.molecule_geometry, spinless = True)
-        
-        '''
-        if self.molecule_pyscf.ccsd_energy:
-            self.H_norm = abs(self.molecule_data.nuclear_repulsion + self.molecule_pyscf.ccsd_energy + (self.molecule_pyscf.ccsd_energy - self.molecule_pyscf.hf_energy))
-        elif self.molecule_pyscf.mp2_energy:
-            self.H_norm = abs(self.molecule_pyscf.mp2_energy + (self.molecule_pyscf.mp2_energy - self.molecule_pyscf.hf_energy))
-        else:
-            self.H_norm = abs(self.molecule_pyscf.hf_energy)
-        '''
 
         l = abs(np.array(list(JW_op.terms.values())))
 
-        self.lambda_value_grid = sum(l)
-        self.Lambda_value_grid = max(l)
-        self.Gamma_grid = np.count_nonzero(l >= 0)
-
-        #self.H_norm_lambda_ratio = max(H_NORM_LAMBDA_RATIO,self.H_norm/self.lambda_value)
-        self.H_norm_lambda_ratio = H_NORM_LAMBDA_RATIO
+        self.lambda_value_grid = sum(l[1:])
+        self.Lambda_value_grid = max(l[1:])
+        self.Gamma_grid = np.count_nonzero(l[:1]>tol)
         
         self.Omega = grid.volume
-
-        '''
-        avg_Z_per_unitary = 0
-        avg_XY_per_unitary = 0
-        weighted_avg_Z_per_unitary = 0
-        weighted_avg_XY_per_unitary = 0
-        for unitary, weight in JW_op.terms.items():
-            avg_Z_per_unitary += len([P[1] for P in unitary if P[1] == 'Z'])
-            avg_XY_per_unitary += len([P[1] for P in unitary if (P[1] == 'X' or P[1] == 'Y')])
-            weighted_avg_Z_per_unitary += len([P[1] for P in unitary if P[1] == 'Z'])*float(abs(weight))
-            weighted_avg_XY_per_unitary += len([P[1] for P in unitary if P[1] == 'X' or P[1] == 'Y'])*float(abs(weight))
-
-        self.avg_Z_per_unitary = avg_Z_per_unitary/len(JW_op.terms)
-        self.avg_XY_per_unitary = avg_XY_per_unitary/len(JW_op.terms)
-        self.weighted_avg_Z_per_unitary = weighted_avg_Z_per_unitary/self.lambda_value
-        self.weighted_avg_XY_per_unitary = weighted_avg_XY_per_unitary/self.lambda_value
-        '''
 
         return grid
 
@@ -294,7 +217,6 @@ class Molecule:
 
         # This does not give the natural orbitals. If those are wanted check https://github.com/pyscf/pyscf/blob/7be5e015b2b40181755c71d888449db936604660/pyscf/mcscf/__init__.py#L172
         # Complete Active Space Self Consistent Field (CASSCF), an option of Multi-Configuration Self Consistent Field (MCSCF) calculation. A more expensive alternative would be Complete Active Space Configuration Interaction (CASCI)
-        #todo: check whether we want natural orbitals or not
         pyscf_mcscf = mcscf.CASSCF(pyscf_scf, n_mocas, ne_act_cas).run(mo_coeff) #Inspired by the mini-example in avas documentation link above
 
         self.molecule_data._pyscf_data['mcscf'] = pyscf_mcscf
@@ -420,45 +342,37 @@ class Molecule:
 
         pyscf_scf = self.molecule_data._pyscf_data['scf']
         pyscf_mol = self.molecule_data._pyscf_data['mol']
-        two_body_integrals = self.molecule_data.two_body_integrals          # electronic repulsion integrals
 
         if occupied_indices or virtual_indices:
             new_core_constant, new_one_body_integrals, new_two_body_integrals = self.molecule_data.get_active_space_integrals(occupied_indices = occupied_indices, active_indices = active_indices)
         else:
             new_core_constant = 0
-            new_two_body_integrals = two_body_integrals
+            new_two_body_integrals = self.molecule_data.two_body_integrals          # electronic repulsion integrals
             new_one_body_integrals = self.molecule_data.one_body_integrals
 
         # From here------------------------------------------------
 
         def low_rank_truncation_mp2_energy(rank_threshold, sparsity_threshold):
 
-            two_b_integrals = copy.copy(new_two_body_integrals)
-            two_b_integrals[np.abs(two_b_integrals) < sparsity_threshold] = 0.
+            one_b_tensor, two_b_tensor = spinorb_from_spatial(new_one_body_integrals, new_two_body_integrals)
+            two_b_tensor[np.abs(two_b_tensor) < sparsity_threshold] = 0.
         
-            lambda_ls, one_body_squares, one_body_correction, truncation_value = low_rank_two_body_decomposition(two_b_integrals,
+            lambda_ls, one_body_squares, one_body_correction, truncation_value = low_rank_two_body_decomposition(two_b_tensor,
                                                                                                     truncation_threshold=rank_threshold,
                                                                                                     final_rank=None,
-                                                                                                    spin_basis=False)
+                                                                                                    spin_basis=True)
 
             # Electronic Repulsion Integral
-            eri = np.einsum('l,lpq,lrs->pqrs',lambda_ls, (one_body_squares + np.transpose(one_body_squares, (0,2,1)))/2, (one_body_squares + np.transpose(one_body_squares, (0,2,1)))/2)
+            two_b_tensor = np.einsum('l,lpq,lrs->pqrs',lambda_ls, (one_body_squares + np.transpose(one_body_squares, (0,2,1)))/2, (one_body_squares + np.transpose(one_body_squares, (0,2,1)))/2)
 
-            # Integrals have type complex but they do not have imaginary part
-            eri = np.real_if_close(eri)
-            assert(np.isreal(eri).all())
+            # Tensors have type complex but they do not have imaginary part
+            two_b_tensor = np.real_if_close(two_b_tensor)
+            assert(np.isreal(two_b_tensor).all())
 
-            #Converting from spin orbitals to spatial orbitals
-            n_spin_orbitals = eri.shape[0]
-            n_spatial_orbitals = n_spin_orbitals//2
-            '''
-            Example of the sumation that comes now
-            a = np.arange(64)
-            a = a.reshape(8,8) -> want to reshape to (4,4) summing by blocks of 2
-            a = a.reshape(4,2,4,2).sum(axis = (1,3))
-            '''
-            one_body_correction = one_body_correction.reshape(n_spatial_orbitals,2,n_spatial_orbitals,2).sum(axis=(1,3))
-            eri = eri.reshape(n_spatial_orbitals,2,n_spatial_orbitals,2,n_spatial_orbitals,2,n_spatial_orbitals,2).sum(axis = (1,3,5,7))
+            one_b_tensor = one_b_tensor + one_body_correction
+            one_b_tensor[abs(one_b_tensor) < sparsity_threshold] = 0.
+
+            h_core, eri = self.spatial_from_spinorb(one_b_tensor, two_b_tensor)
             
             # Checking some of the symmetries: http://vergil.chemistry.gatech.edu/notes/permsymm/permsymm.pdf
             assert(np.isclose(eri, np.transpose(eri, (3,2,1,0)), rtol = 1).all() and np.isclose(eri, np.transpose(eri, (2,3,0,1)), rtol = 1).all() and np.isclose(eri, np.transpose(eri, (1,0,3,2)), rtol = 1).all())
@@ -468,8 +382,7 @@ class Molecule:
 
             mf = scf.RHF(mol)
 
-            h_core = pyscf_scf.get_hcore() + one_body_correction
-            h_core[abs(h_core) < sparsity_threshold] = 0.
+            # pyscf_scf.get_hcore() should be the same as one_body_integrals
             mf.get_hcore = lambda *args: h_core
             mf.get_ovlp = lambda *args: pyscf_scf.get_ovlp()
             #mf.get_hcore[np.abs(mf.get_hcore) < sparsity_threshold] = 0
@@ -499,33 +412,36 @@ class Molecule:
             rank_threshold = threshold[0]
             sparsity_threshold = threshold[1]
 
-            two_b_integrals = copy.copy(new_two_body_integrals)
-            two_b_integrals[abs(two_b_integrals) < sparsity_threshold] = 0.
+            one_body_coefficients, two_b_tensor = spinorb_from_spatial(new_one_body_integrals, new_two_body_integrals)
+            two_b_tensor[abs(two_b_tensor) < sparsity_threshold] = 0.
 
-            lambda_ls, one_body_squares, one_body_correction, truncation_value = low_rank_two_body_decomposition(two_b_integrals,
+            lambda_ls, one_body_squares, one_body_correction, truncation_value = low_rank_two_body_decomposition(two_b_tensor,
                                                                                                             truncation_threshold=rank_threshold,
                                                                                                             final_rank=None,
-                                                                                                            spin_basis=False)
+                                                                                                            spin_basis=True)
 
 
             two_body_coefficients = np.einsum('l,lpr,lqs->pqrs',lambda_ls, one_body_squares, one_body_squares)
 
-            one_body_coefficients, _ = spinorb_from_spatial(new_one_body_integrals, two_b_integrals)
             one_body_coefficients = one_body_correction + one_body_coefficients
             one_body_coefficients[abs(one_body_coefficients) < sparsity_threshold] = 0.
 
             constant = new_core_constant+self.molecule_data.nuclear_repulsion
 
-            #todo: the 1/2 term in front of the two_body_coefficients should be there? -> Check the definition of get_molecular_hamiltonian https://github.com/quantumlib/OpenFermion/blob/40f4dd293d3ac7759e39b0d4c061b391e9663246/src/openfermion/chem/molecular_data.py#L878
+            #the 1/2 term in front of the two_body_coefficients should be there? -> Check the definition of get_molecular_hamiltonian https://github.com/quantumlib/OpenFermion/blob/40f4dd293d3ac7759e39b0d4c061b391e9663246/src/openfermion/chem/molecular_data.py#L878
             # There is a 1/2 term because spinorb_from_spatial (used in get_molecular_hamiltonian) duplicates the coefficients for spin orbitals, so they need to be divided between two
             molecular_hamiltonian = reps.InteractionOperator(constant, one_body_coefficients, 1/2 * two_body_coefficients)
+            
+            fer_op = get_fermion_operator(molecular_hamiltonian)
+            maj = get_majorana_operator(fer_op)
+            l_maj = np.abs(np.array(list(maj.terms.values())))
+            lambda_value = sum(l_maj[1:])
 
-            fermion_operator = openfermion.get_fermion_operator(molecular_hamiltonian)
-            JW_op = openfermion.transforms.jordan_wigner(fermion_operator)
-            #BK_op = openfermion.transforms.bravyi_kitaev(fermion_operator) #Results seem to be the same no matter what transform one uses
-
+            ''' # Same as
+            JW_op = jordan_wigner(molecular_hamiltonian)
             l = abs(np.array(list(JW_op.terms.values())))
-            lambda_value = sum(l)
+            lambda_value = sum(l[1:])
+            '''
 
             return lambda_value
         
@@ -543,29 +459,31 @@ class Molecule:
             result = scipy.optimize.minimize(fun = lambda rank_threshold: 1e-2/(rank_threshold+1e-4), x0 = 1e-4, constraints = [nconstraint, lconstraint], tol = 0.1, options = {'maxiter': 50, 'catol': .01*CHEMICAL_ACCURACY}, method='COBYLA') # Works with COBYLA, but not with SLSQP (misses the boundaries) or trust-constr (oscillates)
             rank_threshold = float(result['x'])
             sparsity_threshold = 0.
+            
+        self.lambda_value = compute_lambda([rank_threshold, sparsity_threshold])
+        #approximate_E = low_rank_truncation_mp2_energy(rank_threshold = rank_threshold, sparsity_threshold = sparsity_threshold)
 
-        approximate_E = low_rank_truncation_mp2_energy(rank_threshold = rank_threshold, sparsity_threshold = sparsity_threshold)
+        one_body_coefficients, two_b_tensor = spinorb_from_spatial(new_one_body_integrals, new_two_body_integrals)
 
         if sparsify:
-            new_two_body_integrals[abs(new_two_body_integrals) < sparsity_threshold] = 0.
+            two_b_tensor[abs(two_b_tensor) < sparsity_threshold] = 0.
 
-        lambda_ls, one_body_squares, one_body_correction, truncation_value = low_rank_two_body_decomposition(new_two_body_integrals,
+        lambda_ls, one_body_squares, one_body_correction, truncation_value = low_rank_two_body_decomposition(two_b_tensor,
                                                                                                             truncation_threshold=rank_threshold,
                                                                                                             final_rank=None,
-                                                                                                            spin_basis=False)
+                                                                                                            spin_basis=True)
 
         final_rank = len(lambda_ls)
 
         two_body_coefficients = np.einsum('l,lpr,lqs->pqrs',lambda_ls, one_body_squares, one_body_squares)
 
-        one_body_coefficients, _ = spinorb_from_spatial(new_one_body_integrals, new_two_body_integrals)
         one_body_coefficients = one_body_correction + one_body_coefficients
         if sparsify:
             one_body_coefficients[abs(one_body_coefficients) < sparsity_threshold] = 0.
 
         constant = new_core_constant+self.molecule_data.nuclear_repulsion
 
-        #todo: the 1/2 term in front of the two_body_coefficients should be there? -> Check the definition of get_molecular_hamiltonian https://github.com/quantumlib/OpenFermion/blob/40f4dd293d3ac7759e39b0d4c061b391e9663246/src/openfermion/chem/molecular_data.py#L878
+        # The 1/2 term in front of the two_body_coefficients should be there? -> Check the definition of get_molecular_hamiltonian https://github.com/quantumlib/OpenFermion/blob/40f4dd293d3ac7759e39b0d4c061b391e9663246/src/openfermion/chem/molecular_data.py#L878
         # There is a 1/2 term because spinorb_from_spatial (used in get_molecular_hamiltonian) duplicates the coefficients for spin orbitals, so they need to be divided between two
         molecular_hamiltonian = reps.InteractionOperator(constant, one_body_coefficients, 1/2 * two_body_coefficients)
 
@@ -602,9 +520,6 @@ class Molecule:
         pyscf_scf = self.molecule_data._pyscf_data['scf']
         pyscf_mol = self.molecule_data._pyscf_data['mol']
 
-        #todo: how to choose the coordinates to fit the molecule well? -> Use geometry from the molecule
-        #coords = np.random.random((100,3)) # todo: dumb, to be substituted
-
         coord = np.empty((0, 3))
         for _, at_coord in self.molecule_data.geometry:
             coord = np.vstack((coord, np.array(at_coord) + 10 * BOHR * np.random.random((50,3)))) # Random coords around the atomic positions
@@ -618,9 +533,7 @@ class Molecule:
 
         mo = ao.dot(pyscf_scf.mo_coeff)
         mo_grad = np.apply_along_axis(func1d =  lambda x: x.dot(pyscf_scf.mo_coeff), axis = 2, arr = ao_grad)
-        #mo_grad = [x.dot(pyscf_scf.mo_coeff) for x in ao_grad]
         mo_hess = np.apply_along_axis(func1d =  lambda x: x.dot(pyscf_scf.mo_coeff), axis = 2, arr = ao_hess)
-        #mo_hess = [x.dot(pyscf_scf.mo_coeff) for x in ao_hess]
 
         def hessian_vector_norm(vec):
             assert(len(vec) == 6)
@@ -730,17 +643,6 @@ class Molecule:
         if hasattr(self, 'lambda_value_U_V'): molecule_properties["lambda_value_U_V"] = self.lambda_value_U_V
         molecule_properties["xmax"] = self.xmax
 
-
-        '''
-        molecule_properties["avg_Z_per_unitary"] = self.avg_Z_per_unitary
-        molecule_properties["avg_XY_per_unitary"] = self.avg_XY_per_unitary
-        molecule_properties["weighted_avg_Z_per_unitary"] = self.weighted_avg_Z_per_unitary
-        molecule_properties["weighted_avg_XY_per_unitary"] = self.weighted_avg_XY_per_unitary
-        '''
-
-
-        #molecule_properties["JW_op_terms"] = JW_op_terms
-
         with open(json_name, "w") as fp:
             json.dump(molecule_properties,fp) 
 
@@ -748,9 +650,6 @@ class Molecule:
         '''
         To load MolecularData: https://github.com/quantumlib/OpenFermion/blob/7c3581ad75716d1ff6a0043a516d271052a90e35/src/openfermion/chem/molecular_data.py#L719
         '''
-        
-        #self.molecule_data.load()
-
 
         try:
             with open(json_name, "r") as fp:
@@ -780,48 +679,25 @@ class Molecule:
             if 'lambda_value_U_V' in molecule_properties.keys(): self.lambda_value_U_V = molecule_properties["lambda_value_U_V"]
             if 'xmax' in molecule_properties.keys(): self.xmax = molecule_properties["xmax"]
 
-            '''
-            self.avg_Z_per_unitary = molecule_properties["avg_Z_per_unitary"]
-            self.avg_XY_per_unitary = molecule_properties["avg_XY_per_unitary"]
-            self.weighted_avg_Z_per_unitary = molecule_properties["weighted_avg_Z_per_unitary"]
-            self.weighted_avg_XY_per_unitary = molecule_properties["weighted_avg_XY_per_unitary"]
-            '''
-
-            #JW_op_terms = molecule_properties["JW_op_terms"]
-
         except:
             pass
-
-        return 
 
     def lambda_of_Hamiltonian_terms_2nd(self,grid, non_periodic = False, spinless = False):
         '''To be used in second quantization (interaction_picture) only'''
 
-        molecular_hamiltonian = self.molecule_data.get_molecular_hamiltonian(occupied_indices=self.occupied_indices, active_indices=self.active_indices)
-
-        #T_dual = dual_basis_kinetic(grid, spinless = spinless) 
         V_dual = dual_basis_potential(grid = grid, spinless = spinless, non_periodic = non_periodic) # diagonal
         U_dual = dual_basis_external_potential(grid = grid, geometry = self.molecule_geometry, spinless = spinless, non_periodic = non_periodic) # diagonal
 
         T_primal = plane_wave_kinetic(grid, spinless = spinless) # diagonal
-        #V_primal = plane_wave_potential(grid, spinless = spinless, non_periodic = non_periodic)
-        #U_primal = plane_wave_external_potential(grid, spinless = spinless, non_periodic = non_periodic)
         
-        JW_op = jordan_wigner(V_dual)
-        l = abs(np.array(list(JW_op.terms.values())))
-        lambda_V = sum(l)
+        Maj_op = get_majorana_operator(V_dual)
+        l_maj = np.abs(np.array(list(Maj_op.terms.values())))
+        lambda_V = sum(l_maj[1:]) # The first term is constant
 
-        JW_op = jordan_wigner(U_dual)
-        l = abs(np.array(list(JW_op.terms.values())))
-        lambda_U = sum(l)
-
-        JW_op = jordan_wigner(T_primal)
-        l = abs(np.array(list(JW_op.terms.values())))
-        self.lambda_value_T = sum(l)
+        lambda_U = (U_dual.induced_norm() - U_dual.constant)/2 # division between 2 to take spin into account
+        self.lambda_value_T = (T_primal.induced_norm() - T_primal.constant)/2 # division between 2 to take spin into account
 
         self.lambda_value_U_V = lambda_U+lambda_V
-
-        return
 
     def lambda_of_Hamiltonian_terms_1st(self, eta, Omega, N):
         '''To be used in first quantization'''
@@ -835,6 +711,73 @@ class Molecule:
         lambda_T = eta/2 * (2*np.pi/Omega**(1/3))**2 * sum_nu
 
         return lambda_T, lambda_U_V
+
+
+    def get_one_norm_int_woconst(self, one_body_integrals, two_body_integrals):
+        """
+        Returns 1-norm, emitting the constant term in the qubit Hamiltonian.
+        See get_one_norm_int.
+
+        Code mostly taken from https://github.com/quantumlib/OpenFermion/pull/725
+
+        Parameters
+        ----------
+        one_body_integrals(ndarray) : An array of the one-electron integrals having
+            shape of (n_orb, n_orb), where n_orb is the number of spatial orbitals.
+        two_body_integrals(ndarray) : An array of the two-electron integrals having
+            shape of (n_orb, n_orb, n_orb, n_orb).
+        Returns
+        -------
+        one_norm : 1-Norm of the qubit Hamiltonian
+        """
+
+        n_orb = one_body_integrals.shape[0]
+
+        htildepq = np.zeros(one_body_integrals.shape)
+        for p in range(n_orb):
+            for q in range(n_orb):
+                htildepq[p, q] = one_body_integrals[p, q]
+                for r in range(n_orb):
+                    htildepq[p, q] += ((two_body_integrals[p, r, r, q]) -
+                                    (1 / 2 * two_body_integrals[p, r, q, r]))
+
+        one_norm = np.sum(np.absolute(htildepq))
+
+        anti_sym_integrals = two_body_integrals - np.transpose(
+            two_body_integrals, (0, 1, 3, 2))
+
+        one_norm += 1 / 8 * np.sum(np.absolute(anti_sym_integrals))
+        one_norm += 1 / 4 * np.sum(np.absolute(two_body_integrals))
+
+        Lambda_value = max([1/2*np.max(np.absolute(htildepq)), 
+                            1/16*np.max(np.absolute(anti_sym_integrals)), 
+                            1/8*np.max(np.absolute(two_body_integrals))])
+
+        Gamma_1bdy = np.count_nonzero(np.abs(htildepq)> tol)*2
+        Gamma_2bdy = np.count_nonzero(np.absolute(two_body_integrals) > tol)
+        Gamma_2bdy += np.count_nonzero(np.absolute(anti_sym_integrals) > tol)/2
+        Gamma = Gamma_1bdy + Gamma_2bdy
+
+        return one_norm, Lambda_value, Gamma    
+
+    def spatial_from_spinorb(self, one_body_tensor, two_body_tensor):
+        #Converting from spin orbitals to spatial orbitals
+        n_spin_orbitals = one_body_tensor.shape[0]
+        assert(one_body_tensor.shape[0] == two_body_tensor.shape[0])
+        n_spatial_orbitals = n_spin_orbitals//2
+        '''
+        Example of the sumation that comes now
+        a = np.arange(64)
+        a = a.reshape(8,8) -> want to reshape to (4,4) summing by blocks of 2
+        a = a.reshape(4,2,4,2).sum(axis = (1,3))
+        '''
+
+        # We add a 1/2 term because in spinorb_from_spatial each entry gets copied twice https://github.com/quantumlib/OpenFermion/blob/ce7b0023fea8721aee5796c82559254b3198d79d/src/openfermion/chem/molecular_data.py#L222-L260
+        one_body_integrals = 1/2*one_body_tensor.reshape(n_spatial_orbitals,2,n_spatial_orbitals,2).sum(axis=(1,3))
+        # We add a 1/4 term because in spinorb_from_spatial each entry gets copied four times https://github.com/quantumlib/OpenFermion/blob/ce7b0023fea8721aee5796c82559254b3198d79d/src/openfermion/chem/molecular_data.py#L222-L260
+        two_body_integrals = 1/4*two_body_tensor.reshape(n_spatial_orbitals,2,n_spatial_orbitals,2,n_spatial_orbitals,2,n_spatial_orbitals,2).sum(axis = (1,3,5,7))
+
+        return one_body_integrals, two_body_integrals
 
 import numpy
 import h5py

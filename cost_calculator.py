@@ -273,7 +273,7 @@ class Cost_calculator:
             elif method == 'sparsity_low_rank':
 
                 if not hasattr(self.molecule, 'sparsity_d') or not hasattr(self.molecule, 'final_rank') or not hasattr(self.molecule, 'lambda_value'):
-                    molecular_hamiltonian= self.molecule.low_rank_approximation(sparsify = True)
+                    molecular_hamiltonian = self.molecule.low_rank_approximation(sparsify = True)
                     self.molecule.get_basic_parameters(molecular_hamiltonian = molecular_hamiltonian)
 
                 N = self.molecule.N
