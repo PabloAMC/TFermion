@@ -63,6 +63,7 @@ class Molecule:
         self.molecule_info_type = molecule_info_type
 
         if self.molecule_info_type == 'name':
+            self.molecule_info = self.molecule_info.replace('_', ' ')
             molecule_geometry = geometry_from_pubchem(self.molecule_info) # We prefer pyscf because of functionality.
 
         elif self.molecule_info_type == 'geometry':
