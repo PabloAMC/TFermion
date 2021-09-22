@@ -4,6 +4,7 @@ import json
 import ast
 import importlib
 import sys
+from openfermion.transforms.opconversions.term_reordering import normal_ordered
 
 from openfermionpsi4 import run_psi4
 from openfermionpyscf import run_pyscf
@@ -17,7 +18,7 @@ from openfermion.hamiltonians import plane_wave_hamiltonian, jordan_wigner_dual_
 from openfermion.hamiltonians import dual_basis_external_potential, plane_wave_external_potential
 from openfermion.hamiltonians import dual_basis_potential, plane_wave_potential
 from openfermion.hamiltonians import dual_basis_kinetic, plane_wave_kinetic
-from openfermion.transforms  import  get_fermion_operator, get_diagonal_coulomb_hamiltonian, jordan_wigner, get_majorana_operator
+from openfermion.transforms  import  get_fermion_operator, get_majorana_operator, get_interaction_operator, normal_ordered, get_molecular_data
 from openfermion.circuits import low_rank_two_body_decomposition
 from openfermion.ops.operators import fermion_operator
 
@@ -123,21 +124,12 @@ class Molecule:
         return [molecule_geometry, MolecularData(molecule_geometry, self.tools.config_variables['basis'], charge = charge, multiplicity = 1, filename = 'name')]
     
 
-    def get_basic_parameters(self, threshold = 0, molecular_hamiltonian = None):
+    def get_basic_parameters(self):
 
         self.eta = self.molecule_data.n_electrons
 
-        if molecular_hamiltonian is None:
-            molecular_hamiltonian = self.molecule_data.get_molecular_hamiltonian(occupied_indices=self.occupied_indices, active_indices=self.active_indices)
-        #fermion_operator = get_fermion_operator(molecular_hamiltonian)
-        #maj_operator = get_majorana_operator(fermion_operator)
-
-        # The 2 comes from the (1/2) in the two_body_coefficient in the molecular_hamiltonian https://github.com/quantumlib/OpenFermion/blob/40f4dd293d3ac7759e39b0d4c061b391e9663246/src/openfermion/chem/molecular_data.py#L906-L913
-        two_body_tensor = np.real_if_close(2*molecular_hamiltonian.two_body_tensor)
-        assert(np.isreal(two_body_tensor).all())
-        one_body_tensor = np.real_if_close(molecular_hamiltonian.one_body_tensor)
-        assert(np.isreal(one_body_tensor).all())
-        one_body_integrals, two_body_integrals = self.spatial_from_spinorb(one_body_tensor, two_body_tensor)
+        _, one_body_integrals, two_body_integrals = self.molecule_data.get_active_space_integrals(occupied_indices=self.occupied_indices, 
+                                                                                                active_indices=self.active_indices)
         self.lambda_value, self.Lambda_value, self.Gamma = self.get_one_norm_int_woconst(one_body_integrals,
                                                                                         two_body_integrals)
 
@@ -291,10 +283,12 @@ class Molecule:
         one_body_coefficients, two_body_coefficients = spinorb_from_spatial(one_body_integrals, two_body_integrals)
         constant = self.molecule_data.nuclear_repulsion
 
-        # For the reason of the 1/2 see function below (low_rank truncation)
-        molecular_hamiltonian = reps.InteractionOperator(constant, one_body_coefficients, 1/2 * two_body_coefficients)
+        pTensor = reps.PolynomialTensor({(): constant, (1, 0): one_body_coefficients, (1, 1, 0, 0): two_body_coefficients})
+        Maj_op = get_majorana_operator(pTensor)
+        l_maj = np.abs(np.array(list(Maj_op.terms.values())))
+        lambda_value_low_rank = sum(l_maj[1:])
 
-        return molecular_hamiltonian, threshold
+        return lambda_value_low_rank, threshold
 
     def low_rank_approximation(self, sparsify = False):
         '''
@@ -371,33 +365,38 @@ class Molecule:
             two_b_tensor = np.einsum('l,lpq,lrs->pqrs',lambda_ls, (one_body_squares + np.transpose(one_body_squares, (0,2,1)))/2, (one_body_squares + np.transpose(one_body_squares, (0,2,1)))/2)
 
             # Tensors have type complex but they do not have imaginary part
-            two_b_tensor = np.real_if_close(two_b_tensor)
-            assert(np.isreal(two_b_tensor).all())
+            two_body_tensor = np.real_if_close(two_b_tensor)
+            assert(np.isreal(two_body_tensor).all())
 
-            one_b_tensor = one_b_tensor + one_body_correction
-            one_b_tensor[abs(one_b_tensor) < sparsity_threshold] = 0.
+            one_body_tensor = one_b_tensor + one_body_correction
+            one_body_tensor[abs(one_body_tensor) < sparsity_threshold] = 0.
 
-            h_core, eri = self.spatial_from_spinorb(one_b_tensor, two_b_tensor)
-            
+            # Taking anticommutation relations into account
+            normal_two_body_tensor = -np.transpose(two_body_tensor, (0,2,1,3))
+            normal_one_body_tensor = one_body_tensor + np.einsum('pqqr-> pr', two_body_tensor)
+
+            h_core, eri = self.spatial_from_spinorb(normal_one_body_tensor, normal_two_body_tensor)
+
             # Checking some of the symmetries: http://vergil.chemistry.gatech.edu/notes/permsymm/permsymm.pdf
-            assert(np.isclose(eri, np.transpose(eri, (3,2,1,0)), rtol = 1).all() and np.isclose(eri, np.transpose(eri, (2,3,0,1)), rtol = 1).all() and np.isclose(eri, np.transpose(eri, (1,0,3,2)), rtol = 1).all())
+            assert(np.isclose(eri, np.transpose(eri, (3,2,1,0)), rtol = 1e-3).all() and np.isclose(eri, np.transpose(eri, (2,3,0,1)), rtol = 1e-3).all() and np.isclose(eri, np.transpose(eri, (1,0,3,2)), rtol = 1e-3).all())
 
             mol = gto.M()
-            mol.nelectron = self.molecule_pyscf.n_electrons
-
+            mol.nelectron = self.molecule_data.n_electrons
             mf = scf.RHF(mol)
 
             # pyscf_scf.get_hcore() should be the same as one_body_integrals
             mf.get_hcore = lambda *args: h_core
-            mf.get_ovlp = lambda *args: pyscf_scf.get_ovlp()
-            #mf.get_hcore[np.abs(mf.get_hcore) < sparsity_threshold] = 0
+            if active_indices:
+                mf.get_ovlp = lambda *args: self.molecule_data.overlap_integrals[np.ix_(active_indices, active_indices)]
+            else:
+                mf.get_ovlp = lambda *args: self.molecule_data.overlap_integrals #pyscf_scf.get_ovlp() # todo: is the overlap matrix from pyscf the correct one?
+            #mf.get_hcore
             # ao2mo.restore(8, eri, n) to get 8-fold permutation symmetry of the integrals
             # ._eri only supports the two-electron integrals in 4-fold or 8-fold symmetry.
 
             mf._eri = eri # ao2mo.restore(8, eri, mol.nelectron)
 
             mf.kernel()
-
             mol.incore_anyway = True
 
             # If there is an active space we want to work with in the Moller Plesset energy calculation, we can do it here
@@ -420,27 +419,24 @@ class Molecule:
             one_body_coefficients, two_b_tensor = spinorb_from_spatial(new_one_body_integrals, new_two_body_integrals)
             two_b_tensor[abs(two_b_tensor) < sparsity_threshold] = 0.
 
-            lambda_ls, one_body_squares, one_body_correction, truncation_value = low_rank_two_body_decomposition(two_b_tensor,
-                                                                                                            truncation_threshold=rank_threshold,
-                                                                                                            final_rank=None,
-                                                                                                            spin_basis=True)
+            lambda_ls, one_body_squares, one_body_correction, _ = low_rank_two_body_decomposition(two_b_tensor,
+                                                                                                truncation_threshold=rank_threshold,
+                                                                                                final_rank=None,
+                                                                                                spin_basis=True)
 
 
-            two_body_coefficients = np.einsum('l,lpr,lqs->pqrs',lambda_ls, one_body_squares, one_body_squares)
+            # Important: the result will be chemist-ordered
+            two_body_coefficients = np.einsum('l,lpq,lrs->pqrs',lambda_ls, one_body_squares, one_body_squares)
 
             one_body_coefficients = one_body_correction + one_body_coefficients
             one_body_coefficients[abs(one_body_coefficients) < sparsity_threshold] = 0.
 
             constant = new_core_constant+self.molecule_data.nuclear_repulsion
 
-            #the 1/2 term in front of the two_body_coefficients should be there? -> Check the definition of get_molecular_hamiltonian https://github.com/quantumlib/OpenFermion/blob/40f4dd293d3ac7759e39b0d4c061b391e9663246/src/openfermion/chem/molecular_data.py#L878
-            # There is a 1/2 term because spinorb_from_spatial (used in get_molecular_hamiltonian) duplicates the coefficients for spin orbitals, so they need to be divided between two
-            molecular_hamiltonian = reps.InteractionOperator(constant, one_body_coefficients, 1/2 * two_body_coefficients)
-            
-            fer_op = get_fermion_operator(molecular_hamiltonian)
-            maj = get_majorana_operator(fer_op)
-            l_maj = np.abs(np.array(list(maj.terms.values())))
-            lambda_value = sum(l_maj[1:])
+            pTensor = reps.PolynomialTensor({(): constant, (1, 0): one_body_coefficients, (1, 0, 1, 0): two_body_coefficients})
+            Maj_op = get_majorana_operator(pTensor)
+            l_maj = np.abs(np.array(list(Maj_op.terms.values())))
+            lambda_value_low_rank = sum(l_maj[1:])
 
             ''' # Same as
             JW_op = jordan_wigner(molecular_hamiltonian)
@@ -448,7 +444,7 @@ class Molecule:
             lambda_value = sum(l[1:])
             '''
 
-            return lambda_value
+            return lambda_value_low_rank
         
         exact_E = low_rank_truncation_mp2_energy(rank_threshold = 0, sparsity_threshold = 0)
 
@@ -473,14 +469,14 @@ class Molecule:
         if sparsify:
             two_b_tensor[abs(two_b_tensor) < sparsity_threshold] = 0.
 
-        lambda_ls, one_body_squares, one_body_correction, truncation_value = low_rank_two_body_decomposition(two_b_tensor,
-                                                                                                            truncation_threshold=rank_threshold,
-                                                                                                            final_rank=None,
-                                                                                                            spin_basis=True)
+        lambda_ls, one_body_squares, one_body_correction, _ = low_rank_two_body_decomposition(two_b_tensor,
+                                                                                            truncation_threshold=rank_threshold,
+                                                                                            final_rank=None,
+                                                                                            spin_basis=True)
 
         final_rank = len(lambda_ls)
 
-        two_body_coefficients = np.einsum('l,lpr,lqs->pqrs',lambda_ls, one_body_squares, one_body_squares)
+        two_body_coefficients = np.einsum('l,lpq,lrs->pqrs',lambda_ls, one_body_squares, one_body_squares)
 
         one_body_coefficients = one_body_correction + one_body_coefficients
         if sparsify:
@@ -488,18 +484,17 @@ class Molecule:
 
         constant = new_core_constant+self.molecule_data.nuclear_repulsion
 
-        # The 1/2 term in front of the two_body_coefficients should be there? -> Check the definition of get_molecular_hamiltonian https://github.com/quantumlib/OpenFermion/blob/40f4dd293d3ac7759e39b0d4c061b391e9663246/src/openfermion/chem/molecular_data.py#L878
-        # There is a 1/2 term because spinorb_from_spatial (used in get_molecular_hamiltonian) duplicates the coefficients for spin orbitals, so they need to be divided between two
-        molecular_hamiltonian = reps.InteractionOperator(constant, one_body_coefficients, 1/2 * two_body_coefficients)
+        pTensor = reps.PolynomialTensor({(): constant, (1, 0): one_body_coefficients, (1, 0, 1, 0): two_body_coefficients})
+        Maj_op = get_majorana_operator(pTensor)
+        l_maj = np.abs(np.array(list(Maj_op.terms.values())))
+        self.lambda_value_low_rank = sum(l_maj[1:])
 
         # The original formula is (2L+1)*(N^4/8+ N/4). Here we have to count only the non-zero elements
-        self.sparsity_d = np.count_nonzero(molecular_hamiltonian.one_body_tensor-np.diag(np.diag(molecular_hamiltonian.one_body_tensor)))/2 + np.count_nonzero(np.diag(np.diag(molecular_hamiltonian.one_body_tensor)))
+        self.sparsity_d = np.count_nonzero(one_body_coefficients-np.diag(np.diag(one_body_coefficients)))/2 + np.count_nonzero(np.diag(np.diag(one_body_coefficients)))
         for i in range(len(lambda_ls)):
             self.sparsity_d += 2*np.all(lambda_ls[i])*( np.count_nonzero(one_body_squares[i,:,:]-np.diag(np.diag(one_body_squares[i,:,:])))/2 + np.count_nonzero(np.diag(np.diag(one_body_squares[i,:,:]))))
 
         self.final_rank = final_rank
-
-        return molecular_hamiltonian
 
     def molecular_orbital_parameters(self):
         '''
