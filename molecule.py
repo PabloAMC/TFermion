@@ -127,9 +127,11 @@ class Molecule:
     def get_basic_parameters(self):
 
         self.eta = self.molecule_data.n_electrons
-
-        _, one_body_integrals, two_body_integrals = self.molecule_data.get_active_space_integrals(occupied_indices=self.occupied_indices, 
+        if self.occupied_indices and self.active_indices:
+            _, one_body_integrals, two_body_integrals = self.molecule_data.get_active_space_integrals(occupied_indices=self.occupied_indices, 
                                                                                                 active_indices=self.active_indices)
+        else:
+            one_body_integrals, two_body_integrals = self.molecule_data.get_integrals()
         self.lambda_value, self.Lambda_value, self.Gamma = self.get_one_norm_int_woconst(one_body_integrals,
                                                                                         two_body_integrals)
 
