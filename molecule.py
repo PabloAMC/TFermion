@@ -18,7 +18,7 @@ from openfermion.hamiltonians import plane_wave_hamiltonian, jordan_wigner_dual_
 from openfermion.hamiltonians import dual_basis_external_potential, plane_wave_external_potential
 from openfermion.hamiltonians import dual_basis_potential, plane_wave_potential
 from openfermion.hamiltonians import dual_basis_kinetic, plane_wave_kinetic
-from openfermion.transforms  import  get_fermion_operator, get_majorana_operator, get_interaction_operator, normal_ordered, get_molecular_data
+from openfermion.transforms  import  get_fermion_operator, get_majorana_operator, get_interaction_operator, normal_ordered, get_molecular_data, jordan_wigner
 from openfermion.circuits import low_rank_two_body_decomposition
 from openfermion.ops.operators import fermion_operator
 
@@ -428,20 +428,26 @@ class Molecule:
 
 
             # Important: the result will be chemist-ordered
-            two_body_coefficients = np.einsum('l,lpq,lrs->pqrs',lambda_ls, one_body_squares, one_body_squares)
+            #two_body_coefficients = np.einsum('l,lpq,lrs->pqrs',lambda_ls, one_body_squares, one_body_squares)
 
             one_body_coefficients = one_body_correction + one_body_coefficients
             one_body_coefficients[abs(one_body_coefficients) < sparsity_threshold] = 0.
 
-            constant = new_core_constant+self.molecule_data.nuclear_repulsion
+            lambda_T = np.sum(abs(one_body_coefficients))
+            lambda_W = np.sum([abs(lambda_ls[i])*(np.sum(abs(one_body_squares[i])))**2 for i in range(len(lambda_ls)])
+            lambda_value_low_rank = lambda_T + lambda_W
 
+            #constant = new_core_constant+self.molecule_data.nuclear_repulsion
+
+            '''
             pTensor = reps.PolynomialTensor({(): constant, (1, 0): one_body_coefficients, (1, 0, 1, 0): two_body_coefficients})
             Maj_op = get_majorana_operator(pTensor)
             l_maj = np.abs(np.array(list(Maj_op.terms.values())))
             lambda_value_low_rank = sum(l_maj[1:])
 
-            ''' # Same as
-            JW_op = jordan_wigner(molecular_hamiltonian)
+            # Same as
+
+            JW_op = jordan_wigner(Maj_op)
             l = abs(np.array(list(JW_op.terms.values())))
             lambda_value = sum(l[1:])
             '''
@@ -478,18 +484,22 @@ class Molecule:
 
         final_rank = len(lambda_ls)
 
-        two_body_coefficients = np.einsum('l,lpq,lrs->pqrs',lambda_ls, one_body_squares, one_body_squares)
+        #two_body_coefficients = np.einsum('l,lpq,lrs->pqrs',lambda_ls, one_body_squares, one_body_squares)
 
         one_body_coefficients = one_body_correction + one_body_coefficients
         if sparsify:
             one_body_coefficients[abs(one_body_coefficients) < sparsity_threshold] = 0.
 
-        constant = new_core_constant+self.molecule_data.nuclear_repulsion
+        lambda_T = np.sum(abs(one_body_coefficients))
+        lambda_W = np.sum([abs(lambda_ls[i])*(np.sum(abs(one_body_squares[i])))**2 for i in range(final_rank)])
+        self.lambda_value_low_rank = lambda_T + lambda_W
 
-        pTensor = reps.PolynomialTensor({(): constant, (1, 0): one_body_coefficients, (1, 0, 1, 0): two_body_coefficients})
+        #constant = new_core_constant+self.molecule_data.nuclear_repulsion
+
+        '''pTensor = reps.PolynomialTensor({(): constant, (1, 0): one_body_coefficients, (1, 0, 1, 0): two_body_coefficients})
         Maj_op = get_majorana_operator(pTensor)
         l_maj = np.abs(np.array(list(Maj_op.terms.values())))
-        self.lambda_value_low_rank = sum(l_maj[1:])
+        self.lambda_value_low_rank = sum(l_maj[1:])'''
 
         # The original formula is (2L+1)*(N^4/8+ N/4). Here we have to count only the non-zero elements
         self.sparsity_d = np.count_nonzero(one_body_coefficients-np.diag(np.diag(one_body_coefficients)))/2 + np.count_nonzero(np.diag(np.diag(one_body_coefficients)))
