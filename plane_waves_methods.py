@@ -34,7 +34,7 @@ class Plane_waves_methods:
         F2 = 2
         FFFT_cost = N/2*np.log2(N)*F2 + N/2*(np.log2(N)-1)*self.tools.pauli_rotation_synthesis(epsilon_SS) 
         
-        return r*(exp_UV_cost + exp_T_cost + 2*FFFT_cost )
+        return r*(2*exp_UV_cost + exp_T_cost + 2*FFFT_cost )
 
     # Low depth quantum simulation of materials (babbush2018low) Taylor
     def low_depth_taylor(self, epsilons, N, lambda_value, Lambda_value, H_norm_lambda_ratio):
@@ -46,7 +46,7 @@ class Plane_waves_methods:
         '''To be used in plane wave basis'''
 
         D = 3 #dimension of the model
-        M = (N/2)**3
+        M = (N/2)**(1/D) # Same as in linear-T method. See also beginning of appendix I in https://journals.aps.org/prx/pdf/10.1103/PhysRevX.8.011044.
 
         t = 4.7/epsilon_PEA
         r = t*Lambda_value/np.log(2)
