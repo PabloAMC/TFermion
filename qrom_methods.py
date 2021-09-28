@@ -18,7 +18,7 @@ class QROM_methods:
         mu = np.ceil(np.log(2*np.sqrt(2)*lambda_value/epsilon_PEA) + np.log(1 + epsilon_PEA/(8*lambda_value)) + np.log(1 - (H_norm_lambda_ratio)**2))
         
         D = 3 #dimension of the model
-        M = (N/2)**3
+        M = (N/2)**(1/D) # eq 45 in the original article
 
         # The number of total rotations is r*2* number of rotations for each preparation P (in this case 2D+1)
         epsilon_SS = epsilon_S / (r*2*(2*D+1))
@@ -42,7 +42,7 @@ class QROM_methods:
         Select = 3*QROM_cost(N) + 2*np.ceil(np.log2(N))*Fredkin_cost
         
         Reflexion = self.tools.multi_controlled_not(2*np.log2(N)+2*mu + N)
-        return r*(2*Prepare + Reflexion + Select) #todo: rotations in the quantum walk
+        return r*(2*Prepare + Reflexion + Select)
 
     ## Sparsity and low rank factorization (berry2019qubitization)
     def sparsity_low_rank(self, epsilons, N, lambda_value, L, H_norm_lambda_ratio, sparsity_d = None):
