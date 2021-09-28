@@ -106,7 +106,7 @@ class Plane_waves_methods:
         
         K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1))
         zeta = epsilon_H/(r*Gamma*3*2*K)
-        max_W = (2*eta+1)/(8*Omega**(1/3)*np.pi)
+        max_W = (2*eta+1)/(8*Omega**(1/3)*np.pi)- (np.pi**2)/(2*N*Omega**(2/3))
         M = max_W/zeta #the alternative was something like  M = Lambda_value*Gamma*r*3*2*K/epsilon_H with Lambda = max_W
 
         # x_max = max value of one dimension
