@@ -218,13 +218,13 @@ class Utils():
 
     def check_molecule_info(self, molecule_info):
 
-        # the hamiltonian is given by a path containing files eri_li.h5 and eri_li_cholesky.h5
+        # the hamiltonian is given by a path containing files eri_reiher.h5 and eri_reiher_cholesky.h5
         if os.path.isdir(molecule_info):
 
-            if os.path.isfile(molecule_info + 'eri_li.h5') and os.path.isfile(molecule_info + 'eri_li_cholesky.h5'):
+            if os.path.isfile(molecule_info + 'eri_reiher.h5') and os.path.isfile(molecule_info + 'eri_reiher_cholesky.h5'):
                 return "hamiltonian"
             else:
-                print("<*> ERROR: The given path does not contain the files eri_li.h5 and eri_li_cholesky.h5 needed for hamiltonian input")
+                print("<*> ERROR: The given path does not contain the files eri_reiher.h5 and eri_reiher_cholesky.h5 needed for hamiltonian input")
                 return "error"
 
         else:
