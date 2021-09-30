@@ -1,8 +1,8 @@
 {
     "basis": "6-31G",
-    "gamma_threshold": 0,
     "optimization_method": "SLSQP",
-    "maximum_cost": 1e30, 
-    "h_norm_lambda_ratio": 0.7
+    "runs": 100, 
+    "h_norm_lambda_ratio": 0.7,
+    "molecules": ["hydrofluoric acid", "water", "ammonia"]
 }
 

@@ -48,7 +48,6 @@ Nevertheless, some important links for the periodic boundary condition (not used
 '''
 
 CHEMICAL_ACCURACY = 0.0015 #in Hartrees, according to http://greif.geo.berkeley.edu/~driver/conversions.html
-H_NORM_LAMBDA_RATIO = .75
 tol = 1e-8
 #wigner_seitz_radius = 5. # Chosen as in https://quantumai.google/openfermion/tutorials/circuits_2_diagonal_coulomb_trotter, but may not make sense
 
@@ -59,8 +58,6 @@ class Molecule:
         self.molecule_info = molecule_info
         self.tools = tools
         self.program = program
-
-        self.gamma_threshold = self.tools.config_variables['gamma_threshold']
 
         # molecule info could be a name, geometry information or hamiltonian description
         self.molecule_info_type = molecule_info_type
