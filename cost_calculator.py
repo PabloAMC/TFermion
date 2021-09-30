@@ -9,16 +9,19 @@ from scipy.optimize import minimize, NonlinearConstraint
 
 class Cost_calculator:
 
-    def __init__(self, molecule, tools):
+    def __init__(self, molecule, tools, molecule_info_type):
 
         self.molecule = molecule
         self.tools = tools
+        self.molecule_info_type = molecule_info_type
         self.costs = {}
 
-    def calculate_cost(self, method, ao_labels = None): 
+    def calculate_cost(self, method): 
 
-        json_name = str(self.molecule.molecule_info)+ '_' +  str(self.tools.config_variables['basis'])
-        self.molecule.load(json_name = json_name)
+        if self.molecule_info_type == 'name':
+            
+            json_name = str(self.molecule.molecule_info)+ '_' +  str(self.tools.config_variables['basis'])
+            self.molecule.load(json_name = json_name)
 
         '''
         if method in ['low_depth_trotter','low_depth_taylor','low_depth_taylor_on_the_fly','linear_t','interaction_picture']:
@@ -361,8 +364,9 @@ class Cost_calculator:
         else:
             print('<*> ERROR: method', method, 'not implemented or not existing')
 
-        json_name = str(self.molecule.molecule_info)+ '_' +  str(self.tools.config_variables['basis'])
-        self.molecule.save(json_name = json_name)
+        if self.molecule_info_type == 'name':
+            json_name = str(self.molecule.molecule_info)+ '_' +  str(self.tools.config_variables['basis'])
+            self.molecule.save(json_name = json_name)
         '''
         if method in ['low_depth_trotter','low_depth_taylor','low_depth_taylor_on_the_fly','linear_t','interaction_picture']:
             b = 'plane'
