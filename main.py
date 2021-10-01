@@ -2,9 +2,11 @@ import utils
 import cost_calculator
 import datetime
 import time
+import pandas as pd
 
 from molecule import Molecule
 from molecule import Molecule_Hamiltonian
+import numpy as np
 
 print('\n###################################################################')
 print('##                             QPHASE                            ##')
@@ -30,25 +32,63 @@ if args.charge == None: args.charge = 0
 
 molecule_info_type = tools.check_molecule_info(args.molecule_info)
 
-molecule = None
-if molecule_info_type == 'name' or molecule_info_type == 'geometry':
-    molecule = Molecule(molecule_info = args.molecule_info, molecule_info_type = molecule_info_type, tools = tools, charge = args.charge)
-elif molecule_info_type == 'hamiltonian':
-    molecule = Molecule_Hamiltonian(molecule_info = args.molecule_info, tools = tools)
-else: # if there is no match between the input file extension and the requiered, finish the program
-    exit()
+if not molecule_info_type:
+    molecule_info_type = 'name'
+    dictionary = {}
+    methods = ['qdrift', 'rand_ham', 'taylor_naive', 'taylor_on_the_fly', 'configuration_interaction',
+                'low_depth_trotter', 'low_depth_taylor', 'low_depth_taylor_on_the_fly', 
+                'linear_t', 'sparsity_low_rank', 'interaction_picture']
 
-#Active space
-if args.ao_labels:
-    ne_act_cas = molecule.active_space(args.ao_labels[0].replace('\\',''))
+    for molecule_info in tools.config_variables['molecules']:
+        args.molecule_info = molecule_info
+        dictionary[molecule_info] = {}
 
-#molecule.low_rank_approximation(occupied_indices = [0,1,2], active_indices = [3,4], virtual_indices = [5,6], sparsify = True)
-#ne_act_cas, n_mocore, n_mocas, n_movir = molecule.active_space(ao_labels=['O 2pz'])
+        molecule = None
+        if molecule_info_type == 'name' or molecule_info_type == 'geometry':
+            molecule = Molecule(molecule_info = args.molecule_info, molecule_info_type = molecule_info_type, tools = tools, charge = args.charge)
+        elif molecule_info_type == 'hamiltonian':
+            molecule = Molecule_Hamiltonian(molecule_info = args.molecule_info, tools = tools)
+        else: # if there is no match between the input file extension and the requiered, finish the program
+            exit()
 
-c_calculator = cost_calculator.Cost_calculator(molecule, tools)
-c_calculator.calculate_cost(args.method)
-print('The cost to calculate the energy of', args.molecule_info,'with method', args.method, 'is', "{:0.2e}".format(c_calculator.costs[args.method]), 'T gates')
-print('With the specified parameters, synthesising that many T gates should take', "{:0.2e}".format(c_calculator.calculate_time(c_calculator.costs[args.method])), 'seconds')
+        #Active space
+        if args.ao_labels:
+            ne_act_cas = molecule.active_space(args.ao_labels[0].replace('\\',''))
+
+        #molecule.low_rank_approximation(occupied_indices = [0,1,2], active_indices = [3,4], virtual_indices = [5,6], sparsify = True)
+        #ne_act_cas, n_mocore, n_mocas, n_movir = molecule.active_space(ao_labels=['O 2pz'])
+
+        c_calculator = cost_calculator.Cost_calculator(molecule, tools, molecule_info_type)
+        for method in methods:
+            c_calculator.calculate_cost(method)
+            median = np.nanmedian(c_calculator.costs[method])
+            dictionary[molecule_info][method] = "{:0.2e}".format(median)
+
+    pd.DataFrame(dictionary).to_csv('./results/results.csv')
+
+
+else: 
+    molecule = None
+    if molecule_info_type == 'name' or molecule_info_type == 'geometry':
+        molecule = Molecule(molecule_info = args.molecule_info, molecule_info_type = molecule_info_type, tools = tools, charge = args.charge)
+    elif molecule_info_type == 'hamiltonian':
+        molecule = Molecule_Hamiltonian(molecule_info = args.molecule_info, tools = tools)
+    else: # if there is no match between the input file extension and the requiered, finish the program
+        exit()
+
+    #Active space
+    if args.ao_labels:
+        ne_act_cas = molecule.active_space(args.ao_labels[0].replace('\\',''))
+
+    #molecule.low_rank_approximation(occupied_indices = [0,1,2], active_indices = [3,4], virtual_indices = [5,6], sparsify = True)
+    #ne_act_cas, n_mocore, n_mocas, n_movir = molecule.active_space(ao_labels=['O 2pz'])
+
+    c_calculator = cost_calculator.Cost_calculator(molecule, tools, molecule_info_type)
+    c_calculator.calculate_cost(args.method)
+    median = np.median(c_calculator.costs[args.method])
+
+    print('The cost to calculate the energy of', args.molecule_info,'with method', args.method, 'is', "{:0.2e}".format(median), 'T gates')
+    print('With the specified parameters, synthesising that many T gates should take approximately', "{:0.2e}".format(c_calculator.calculate_time(median)), 'seconds')
 
 execution_time = time.time() - start_time
 

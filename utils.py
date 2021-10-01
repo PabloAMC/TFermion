@@ -32,8 +32,8 @@ class Utils():
 
         parser = argparse.ArgumentParser(description="Tool to estimate the T gates cost of many quantum energy calculator methods.\n Example: python qphase.py methane qdrift")
 
-        parser.add_argument("molecule_info", help="information about molecule to analyze. It could be a name, a geometry file (with .chem extension) or a hamiltonian file (with .h5 or .hdf5 extension)", type=str)
-        parser.add_argument("method", help="method to calculate the energy of the molecule", type=str)
+        parser.add_argument("molecule_info", nargs='?', default=None, help="information about molecule to analyze. It could be a name, a geometry file (with .chem extension) or a hamiltonian file (with .h5 or .hdf5 extension)", type=str)
+        parser.add_argument("method", nargs='?', default=None, help="method to calculate the energy of the molecule", type=str)
         parser.add_argument("ao_labels", nargs='*', default=[], help="atomic orbital labels for the avas method to select the active space. Example: ['Fe 3d', 'C 2pz']")
         
         parser.add_argument("-c", "--charge",  help="charge of the molecule, defaults to 0", type=int)
@@ -218,13 +218,16 @@ class Utils():
 
     def check_molecule_info(self, molecule_info):
 
-        # the hamiltonian is given by a path containing files eri_li.h5 and eri_li_cholesky.h5
+        if molecule_info == "":
+            return None
+
+        # the hamiltonian is given by a path containing files eri_reiher.h5 and eri_reiher_cholesky.h5
         if os.path.isdir(molecule_info):
 
-            if os.path.isfile(molecule_info + 'eri_li.h5') and os.path.isfile(molecule_info + 'eri_li_cholesky.h5'):
+            if os.path.isfile(molecule_info + 'eri_reiher.h5') and os.path.isfile(molecule_info + 'eri_reiher_cholesky.h5'):
                 return "hamiltonian"
             else:
-                print("<*> ERROR: The given path does not contain the files eri_li.h5 and eri_li_cholesky.h5 needed for hamiltonian input")
+                print("<*> ERROR: The given path does not contain the files eri_reiher.h5 and eri_reiher_cholesky.h5 needed for hamiltonian input")
                 return "error"
 
         else:

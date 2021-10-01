@@ -1,0 +1,12 @@
+,hydrofluoric acid,water,ammonia
+qdrift,1.44e+24,1.32e+24,2.61e+24
+rand_ham,2.84e+24,1.31e+25,8.36e+25
+taylor_naive,1.26e+17,1.28e+17,1.64e+17
+taylor_on_the_fly,4.70e+19,5.71e+19,7.77e+19
+configuration_interaction,1.13e+25,2.40e+25,4.62e+25
+low_depth_trotter,2.00e+26,1.60e+26,7.64e+25
+low_depth_taylor,1.32e+13,9.61e+12,5.06e+12
+low_depth_taylor_on_the_fly,2.25e+26,3.63e+26,3.10e+26
+linear_t,4.77e+15,5.19e+15,2.87e+15
+sparsity_low_rank,2.08e+12,3.02e+12,5.70e+12
+interaction_picture,1.08e+20,8.65e+19,4.29e+19

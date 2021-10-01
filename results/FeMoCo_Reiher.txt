@@ -1,0 +1,64 @@
+
+###################################################################
+##                             QPHASE                            ##
+##                                                               ##
+##      We will see what it is that (Not Google paper copy)      ##
+###################################################################
+
+The cost to calculate the energy of ./hamiltonian/ with method qdrift is 5.46e+26 T gates
+With the specified parameters, synthesising that many T gates should take 1.20e+19 seconds
+
+** -------------------------------------------------- **
+**                                                    **
+** Execution time     => 0:00:06.235683  in hh:mm:ss  **
+********************************************************
+
+
+
+###################################################################
+##                             QPHASE                            ##
+##                                                               ##
+##      We will see what it is that (Not Google paper copy)      ##
+###################################################################
+
+The cost to calculate the energy of ./hamiltonian/ with method rand_ham is 1.97e+29 T gates
+With the specified parameters, synthesising that many T gates should take 4.34e+21 seconds
+
+** -------------------------------------------------- **
+**                                                    **
+** Execution time     => 0:00:06.267525  in hh:mm:ss  **
+********************************************************
+
+
+
+###################################################################
+##                             QPHASE                            ##
+##                                                               ##
+##      We will see what it is that (Not Google paper copy)      ##
+###################################################################
+
+The cost to calculate the energy of ./hamiltonian/ with method taylor_naive is 1.09e+20 T gates
+With the specified parameters, synthesising that many T gates should take 2.39e+12 seconds
+
+** -------------------------------------------------- **
+**                                                    **
+** Execution time     => 0:00:06.128905  in hh:mm:ss  **
+********************************************************
+
+
+
+###################################################################
+##                             QPHASE                            ##
+##                                                               ##
+##      We will see what it is that (Not Google paper copy)      ##
+###################################################################
+
+The cost to calculate the energy of ./hamiltonian/ with method sparsity_low_rank is 3.24e+13 T gates
+With the specified parameters, synthesising that many T gates should take 7.13e+05 seconds
+
+** -------------------------------------------------- **
+**                                                    **
+** Execution time     => 0:00:02.962235  in hh:mm:ss  **
+********************************************************
+
+

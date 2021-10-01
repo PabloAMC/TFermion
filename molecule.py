@@ -48,7 +48,6 @@ Nevertheless, some important links for the periodic boundary condition (not used
 '''
 
 CHEMICAL_ACCURACY = 0.0015 #in Hartrees, according to http://greif.geo.berkeley.edu/~driver/conversions.html
-H_NORM_LAMBDA_RATIO = .75
 tol = 1e-8
 #wigner_seitz_radius = 5. # Chosen as in https://quantumai.google/openfermion/tutorials/circuits_2_diagonal_coulomb_trotter, but may not make sense
 
@@ -59,8 +58,6 @@ class Molecule:
         self.molecule_info = molecule_info
         self.tools = tools
         self.program = program
-
-        self.gamma_threshold = self.tools.config_variables['gamma_threshold']
 
         # molecule info could be a name, geometry information or hamiltonian description
         self.molecule_info_type = molecule_info_type
@@ -770,8 +767,6 @@ class Molecule:
 
 import numpy
 import h5py
-import math
-import itertools
 from itertools import combinations
 class Molecule_Hamiltonian:
 
@@ -784,18 +779,20 @@ class Molecule_Hamiltonian:
         self.sparsity_d = None
 
         # set r value or final rank
-        self.R = 275 # set cholesky dimension
+        self.final_rank = 275 # set cholesky dimension
+
+        self.get_basic_parameters()
 
 
     # code extracted from https://doi.org/10.5281/zenodo.4248322
     def get_basic_parameters(self, molecular_hamiltonian=None):
 
-        f = h5py.File(self.molecule_info+"eri_li.h5", "r")
+        f = h5py.File(self.molecule_info+"eri_reiher.h5", "r")
         eri = f['eri'][()]
         h0 = f['h0'][()]
         f.close()
 
-        f = h5py.File(self.molecule_info+"eri_li_cholesky.h5", "r")
+        f = h5py.File(self.molecule_info+"eri_reiher_cholesky.h5", "r")
         gval = f["gval"][()]
         gvec = f["gvec"][()]
         f.close()
@@ -804,15 +801,15 @@ class Molecule_Hamiltonian:
         nchol_max = gval.shape[0]
         thresh = 3.5e-5 # set threshold
 
-        L = numpy.einsum("ij,j->ij",gvec,numpy.sqrt(gval))
-        L = L.T.copy()
-        L = L.reshape(nchol_max, norb, norb)
+        self.L = numpy.einsum("ij,j->ij",gvec,numpy.sqrt(gval))
+        self.L = self.L.T.copy()
+        self.L = self.L.reshape(nchol_max, norb, norb)
 
         T = h0 - 0.5 * numpy.einsum("pqqs->ps", eri, optimize=True) + numpy.einsum("pqrr->pq", eri, optimize = True)
 
         lambda_T = numpy.sum(numpy.abs(T))
 
-        LR = L[:self.R,:,:].copy()
+        LR = self.L[:self.final_rank,:,:].copy()
 
         lambda_W = 0.25 * numpy.einsum("xij,xkl->",numpy.abs(LR), numpy.abs(LR), optimize=True)
 
@@ -886,6 +883,7 @@ class Molecule_Hamiltonian:
 
         # save parameters to cost_methods
         self.lambda_value = lambda_T + lambda_W
+        self.lambda_value_low_rank = self.lambda_value
 
         # Lambda_value is the max of all summed coefficients of T and LR
         V = 0.25 * numpy.einsum("xij,xkl->ijkl",numpy.abs(LR), numpy.abs(LR), optimize=True) 
@@ -902,4 +900,4 @@ class Molecule_Hamiltonian:
 
     def low_rank_approximation(self, sparsify):
 
-        return None, self.R
+        return None, self.final_rank
