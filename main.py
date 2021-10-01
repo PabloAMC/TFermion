@@ -61,6 +61,8 @@ if not molecule_info_type:
         c_calculator = cost_calculator.Cost_calculator(molecule, tools, molecule_info_type)
         for method in methods:
             c_calculator.calculate_cost(method)
+            c_calculator.costs[method] = [x for x in c_calculator.costs[method] if (not np.isnan(x) and not np.isinf(x))]
+            print(method, molecule, len(c_calculator.costs[method]))
             median = np.nanmedian(c_calculator.costs[method])
             dictionary[molecule_info][method] = "{:0.2e}".format(median)
 
@@ -85,7 +87,7 @@ else:
 
     c_calculator = cost_calculator.Cost_calculator(molecule, tools, molecule_info_type)
     c_calculator.calculate_cost(args.method)
-    median = np.median(c_calculator.costs[args.method])
+    median = np.nanmedian(c_calculator.costs[args.method])
 
     print('The cost to calculate the energy of', args.molecule_info,'with method', args.method, 'is', "{:0.2e}".format(median), 'T gates')
     print('With the specified parameters, synthesising that many T gates should take approximately', "{:0.2e}".format(c_calculator.calculate_time(median)), 'seconds')

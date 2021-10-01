@@ -66,7 +66,7 @@ class Utils():
         while error > e and not self.all_equal(last_error_values):
 
             if function_name == 'sqrt' or function_name == 'exp':
-                n = int(str(xeval)[:int(len(str(int(xeval)))/2)])
+                n = int(str(xeval)[:max(int(len(str(int(xeval)))/2),1)])
                 error, _ = self.calculate_error_function(function, function_name, n, xeval, order)
             elif function_name == 'cos':
                 error, xeval = self.calculate_error_function(function, function_name, 1, xeval, order, xeval)

@@ -146,9 +146,8 @@ class Taylor_based_methods:
         epsilon_H = epsilons[3]
         eps_tay = epsilons[4]
 
-
         '''
-        gamma1, gamma2, alpha are defined in D9 and D8
+        gamma1, gamma2, alpha are defined in 28, 29 and 30 of the original paper
         '''
         d = 6 ## THIS IS SORT OF AN HYPERPARAMETER: THE NUMBER OF GAUSSIANS PER BASIS FUNCTION
         
@@ -157,68 +156,69 @@ class Taylor_based_methods:
         K2 = 128*np.pi/alpha**6*(alpha + 2) + 2161*np.pi**2*(20*gamma1 + np.sqrt(2))    # eq 30
         
         t = 4.7/epsilon_PEA
-        x_max = np.log(N * t/ epsilon_HS)
+        x_max = 0.01890*100 # 1 pm = 0.01890 ua. Check atomic radius in https://en.wikipedia.org/wiki/Atomic_radius
         
         Gamma = binom(eta, 2)*binom(N-eta, 2) + binom(eta,1)*binom(N-eta,1) + 1 # = d
         Zq = eta
         
         '''
         Warning, we have a circular definition here of delta, mu_M_zeta and r.
-        In practice we have to find the smallest value of mu_M_zeta compatible with delta:
-        mu_M_zeta \\leq f( epsilon_H / 3K*2 Gamma t mu_M_zeta), with f the np.max defining mu_M_zeta below
-        Due to this complication we distribute the error uniformly accross all C-U which is not optimal
+        In practice we compute the equality value mu_M_zeta compatible with delta:
+        r ~= r_bound_calc(r)
         '''
 
-        # min mu_M_zeta such that it is larger or equal to the bound given in eq D13
-        def mu_M_zeta_bound_calc(mu_M_zeta):
-
-            r = 2*Gamma*t*mu_M_zeta/np.log(2)
+        def r_bound_calc(r):
             K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1)) 
-            delta = epsilon_H/(3*r*K)   # delta is the error in calculating a single integral. There are 3K*r of them in the simulation, 
+            delta = epsilon_H/(2*3*r*K)   # delta is the error in calculating a single integral. There are 2*3K*r of them in the simulation, 
                                         # as r segments are simulated, for a total time of t
 
             mu_M_zeta_bound = np.max([ 
                 672*np.pi**2/(alpha**3)*phi_max**4*x_max**5*(np.log(K2*phi_max**4*x_max**5/delta))**6,
                 256*np.pi**2/(alpha**3)*Zq*phi_max**2*x_max**2*(np.log(K1*Zq*phi_max**2*x_max**2/delta))**3,
-                32*gamma1**2**2/(alpha**3)*phi_max**2*x_max*(np.log(K0*phi_max**2*x_max/delta))**3
-            ])
-            #This bound is so because Lemmas 1-3 are bounding aleph_{\gamma,\rho}. Taking the definition of M, it is clear.
-            return mu_M_zeta_bound
+                32*gamma1**2/(alpha**3)*phi_max**2*x_max*(np.log(K0*phi_max**2*x_max/delta))**3
+            ])   #This bound is so because Lemmas 1-3 are bounding aleph_{\gamma,\rho}. Taking the definition of M, it is clear.
 
-        # Nonlinear constraint mu_M_zeta >= mu_M_zeta_bound
-        nconstraint = scipy.optimize.NonlinearConstraint(fun = lambda mu_M_zeta: mu_M_zeta_bound_calc(mu_M_zeta)- mu_M_zeta, lb = 0, ub = +np.inf, keep_feasible = True)
+            r_bound = 2*Gamma*t*mu_M_zeta_bound/np.log(2)
+            return r_bound
 
-        result = scipy.optimize.minimize(fun = lambda mu_M_zeta: mu_M_zeta, x0 = 1e3, constraints = [nconstraint], tol = 10, options = {'maxiter': 50}, method='COBYLA') # Works with COBYLA, but not with SLSQP (misses the boundaries) or trust-constr (oscillates)
+        result = scipy.optimize.minimize(fun = lambda logr: (logr - np.log(r_bound_calc(np.exp(logr))))**2, x0 = 25, tol = .05, options = {'maxiter': 5000}, method='COBYLA') # Works with COBYLA, but not with SLSQP (misses the boundaries) or trust-constr (oscillates)
+        logr = result['x']
+        r = np.exp(logr)
 
-        mu_M_zeta = float(result['x'])
-        r = 2*Gamma*t*mu_M_zeta/np.log(2) # Table 1 in original article and L = 2 M Gamma, the 2 from register |s> 
+        #bound = r_bound_calc(r) #This should be close to each other, relatively speaking
+        #r_alt = r_bound_calc(Gamma*t) #Alternative and less accurate way of computing the result
+
         K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1)) 
 
-        delta = epsilon_H/(3*r*K)
-        mu = np.max([
-            np.ceil(((K2*phi_max**4*x_max**5/delta) * (1/alpha*np.log(K2*phi_max**4*x_max**5/delta))**7)**6),
-            np.ceil(((K1*Zq*phi_max**2*x_max**2/delta) * (2/alpha*np.log(K1*Zq*phi_max**2*x_max**2/delta))**4)**3),
-            np.ceil(((K0*phi_max**2*x_max/delta) * (2/alpha*np.log(K0*phi_max**2*x_max/delta))**4)**3)
+        delta = epsilon_H/(2*3*r*K)
+        
+        mu_M_zeta = np.max([ 
+            672*np.pi**2/(alpha**3)*phi_max**4*x_max**5*(np.log(K2*phi_max**4*x_max**5/delta))**6,
+            256*np.pi**2/(alpha**3)*Zq*phi_max**2*x_max**2*(np.log(K1*Zq*phi_max**2*x_max**2/delta))**3,
+            32*gamma1**2/(alpha**3)*phi_max**2*x_max*(np.log(K0*phi_max**2*x_max/delta))**3
         ])
-        zeta = epsilon_H/(r*Gamma*mu*3*2*K)
-        M = mu_M_zeta/(mu*zeta)
+
+        log2mu = np.max([
+            6*(np.log2(K2*phi_max**4*x_max**5) + np.log2(1/delta) + 7*np.log2(1/alpha*(np.log(K2*phi_max**4*x_max**5)+np.log(1/delta)))),
+            3*(np.log2(K1*Zq*phi_max**2*x_max**2)+np.log2(1/delta) + 4*np.log2(2/alpha*(np.log(K1*Zq*phi_max**2*x_max**2)+np.log(1/delta)))),
+            3*(np.log2(K0*phi_max**2*x_max)+np.log2(1/delta) +4*np.log2 (2/alpha*(np.log(K0*phi_max**2*x_max)+np.log(1/delta))))
+        ])
+        #zeta = epsilon_H/(r*Gamma*mu*3*2*K)
+        log2M = np.log2(mu_M_zeta)+ np.log2(3*2*K*r)+ np.log2(1/epsilon_H) #M = mu_M_zeta*/(mu*zeta)
 
         epsilon_SS = epsilon_S / (r*3*2*(2*K)) # 3 from AA, 2 Prepare_beta for Prepare and Prepare^+, 2K T gates in the initial theta rotations
         crot_synt = self.tools.c_pauli_rotation_synthesis(epsilon_SS)
         Prepare_beta = crot_synt*K
 
         #### Qval cost computation
-        n = np.ceil(np.log2(mu)/3)
+        n = np.ceil(log2mu/3) #each coordinate is a third
         x = sympy.Symbol('x')
 
         number_of_taylor_expansions = (((2*4+2+2)*d*N + (J+1))*K*2*3*r) #2*4+2+2 = 2*two_body + kinetic + external_potential
         eps_tay_s = eps_tay/number_of_taylor_expansions
-        x = sympy.Symbol('x')
-                
+
         exp_order = self.tools.order_find(lambda x:math.exp(zeta_max_i*(x)**2), function_name = 'exp', e = eps_tay_s, xeval = x_max)
         sqrt_order = self.tools.order_find(lambda x:math.sqrt(x), function_name = 'sqrt', e = eps_tay_s, xeval = x_max)
-
-        n = np.ceil(np.ceil(np.log2(mu))/3) #each coordinate is a third
 
         sum = self.tools.sum_cost(n)
         mult = self.tools.multiplication_cost(n)
@@ -238,7 +238,7 @@ class Taylor_based_methods:
         sample_2body = 2*two_body + sum
         sample_1body =  kinetic + external_potential + sum
 
-        comp = self.tools.compare_cost(max(np.ceil(np.log2(M)),np.ceil(np.log2(mu))))
+        comp = self.tools.compare_cost(max(np.ceil(log2M),np.ceil(log2mu)))
         kickback = 2*comp
 
         Q_val = 2*(sample_2body + sample_1body) + kickback
