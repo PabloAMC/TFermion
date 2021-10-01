@@ -159,7 +159,7 @@ class Cost_calculator:
                 zeta_max_i = self.molecule.zeta_max_i
 
                 gamma1 = self.molecule.grad_max * x_max / self.molecule.phi_max
-                gamma2 = self.molecule.grad_max**2 * x_max**2 / self.molecule.phi_max
+                gamma2 = self.molecule.hess_max * x_max**2 / self.molecule.phi_max
 
                 J = len(self.molecule.molecule_geometry) #is the number of atoms in the molecule
 
