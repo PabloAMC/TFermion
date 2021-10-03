@@ -506,7 +506,7 @@ class Molecule:
 
         coord = np.empty((0, 3))
         for _, at_coord in self.molecule_data.geometry:
-            coord = np.vstack((coord, np.array(at_coord) + 10 * BOHR * np.random.random((50,3)))) # Random coords around the atomic positions
+            coord = np.vstack((coord, np.array(at_coord) + 10 * BOHR * np.random.random((1000,3)))) # Random coords around the atomic positions
 
         # deriv=2: value + gradients + second order derivatives
         ao_p = pyscf_mol.eval_gto('GTOval_sph_deriv2', coord) # (10,Ngrids,n_mo) array

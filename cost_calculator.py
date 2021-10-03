@@ -152,7 +152,7 @@ class Cost_calculator:
                     self.molecule.calculate_zeta_max_i()
 
                 N = self.molecule.N # computed from initialising the molecule
-                x_max = 0.01890*100 # 1 pm = 0.01890 ua. Check atomic radiuses in https://en.wikipedia.org/wiki/Atomic_radius
+                x_max = 1 # Default units are Angstroms. See https://en.wikipedia.org/wiki/Atomic_radius and https://en.wikipedia.org/wiki/Atomic_radii_of_the_elements_(data_page)
                 phi_max = self.molecule.phi_max
                 alpha = self.molecule.alpha
                 eta = self.molecule.eta

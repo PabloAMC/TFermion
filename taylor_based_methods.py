@@ -156,7 +156,7 @@ class Taylor_based_methods:
         K2 = 128*np.pi/alpha**6*(alpha + 2) + 2161*np.pi**2*(20*gamma1 + np.sqrt(2))    # eq 45 in original article
         
         t = 4.7/epsilon_PEA
-        x_max = 0.01890*100 # 1 pm = 0.01890 ua. Check atomic radius in https://en.wikipedia.org/wiki/Atomic_radius
+        x_max = 1 # Default units are Angstroms. See https://en.wikipedia.org/wiki/Atomic_radius and https://en.wikipedia.org/wiki/Atomic_radii_of_the_elements_(data_page)
         
         Gamma = binom(eta, 2)*binom(N-eta, 2) + binom(eta,1)*binom(N-eta,1) + 1 # = d
         Zq = eta
