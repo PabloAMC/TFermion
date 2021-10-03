@@ -15,7 +15,7 @@ class QROM_methods:
         t = 4.7/epsilon_PEA
         r = np.e*lambda_value*t
         
-        mu = np.ceil(np.log(2*np.sqrt(2)*lambda_value/epsilon_PEA) + np.log(1 + epsilon_PEA/(8*lambda_value)) + np.log(1 - (H_norm_lambda_ratio)**2))
+        mu = np.ceil(np.log2(2*np.sqrt(2)*lambda_value/epsilon_PEA) + np.log2(1 + epsilon_PEA/(8*lambda_value)) + np.log2(1 - (H_norm_lambda_ratio)**2))
         
         D = 3 #dimension of the model
         M = (N/2)**(1/D) # eq 45 in the original article
@@ -49,12 +49,11 @@ class QROM_methods:
 
         epsilon_PEA = epsilons[0]
         epsilon_S = epsilons[1]
-        N = 2*N # In this article N means spin orbitals, not orbitals
 
         t = 4.7/epsilon_PEA
         r = np.e*lambda_value*t
         
-        mu = np.ceil(np.log(2*np.sqrt(2)*lambda_value/epsilon_PEA) + np.log(1 + epsilon_PEA/(8*lambda_value)) + np.log(1 - (H_norm_lambda_ratio)**2))
+        mu = np.ceil(np.log2(2*np.sqrt(2)*lambda_value/epsilon_PEA) + np.log2(1 + epsilon_PEA/(8*lambda_value)) + np.log2(1 - (H_norm_lambda_ratio)**2))
 
         # Rotations are used in the Uniform protocol as well as in the ancilla to decrease the Success amplitude
         epsilon_SS = epsilon_S/ (r*2*(2*(12 +1)+6)) #first 2 is Prepare and Prepare^+, second Prepare is for the two rotations in each Uniform. Finally we have Uniform_{N/2}, Uniform_L and the ancilla rotations to decrease success prob.
@@ -85,7 +84,7 @@ class QROM_methods:
         M = np.ceil(np.log2(N**2) + mu)
         kc = 2**closest_power(np.sqrt(d/M))
         ku = 2**closest_power(np.sqrt(d))
-        QROAM = 4*(np.ceil(d/kc)+4*M*(kc-1)+2*np.ceil(d/ku) + 4*ku)
+        QROAM = 4*(np.ceil(d/kc)+M*(kc-1)+np.ceil(d/ku) + ku)
 
         compare = self.tools.compare_cost(mu)
         Fredkin_cost = 4 # The controlled swaps = 1 Toffoli

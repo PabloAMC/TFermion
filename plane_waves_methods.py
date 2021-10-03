@@ -55,7 +55,7 @@ class Plane_waves_methods:
 
         epsilon_SS = epsilon_S /(r*3*2*K*(2+4*D+2)) # In the sum the first 2 is due to Uniform_3, next 2D are due to 2 uses of Uniform_M^{otimes D}, and the final two due to the controlled rotation theta angles
         
-        mu = np.ceil(np.log(2*np.sqrt(2)*Lambda_value/epsilon_PEA) + np.log(1 + epsilon_PEA/(8*lambda_value)) + np.log(1 - (H_norm_lambda_ratio)**2))
+        mu = np.ceil(np.log2(2*np.sqrt(2)*Lambda_value/epsilon_PEA) + np.log2(1 + epsilon_PEA/(8*lambda_value)) + np.log2(1 - (H_norm_lambda_ratio)**2))
         
         # The number of total rotations is r*2* number of rotations for each preparation P (in this case 2D+1)
         z_rot_synt = self.tools.pauli_rotation_synthesis(epsilon_SS)
