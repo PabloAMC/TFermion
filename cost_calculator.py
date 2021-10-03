@@ -144,7 +144,7 @@ class Cost_calculator:
                         J)]
             
             elif method == 'configuration_interaction':
-                if not hasattr(self.molecule, 'phi_max') or not hasattr(self.molecule, 'dphi_max') or not hasattr(self.molecule, 'grad_max'):
+                if not hasattr(self.molecule, 'phi_max') or not hasattr(self.molecule, 'grad_max') or not hasattr(self.molecule, 'lapl_max'):
                     self.molecule.molecular_orbital_parameters()
                 if not hasattr(self.molecule, 'alpha'):
                     self.molecule.min_alpha()
@@ -159,7 +159,7 @@ class Cost_calculator:
                 zeta_max_i = self.molecule.zeta_max_i
 
                 gamma1 = self.molecule.grad_max * x_max / self.molecule.phi_max
-                gamma2 = self.molecule.hess_max * x_max**2 / self.molecule.phi_max
+                gamma2 = self.molecule.lapl_max * x_max**2 / self.molecule.phi_max
 
                 J = len(self.molecule.molecule_geometry) #is the number of atoms in the molecule
 

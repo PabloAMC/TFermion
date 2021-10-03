@@ -487,7 +487,7 @@ class Molecule:
         dphi_max: maximum "directional" derivative of molecular orbitals (Used in Taylor naive and Configuration Interaction paper)
         grad_max: maximum norm of gradient (used in Configuration Interaction article)
         hess_max: maximum norm of the hessian (used in Configuration Intearction article)
-
+        lapl_max: absolute value of the laplacian (used in Configuration Intearction article)
 
         - COMPUTE MO VALUES AND THEIR DERIVATIVES IN THE SPACE: https://github.com/pyscf/pyscf/blob/master/examples/gto/24-ao_value_on_grid.py (It's totally awesome that this exists)
         
@@ -532,14 +532,19 @@ class Molecule:
 
             return np.linalg.norm(A, ord = 2)
 
+        def laplacian_vector_abs(vec):
+            return abs(sum([vec[0], vec[3], vec[5]]))
+
         self.phi_max = np.max(np.abs(mo))
-        self.dphi_max = np.max(np.abs(mo_grad))
+        self.dphi_max = np.max(np.abs(mo_grad)) # Different from grad_max because it's the absolute value of the maximum entry (as opposed to sum of entries) of the gradient
 
         mo_grads_norms = np.apply_along_axis(func1d = np.linalg.norm, axis = 0, arr = mo_grad)
         mo_hess_norms = np.apply_along_axis(func1d = hessian_vector_norm, axis = 0, arr = mo_hess)
+        mo_laplacian_norms = np.apply_along_axis(func1d = laplacian_vector_abs, axis = 0, arr = mo_hess)
 
         self.grad_max = np.max(mo_grads_norms)
         self.hess_max = np.max(mo_hess_norms)
+        self.lapl_max = np.max(mo_laplacian_norms)
 
         return
 
@@ -621,6 +626,7 @@ class Molecule:
         if hasattr(self, 'dphi_max'): molecule_properties["dphi_max"] = self.dphi_max
         if hasattr(self, 'grad_max'): molecule_properties["grad_max"] = self.grad_max
         if hasattr(self, 'hess_max'): molecule_properties["hess_max"] = self.hess_max
+        if hasattr(self, 'lapl_max'): molecule_properties["lapl_max"] = self.lapl_max
 
         if hasattr(self, 'final_rank'): molecule_properties["final_rank"] = self.final_rank
         if hasattr(self, 'sparsity_d'): molecule_properties["sparsity_d"] = self.sparsity_d
@@ -658,6 +664,7 @@ class Molecule:
             if 'dphi_max' in molecule_properties.keys(): self.dphi_max = molecule_properties["dphi_max"]
             if 'grad_max' in molecule_properties.keys(): self.grad_max = molecule_properties["grad_max"]
             if 'hess_max' in molecule_properties.keys(): self.hess_max = molecule_properties["hess_max"]
+            if 'lapl_max' in molecule_properties.keys(): self.lapl_max = molecule_properties["lapl_max"]
 
             if 'final_rank' in molecule_properties.keys(): self.final_rank = molecule_properties["final_rank"]
             if 'sparsity_d' in molecule_properties.keys(): self.sparsity_d = molecule_properties["sparsity_d"]

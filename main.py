@@ -62,7 +62,7 @@ if not molecule_info_type:
         for method in methods:
             c_calculator.calculate_cost(method)
             c_calculator.costs[method] = [x for x in c_calculator.costs[method] if (not np.isnan(x) and not np.isinf(x))]
-            print(method, molecule, len(c_calculator.costs[method]))
+            print(method, molecule_info, len(c_calculator.costs[method]))
             median = np.nanmedian(c_calculator.costs[method])
             dictionary[molecule_info][method] = "{:0.2e}".format(median)
 

@@ -147,13 +147,13 @@ class Taylor_based_methods:
         eps_tay = epsilons[4]
 
         '''
-        gamma1, gamma2, alpha are defined in 28, 29 and 30 of the original paper
+        gamma1, gamma2, alpha are defined in 28, 29 and 30 of the original paper https://iopscience.iop.org/article/10.1088/2058-9565/aa9463/meta
         '''
         d = 6 ## THIS IS SORT OF AN HYPERPARAMETER: THE NUMBER OF GAUSSIANS PER BASIS FUNCTION
         
-        K0 = 26*gamma1/alpha**2 + 8*np.pi*gamma2/alpha**3 + 32*np.sqrt(3)*gamma1*gamma2 # eq 28
-        K1 = 8*np.pi**2/alpha**3*(alpha + 2) + 1121*(8*gamma1 + np.sqrt(2))             # eq 29
-        K2 = 128*np.pi/alpha**6*(alpha + 2) + 2161*np.pi**2*(20*gamma1 + np.sqrt(2))    # eq 30
+        K0 = 26*gamma1/alpha**2 + 8*np.pi*gamma2/alpha**3 + 32*np.sqrt(3)*gamma1*gamma2 # eq 37 in original article
+        K1 = 8*np.pi**2/alpha**3*(alpha + 2) + 1121*(8*gamma1 + np.sqrt(2))             # eq 41 in original article
+        K2 = 128*np.pi/alpha**6*(alpha + 2) + 2161*np.pi**2*(20*gamma1 + np.sqrt(2))    # eq 45 in original article
         
         t = 4.7/epsilon_PEA
         x_max = 0.01890*100 # 1 pm = 0.01890 ua. Check atomic radius in https://en.wikipedia.org/wiki/Atomic_radius
@@ -163,7 +163,7 @@ class Taylor_based_methods:
         
         '''
         Warning, we have a circular definition here of delta, mu_M_zeta and r.
-        In practice we compute the equality value mu_M_zeta compatible with delta:
+        In practice we compute the equality value r given by the lemmas in the paper:
         r ~= r_bound_calc(r)
         '''
 
@@ -185,7 +185,7 @@ class Taylor_based_methods:
         logr = result['x']
         r = np.exp(logr)
 
-        #bound = r_bound_calc(r) #This should be close to each other, relatively speaking
+        #bound = r_bound_calc(r) #This should be close to each r, relatively speaking
         #r_alt = r_bound_calc(Gamma*t) #Alternative and less accurate way of computing the result
 
         K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1)) 
