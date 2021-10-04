@@ -36,19 +36,7 @@ class Cost_calculator:
             json_name = str(self.molecule.molecule_info)+ '_' +  str(self.basis)
             self.molecule.load(json_name = 'parameters/'+json_name)
 
-        '''
-        if method in ['low_depth_trotter','low_depth_taylor','low_depth_taylor_on_the_fly','linear_t','interaction_picture']:
-            b = 'plane'
-            # we add the gaussian basis to the name because it is important to figure out the comparable number of plane wave basis functions
-            self.molecule.load(json_name = str(self.molecule.molecule_info)+ '_' +  str(self.basis)+ '_' +b)
-
-        elif method in ['rand_ham','qdrift','naive_taylor','taylor_on_the_fly','configuration_interaction','sparsity_low_rank']:
-            b = 'gauss'
-            self.molecule.load(json_name = str(self.molecule.molecule_info)+ '_' + str(self.basis)+ '_' +b)
-
-        '''
         if method == 'qdrift' or method == 'rand_ham':
-            #todo: error handling will need to be modified after I talk with Michael
 
             methods_trotter = trotter_based_methods.Trotter_based_methods(self.tools)
 
@@ -187,13 +175,13 @@ class Cost_calculator:
 
             # This methods are plane waves, so instead of calling self.molecule.get_basic_parameters() one should call self.molecule.build_grid()
             # grid_length is the only parameter of build_grid. Should be calculated such that the number of basis functions
-            #   is ~= 100*self.molecule_data.n_orbitals*2. grid_length ~= int(np.cbrt(100*self.molecule.molecule_data.n_orbitals * 2))
+            #   is ~= 100*self.molecule_data.n_orbitals. grid_length ~= int(np.cbrt(100*self.molecule.molecule_data.n_orbitals * 2))
             # Omega is returned by self.molecule.build_grid()
             # J = len(self.molecule.geometry) #is the number of atoms in the molecule
 
             if method == 'low_depth_trotter':
 
-                grid_length = int(round((self.molecule.N * 100) ** (1/3)))
+                grid_length = int(round((self.molecule.N * self.tools.config_variables['gauss2plane_overhead']) ** (1/3)))
                 if not hasattr(self.molecule, 'eta') or not hasattr(self.molecule, 'Omega') or not hasattr(self.molecule, 'N_grid'):
                     grid = self.molecule.build_grid(grid_length)
 
@@ -215,7 +203,7 @@ class Cost_calculator:
 
             elif method == 'low_depth_taylor':
 
-                grid_length = int(round((self.molecule.N * 100) ** (1/3)))
+                grid_length = int(round((self.molecule.N * self.tools.config_variables['gauss2plane_overhead']) ** (1/3)))
                 if not hasattr(self.molecule, 'lambda_value_grid') or not hasattr(self.molecule, 'Lambda_value_grid') or not hasattr(self.molecule, 'N_grid'):
                     grid = self.molecule.build_grid(grid_length)
 
@@ -239,7 +227,7 @@ class Cost_calculator:
 
             elif method == 'low_depth_taylor_on_the_fly':
 
-                grid_length = int(round((self.molecule.N * 100) ** (1/3)))
+                grid_length = int(round((self.molecule.N * self.tools.config_variables['gauss2plane_overhead']) ** (1/3)))
                 if not hasattr(self.molecule, 'lambda_value_grid') or not hasattr(self.molecule, 'Omega') or not hasattr(self.molecule, 'Gamma_grid') or not hasattr(self.molecule, 'eta') or not hasattr(self.molecule, 'N_grid'):
                     grid = self.molecule.build_grid(grid_length)
 
@@ -275,7 +263,7 @@ class Cost_calculator:
 
             if method == 'linear_t':
 
-                grid_length = int(round((self.molecule.N * 100) ** (1/3)))
+                grid_length = int(round((self.molecule.N * self.tools.config_variables['gauss2plane_overhead']) ** (1/3)))
                 if not hasattr(self.molecule, 'lambda_value_grid') or not hasattr(self.molecule, 'N_grid'):
                     grid = self.molecule.build_grid(grid_length)
 
@@ -326,7 +314,7 @@ class Cost_calculator:
 
             if method == 'interaction_picture':
 
-                grid_length = int(round((self.molecule.N * 100) ** (1/3)))
+                grid_length = int(round((self.molecule.N * self.tools.config_variables['gauss2plane_overhead']) ** (1/3)))
                 
                 if not hasattr(self.molecule, 'lambda_value_T') or not hasattr(self.molecule, 'lambda_value_U_V') or not hasattr(self.molecule, 'Gamma_grid') or not hasattr(self.molecule, 'N_grid'):
                     grid = self.molecule.build_grid(grid_length)
@@ -355,7 +343,7 @@ class Cost_calculator:
             # TO BE DELETED
             elif method == 'sublinear_scaling':
 
-                grid_length = int(round((self.molecule.N * 100) ** (1/3)))
+                grid_length = int(round((self.molecule.N * self.tools.config_variables['gauss2plane_overhead']) ** (1/3)))
                 if not hasattr(self.molecule, 'lambda_value_T') or not hasattr(self.molecule, 'lambda_value_U_V') or not hasattr(self.molecule, 'Gamma_grid') or not hasattr(self.molecule, 'N_grid'):
                     grid = self.molecule.build_grid(grid_length)
 
