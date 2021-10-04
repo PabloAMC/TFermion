@@ -786,7 +786,8 @@ class Molecule_Hamiltonian:
         self.sparsity_d = None
 
         # set r value or final rank
-        self.final_rank = 275 # set cholesky dimension
+        self.final_rank = 200 # set cholesky dimension
+        self.N = 108 #todo IMPORTANT: 108 FOR REIHER, 152 FOR LI
 
         self.get_basic_parameters()
 
@@ -808,85 +809,17 @@ class Molecule_Hamiltonian:
         nchol_max = gval.shape[0]
         thresh = 3.5e-5 # set threshold
 
-        self.L = numpy.einsum("ij,j->ij",gvec,numpy.sqrt(gval))
-        self.L = self.L.T.copy()
-        self.L = self.L.reshape(nchol_max, norb, norb)
+        L = numpy.einsum("ij,j->ij",gvec,numpy.sqrt(gval))
+        L = L.T.copy()
+        L = L.reshape(nchol_max, norb, norb)
 
         T = h0 - 0.5 * numpy.einsum("pqqs->ps", eri, optimize=True) + numpy.einsum("pqrr->pq", eri, optimize = True)
 
         lambda_T = numpy.sum(numpy.abs(T))
 
-        LR = self.L[:self.final_rank,:,:].copy()
+        LR = L[:self.final_rank,:,:].copy()
 
         lambda_W = 0.25 * numpy.einsum("xij,xkl->",numpy.abs(LR), numpy.abs(LR), optimize=True)
-
-        # compute one-body
-        T = h0 - 0.5 * numpy.einsum("pqqs->ps", eri) + numpy.einsum("pqrr->pq", eri)
-
-        orbs = [i for i in range(norb)]
-
-        lambda_T = numpy.sum(numpy.abs(T))
-
-
-        pqrs = list(combinations(orbs, 4))
-        pqr = list(combinations(orbs, 3))
-        pq = list(combinations(orbs, 2))
-
-
-        eri_sparse = eri.copy()
-        eri_sparse[numpy.abs(eri) < thresh] = 0.0 # zero out all elements below threshold
-
-        lambda_V = 0.5 * numpy.sum(numpy.abs(eri_sparse))
-
-        nnzs = 0.0
-        for p,q,r,s in pqrs:
-            # pqrs
-            if numpy.abs(eri_sparse[p,q,r,s]) >= thresh:
-                nnzs += 1.0
-            # prqs
-            if numpy.abs(eri_sparse[p,r,q,s]) >= thresh:
-                nnzs += 1.0
-            # psqr
-            if numpy.abs(eri_sparse[p,s,q,r]) >= thresh:
-                nnzs += 1.0
-
-
-        for p,q,r in pqr:
-            # ppqr, pqpr
-            # qqpr, qrpq
-            # rrpq, rpqr
-            if numpy.abs(eri_sparse[p,p,q,r]) >= thresh:
-                nnzs += 1.0
-            if numpy.abs(eri_sparse[p,q,p,r]) >= thresh:
-                nnzs += 1.0
-            if numpy.abs(eri_sparse[q,q,p,r]) >= thresh:
-                nnzs += 1.0
-            if numpy.abs(eri_sparse[q,r,p,q]) >= thresh:
-                nnzs += 1.0
-            if numpy.abs(eri_sparse[r,r,p,q]) >= thresh:
-                nnzs += 1.0
-            if numpy.abs(eri_sparse[r,p,q,r]) >= thresh:
-                nnzs += 1.0
-
-        for p,q in pq:
-            # ppqq
-            # pqpq
-            # pppq
-            # qqqp
-            if numpy.abs(eri_sparse[p,p,q,q]) >= thresh:
-                nnzs += 1.0
-            if numpy.abs(eri_sparse[p,q,p,q]) >= thresh:
-                nnzs += 1.0
-            if numpy.abs(eri_sparse[p,p,p,q]) >= thresh:
-                nnzs += 1.0
-            if numpy.abs(eri_sparse[q,q,q,p]) >= thresh:
-                nnzs += 1.0
-
-        for p in orbs:
-            if numpy.abs(eri_sparse[p,p,p,p]) >= thresh:
-                nnzs += 1.0
-
-        nnzs += norb *(norb+1.)/2.
 
         # save parameters to cost_methods
         self.lambda_value = lambda_T + lambda_W
