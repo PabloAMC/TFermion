@@ -3,6 +3,6 @@
     "optimization_method": "SLSQP",
     "runs": 1000, 
     "h_norm_lambda_ratio": 0.7,
-    "molecules": ["hydrofluoric acid", "water", "ammonia", "methane", "O2"]
+    "molecules": ["h2", "hydrofluoric acid", "water", "ammonia", "methane", "O2", "CO2", "NaCl"]
 }
 

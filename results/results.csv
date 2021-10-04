@@ -1,12 +1,12 @@
-Methods,hydrofluoric acid,water,ammonia,methane,O2
-qdrift,1.44e+24,1.49e+24,2.79e+24,4.29e+24,5.77e+24
-rand_ham,3.10e+24,1.39e+25,8.50e+25,1.16e+26,1.36e+25
-taylor_naive,1.19e+17,1.31e+17,1.69e+17,3.77e+18,4.32e+18
-taylor_on_the_fly,5.07e+19,6.24e+19,8.95e+19,1.43e+20,2.06e+20
-configuration_interaction,1.13e+39,1.06e+39,1.45e+38,3.28e+39,4.74e+40
-low_depth_trotter,1.93e+26,1.71e+26,7.63e+25,1.30e+26,6.60e+26
-low_depth_taylor,1.33e+13,1.02e+13,5.26e+12,6.78e+12,1.18e+13
-low_depth_taylor_on_the_fly,2.17e+26,3.82e+26,2.98e+26,6.72e+26,8.97e+26
-linear_t,4.66e+15,5.23e+15,2.97e+15,4.72e+15,7.25e+15
-sparsity_low_rank,2.08e+12,3.28e+12,5.81e+12,1.27e+13,1.07e+13
-interaction_picture,1.05e+20,9.19e+19,4.56e+19,7.06e+19,1.25e+20
+Methods,h2,hydrofluoric acid,water,ammonia,methane,O2,CO2,NaCl
+qdrift,7.42e+21,1.35e+24,1.51e+24,2.64e+24,4.14e+24,5.39e+24,2.53e+25,4.55e+25
+rand_ham,1.85e+19,3.09e+24,1.42e+25,8.48e+25,1.16e+26,1.42e+25,9.06e+26,4.07e+28
+taylor_naive,2.72e+13,1.19e+17,1.27e+17,1.66e+17,3.64e+18,4.32e+18,9.86e+18,1.28e+19
+taylor_on_the_fly,9.71e+17,5.14e+19,6.42e+19,8.73e+19,1.42e+20,2.12e+20,6.76e+20,6.40e+20
+configuration_interaction,9.62e+35,1.11e+39,1.07e+39,1.45e+38,3.28e+39,4.76e+40,1.34e+43,1.39e+46
+low_depth_trotter,1.90e+23,2.00e+26,1.71e+26,7.83e+25,1.31e+26,6.92e+26,1.27e+27,1.02e+28
+low_depth_taylor,1.53e+12,1.32e+13,9.96e+12,5.22e+12,6.93e+12,1.17e+13,7.39e+12,3.40e+13
+low_depth_taylor_on_the_fly,1.05e+24,2.20e+26,3.73e+26,3.04e+26,6.71e+26,8.86e+26,4.16e+27,6.84e+27
+linear_t,1.67e+14,4.70e+15,5.28e+15,3.02e+15,4.72e+15,7.42e+15,1.21e+16,3.04e+16
+sparsity_low_rank,3.24e+10,1.36e+12,1.88e+12,3.42e+12,6.46e+12,5.51e+12,2.49e+13,1.98e+13
+interaction_picture,2.77e+18,1.05e+20,9.29e+19,4.57e+19,7.10e+19,1.27e+20,1.54e+20,6.07e+20
