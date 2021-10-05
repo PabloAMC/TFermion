@@ -114,7 +114,7 @@ class Cost_calculator:
                 dphi_max = self.molecule.dphi_max
                 J = len(self.molecule.molecule_geometry) #is the number of atoms in the molecule
 
-                arguments = (N, lambda_value, Lambda_value, Gamma, phi_max, dphi_max, zeta_max_i, J)
+                arguments = (N, Gamma, phi_max, dphi_max, zeta_max_i, J)
 
                 # generate values for errors epsilon_PEA, epsilon_HS, epsilon_S, eps_H, eps_taylor
                 for _ in range(self.runs):
@@ -123,8 +123,6 @@ class Cost_calculator:
                     self.costs['taylor_on_the_fly'] += [methods_taylor.taylor_on_the_fly(
                         optimized_errors.x,
                         N,
-                        lambda_value,
-                        Lambda_value,
                         Gamma,
                         phi_max,
                         dphi_max,

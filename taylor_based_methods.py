@@ -37,8 +37,9 @@ class Taylor_based_methods:
         epsilon_SS = epsilon_S /(r*3*2*(K*arb_state_synt + 2*K) ) # 3 from AA, 2 for for Prepare and Prepare^+, then Prepare_beta_1 and Prepare_beta_2, finally r
 
         Select_j = 4*N*self.tools.multi_controlled_not(np.ceil(np.log2(N))+2) + 4*N + N*self.tools.multi_controlled_not(np.ceil(np.log2(N)))
-        # The 4 comes from values of q, the N from values of j; the 4N comes from the Toffolis in the C-Z; the third term deactivates the accumulator
-        Select_H = 4*Select_j
+        # We use an accumulator that applies C-Z and upon stop applies the X or Y with phase: The 4 comes from values of q, the N from values of j;
+        # the first term applies the X or Y (and phase); the 4N comes from the Toffolis in the C-Z; the third term deactivates the accumulator
+        Select_H = 4*Select_j # 4 creation/annihilation operators per H_\gamma
         QPE_adaptation = self.tools.multi_controlled_not(np.ceil(K/2) + 1) 
         Select_V = Select_H * K + QPE_adaptation
 
@@ -53,7 +54,7 @@ class Taylor_based_methods:
         
         return result
 
-    def taylor_on_the_fly(self, epsilons, N, lambda_value, Lambda_value, Gamma, phi_max, dphi_max, zeta_max_i, J):
+    def taylor_on_the_fly(self, epsilons, N, Gamma, phi_max, dphi_max, zeta_max_i, J):
         
         epsilon_PEA = epsilons[0]
         epsilon_HS = epsilons[1]
@@ -78,13 +79,16 @@ class Taylor_based_methods:
         t = 4.7/epsilon_PEA
         x_max = np.log(N * t/ epsilon_H)
         
-        #lambda_value = Gamma*phi_max**4 * x_max**5 # It is more precise to recover it from the molecule, this is closer to lambda = Lambda*Gamma
-        r = lambda_value* t / np.log(2)
+        Vol_max_w_gamma = (2**6*phi_max**4 * x_max**5) # eq 66 in the original article
+        lambda_value = Gamma*Vol_max_w_gamma # eq 60 in the original article
+        r = lambda_value* t / np.log(2) 
+        K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1))
 
-        K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1)) 
+        # zeta = epsilon_HS /(2*3*K*r*Gamma*Vol); eq 55 in the original article
+        M = lambda_value* 2*3*K*r/epsilon_H # = 6*K*r*Gamma*Vol_max_w_gamma/epsilon_H; eq 55 in the original article
 
         epsilon_SS = epsilon_S /(r*3*2*(2*K)) # 3 from AA, 2 Prepare_beta for Prepare and Prepare^+, 2K T gates in the initial theta rotations
-        # We distribute the error between all C-U in phase estimation uniformly
+
         number_of_taylor_expansions = (((4+2+2)*d*N + (J+1))*K*2*3*r) #4+2+2 = two_body + kinetic + external_potential
         eps_tay_s = eps_tay/number_of_taylor_expansions
         x = sympy.Symbol('x')
@@ -94,7 +98,6 @@ class Taylor_based_methods:
         
         mu = ( r*3*2*K/epsilon_H *2*(4*dphi_max + phi_max/x_max)*phi_max**3 * x_max**6 )**6
         n = np.ceil(np.ceil(np.log2(mu))/3) #each coordinate is a third
-        M = Lambda_value*Gamma*r*3*2*K/epsilon_H
 
         sum = self.tools.sum_cost(n)
         mult = self.tools.multiplication_cost(n)
