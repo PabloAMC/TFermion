@@ -207,7 +207,7 @@ class Taylor_based_methods:
             3*(np.log2(K0*phi_max**2*x_max)+np.log2(1/delta) +4*np.log2 (2/alpha*(np.log(K0*phi_max**2*x_max)+np.log(1/delta))))
         ])
         #zeta = epsilon_H/(r*Gamma*mu*3*2*K)
-        log2M = np.log2(mu_M_zeta)+ np.log2(3*2*K*r)+ np.log2(1/epsilon_H) #M = mu_M_zeta*/(mu*zeta)
+        log2M = np.log2(mu_M_zeta)+ np.log2(3*2*K*r*Gamma)+ np.log2(1/epsilon_H) #M = mu_M_zeta*/(mu*zeta)
 
         epsilon_SS = epsilon_S / (r*3*2*(2*K)) # 3 from AA, 2 Prepare_beta for Prepare and Prepare^+, 2K T gates in the initial theta rotations
         crot_synt = self.tools.c_pauli_rotation_synthesis(epsilon_SS)
