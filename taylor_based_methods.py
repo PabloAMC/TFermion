@@ -77,7 +77,7 @@ class Taylor_based_methods:
         d = 6 # Number of Gaussians per basis function
 
         t = 4.7/epsilon_PEA
-        x_max = np.log(N * t/ epsilon_H)
+        x_max = np.log(N * t/ epsilon_H)* self.tools.config_variables['xmax_mult_factor_taylor'] # eq 68 in the original paper
         
         Vol_max_w_gamma = (2**6*phi_max**4 * x_max**5) # eq 66 in the original article
         lambda_value = Gamma*Vol_max_w_gamma # eq 60 in the original article

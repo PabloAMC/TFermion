@@ -36,10 +36,10 @@ class QROM_methods:
         sum = self.tools.sum_cost(D*np.log2(M))
         Fredkin_cost = 4 # The controlled swaps = 1 Toffoli
 
-        Subprepare = QROM_cost(3*M**D) + uniform_cost(3) + D*uniform_cost(M) + 2*compare + (3+D*np.log2(M))*Fredkin_cost
-        Prepare = Subprepare + D*uniform_cost(M, controlled=True) + D*np.log2(M)*Fredkin_cost + sum + 2*self.tools.multi_controlled_not(np.log2(N))
+        Subprepare = QROM_cost(3*M**D) + uniform_cost(3) + D*uniform_cost(M) + 2*compare + (3+D*np.log2(M))*Fredkin_cost # Fig 15 in the original article
+        Prepare = Subprepare + D*uniform_cost(M, controlled=True) + D*np.log2(M)*Fredkin_cost + sum + 2*self.tools.multi_controlled_not(np.log2(N)) # Fig 16 in the original article
         
-        Select = 3*QROM_cost(N) + 2*np.ceil(np.log2(N))*Fredkin_cost
+        Select = 3*QROM_cost(N) + 2*np.ceil(np.log2(N))*Fredkin_cost # Fig 14 in the original paper
         
         Reflexion = self.tools.multi_controlled_not(2*np.log2(N)+2*mu + N)
         return r*(2*Prepare + Reflexion + Select)
