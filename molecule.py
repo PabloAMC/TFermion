@@ -135,7 +135,7 @@ class Molecule:
 
     def build_grid(self, grid_length: int = 7):
         '''
-        non_periodic: If True, impose periodic boundary conditions
+        non_periodic: If False, impose periodic boundary conditions
         '''
 
         self.N_grid = grid_length**3
@@ -675,7 +675,7 @@ class Molecule:
         except:
             pass
 
-    def lambda_of_Hamiltonian_terms_2nd(self,grid, non_periodic = False, spinless = False):
+    def lambda_of_Hamiltonian_terms_2nd(self,grid, non_periodic = True, spinless = False):
         '''To be used in second quantization (interaction_picture) only'''
 
         V_dual = dual_basis_potential(grid = grid, spinless = spinless, non_periodic = non_periodic) # diagonal
