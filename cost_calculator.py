@@ -34,7 +34,7 @@ class Cost_calculator:
         if self.molecule_info_type == 'name':
             
             json_name = str(self.molecule.molecule_info)+ '_' +  str(self.basis)
-            self.molecule.load(json_name = 'parameters/'+json_name)
+            self.molecule.load(json_name = 'parameters/'+json_name+'_'+str(self.tools.config_variables['gauss2plane_overhead'])+'.json')
 
         if method == 'qdrift' or method == 'rand_ham':
 
@@ -377,7 +377,7 @@ class Cost_calculator:
 
         if self.molecule_info_type == 'name':
             json_name = str(self.molecule.molecule_info)+ '_' +  str(self.basis)
-            self.molecule.save(json_name = 'parameters/'+json_name)
+            self.molecule.save(json_name = 'parameters/'+json_name+'_'+str(self.tools.config_variables['gauss2plane_overhead']))
 
     def calculate_optimized_errors(self, number_errors, cost_method, arguments):
 
