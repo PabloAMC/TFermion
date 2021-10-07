@@ -619,7 +619,7 @@ class Molecule:
         if hasattr(self, 'Gamma_grid'): molecule_properties["Gamma_grid"] = self.Gamma_grid
         if hasattr(self, 'eta'): molecule_properties["eta"] = self.eta
         if hasattr(self, 'Omega'): molecule_properties["Omega"] = self.Omega
-        if hasattr(self, 'zeta_max_i'): molecule_properties["zeta_i"] = self.zeta_max_i
+        if hasattr(self, 'zeta_max_i'): molecule_properties["zeta_max_i"] = self.zeta_max_i
 
         if hasattr(self, 'alpha'): molecule_properties["alpha"] = self.alpha
         if hasattr(self, 'phi_max'): molecule_properties["phi_max"] = self.phi_max
