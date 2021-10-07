@@ -34,7 +34,7 @@ class Cost_calculator:
         if self.molecule_info_type == 'name':
             
             json_name = str(self.molecule.molecule_info)+ '_' +  str(self.basis)
-            self.molecule.load(json_name = 'parameters/'+json_name+'_'+str(self.tools.config_variables['gauss2plane_overhead'])+'.json')
+            self.molecule.load(json_name = 'parameters/'+json_name+'_'+str(self.tools.config_variables['gauss2plane_overhead']))
 
         if method == 'qdrift' or method == 'rand_ham':
 
