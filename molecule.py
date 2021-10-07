@@ -138,7 +138,7 @@ class Molecule:
         non_periodic: If True, impose periodic boundary conditions
         '''
 
-        self.N_grid = grid_length**3*2
+        self.N_grid = grid_length**3
         self.eta = self.molecule_data.n_electrons
         
         length_scale = 4*self.xmax # We set a box whose length is 4 times the maximum coordinate value of any atom, as the box has to be twice as large as the maximum distance in each coord
