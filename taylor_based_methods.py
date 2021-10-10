@@ -30,7 +30,7 @@ class Taylor_based_methods:
         epsilon_S = epsilons[2]
         
         t = 4.7/epsilon_PEA
-        r = t*lambda_value / np.log(2) # Number of time segments
+        r = np.ceil(t*lambda_value / np.log(2)) # Number of time segments
     
         K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1)) 
         arb_state_synt = self.tools.arbitrary_state_synthesis(4*np.ceil(np.log2(N)))
@@ -81,7 +81,7 @@ class Taylor_based_methods:
         
         Vol_max_w_gamma = (2**6*phi_max**4 * x_max**5) # eq 66 in the original article
         lambda_value = Gamma*Vol_max_w_gamma # eq 60 in the original article
-        r = lambda_value* t / np.log(2) 
+        r = np.ceil(lambda_value* t / np.log(2)) 
         K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1))
 
         # zeta = epsilon_HS /(2*3*K*r*Gamma*Vol); eq 55 in the original article
@@ -185,7 +185,7 @@ class Taylor_based_methods:
             return r_bound
 
         result = scipy.optimize.minimize(fun = lambda logr: (logr - np.log(r_bound_calc(np.exp(logr))))**2, x0 = 25, tol = .05, options = {'maxiter': 5000}, method='COBYLA') # Works with COBYLA, but not with SLSQP (misses the boundaries) or trust-constr (oscillates)
-        logr = result['x']
+        logr = np.ceil(result['x'])
         r = np.exp(logr)
 
         #bound = r_bound_calc(r) #This should be close to each r, relatively speaking

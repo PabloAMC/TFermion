@@ -33,7 +33,7 @@ class Interaction_picture:
         '''
 
         t = 4.7/epsilon_PEA
-        r = lambd_T*t/np.log(2) # lambd_T is necessary to take tau = 1
+        r = np.ceil(lambd_T*t/np.log(2)) # lambd_T is necessary to take tau = 1
         
         K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1)) 
         M = np.max([16*t*np.log(2)/epsilon_HS * (2*lambd_U_V + lambd_T), K**2])
@@ -132,7 +132,7 @@ class Interaction_picture:
         ### Main algorithm
 
         t = 4.7/epsilon_PEA
-        r = np.e*lambd_U_V*t #Alternatively 2*lambd_U_V*t/np.log(2); lambd_T is necessary to take tau = 1
+        r = np.ceil(np.e*lambd_U_V*t) #Alternatively 2*lambd_U_V*t/np.log(2); lambd_T is necessary to take tau = 1
         
         # Notice that K is a bit different than in other articles 
         K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1))  # Same as in the previous function
