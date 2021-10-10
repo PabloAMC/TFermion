@@ -49,7 +49,7 @@ class Taylor_based_methods:
         Prepare_beta_2 = rot_synt*K*arb_state_synt
         Prepare_beta = Prepare_beta_1 + Prepare_beta_2
 
-        R = self.tools.multi_controlled_not((K+1)*np.log2(Gamma) + N) # The prepare qubits and the select qubits (in Jordan-Wigner there are N)
+        R = self.tools.multi_controlled_not((K+1)*np.ceil(np.log2(Gamma)) + N) # The prepare qubits and the select qubits (in Jordan-Wigner there are N)
         result = r*(3*(2*Prepare_beta + Select_V) + 2*R)  # 3 from AA, 2 Prepare_beta for Prepare and Prepare^+
         
         return result
@@ -207,7 +207,7 @@ class Taylor_based_methods:
             3*(np.log2(K0*phi_max**2*x_max)+np.log2(1/delta) +4*np.log2 (2/alpha*(np.log(K0*phi_max**2*x_max)+np.log(1/delta))))
         ])
         #zeta = epsilon_H/(r*Gamma*mu*3*2*K)
-        log2M = np.log2(mu_M_zeta)+ np.log2(3*2*K*r*Gamma)+ np.log2(1/epsilon_H) #M = mu_M_zeta*/(mu*zeta)
+        log2M = np.ceil(np.log2(mu_M_zeta)+ np.log2(3*2*K*r*Gamma)+ np.log2(1/epsilon_H)) #M = mu_M_zeta*/(mu*zeta)
 
         epsilon_SS = epsilon_S / (r*3*2*(2*K)) # 3 from AA, 2 Prepare_beta for Prepare and Prepare^+, 2K T gates in the initial theta rotations
         crot_synt = self.tools.c_pauli_rotation_synthesis(epsilon_SS)
@@ -249,10 +249,10 @@ class Taylor_based_methods:
         ### Qcol cost computation
 
         # There will be eta registers with log2(N) qubits each
-        compare = self.tools.compare_cost(np.log2(N))
+        compare = self.tools.compare_cost(np.ceil(np.log2(N)))
         sort = eta*(4 + compare) # 4 for the c-swap and one comparison
-        check = self.tools.multi_controlled_not(eta*np.log2(N))
-        sum = self.tools.sum_cost(np.log2(N))
+        check = self.tools.multi_controlled_not(eta*np.ceil(np.log2(N)))
+        sum = self.tools.sum_cost(np.ceil(np.log2(N)))
 
         find_alphas = 2* eta*(4*sum + check + sort + compare) #The 2 is because if it fails we have to reverse the computation
         find_gammas_2y4 = 2*(3*sum + check+ sort+ compare +3*4) + find_alphas  # The 3*4 is the final 3 Toffolis; the 2 is is because if it fails we have to reverse the computation 
@@ -263,7 +263,7 @@ class Taylor_based_methods:
         QPE_adaptation = self.tools.multi_controlled_not(np.ceil(K/2) + 1) 
         Select_V = K*Select_H + QPE_adaptation
 
-        R = self.tools.multi_controlled_not((K+1)*np.log2(Gamma) + N) # The prepare qubits and the select qubits (in Jordan-Wigner there are N)
+        R = self.tools.multi_controlled_not((K+1)*np.ceil(np.log2(Gamma)) + N) # The prepare qubits and the select qubits (in Jordan-Wigner there are N)
         result = r*(3*(2*Prepare_beta + Select_V) + 2*R)
 
         return result
