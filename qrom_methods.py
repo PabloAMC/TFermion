@@ -26,7 +26,7 @@ class QROM_methods:
 
         def uniform_cost(L, k=0, z_rot_synt = z_rot_synt, controlled = False):
             if controlled:
-                return 2*k+10*np.ceil((L)) + 2*z_rot_synt
+                return 2*k+10*np.ceil(np.log2(L)) + 2*z_rot_synt
             else:
                 return 8*np.ceil(np.log2(L)) + 2*z_rot_synt
 
