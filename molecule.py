@@ -787,7 +787,7 @@ class Molecule_Hamiltonian:
 
         # set r value or final rank
         self.final_rank = 200 # set cholesky dimension
-        self.N = 108 #todo IMPORTANT: 108 FOR REIHER, 152 FOR LI
+        self.N = 152 #todo IMPORTANT: 108 FOR REIHER, 152 FOR LI
 
         self.get_basic_parameters()
 
@@ -795,12 +795,12 @@ class Molecule_Hamiltonian:
     # code extracted from https://doi.org/10.5281/zenodo.4248322
     def get_basic_parameters(self, molecular_hamiltonian=None):
 
-        f = h5py.File(self.molecule_info+"eri_reiher.h5", "r")
+        f = h5py.File(self.molecule_info+"eri_li.h5", "r")
         eri = f['eri'][()]
         h0 = f['h0'][()]
         f.close()
 
-        f = h5py.File(self.molecule_info+"eri_reiher_cholesky.h5", "r")
+        f = h5py.File(self.molecule_info+"eri_li_cholesky.h5", "r")
         gval = f["gval"][()]
         gvec = f["gvec"][()]
         f.close()

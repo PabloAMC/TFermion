@@ -33,7 +33,7 @@ class Interaction_picture:
         '''
 
         t = 4.7/epsilon_PEA
-        r = lambd_T*t/np.log(2) # lambd_T is necessary to take tau = 1
+        r = np.ceil(lambd_T*t/np.log(2)) # lambd_T is necessary to take tau = 1
         
         K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1)) 
         M = np.max([16*t*np.log(2)/epsilon_HS * (2*lambd_U_V + lambd_T), K**2])
@@ -75,9 +75,9 @@ class Interaction_picture:
         z_rot_synt = self.tools.pauli_rotation_synthesis(epsilon_SS)
         def uniform_cost(L, k=0, z_rot_synt = z_rot_synt, controlled = False):
             if controlled:
-                return 2*k+10*np.log2(L) + 2*z_rot_synt
+                return 2*k+10*np.ceil(np.log2(L)) + 2*z_rot_synt
             else:
-                return 8*np.log2(L) + 2*z_rot_synt
+                return 8*np.ceil(np.log2(L)) + 2*z_rot_synt
         Uniform = uniform_cost(np.ceil(np.log2(M)))
 
         # DYS_K
@@ -123,16 +123,16 @@ class Interaction_picture:
         ### Initial state antisymmetrization
         comparison_eta = self.tools.compare_cost(np.ceil(np.log2(eta**2)))
         comparison_N = self.tools.compare_cost(np.ceil(np.log2(N)))
-        swaps_eta = 4*np.ceil(np.log(eta**2))
-        swaps_N = 4*np.ceil(np.log(N))
-        Step_2 = eta*np.log2(eta)*(np.log2(eta)-1)/4* (comparison_eta + swaps_eta)
-        Step_4 = eta*np.log2(eta)*(np.log2(eta)-1)/4* (comparison_N + swaps_N)
+        swaps_eta = 4*np.ceil(np.log2(eta**2))
+        swaps_N = 4*np.ceil(np.log2(N))
+        Step_2 = eta*np.ceil(np.log2(eta))*(np.ceil(np.log2(eta))-1)/4* (comparison_eta + swaps_eta)
+        Step_4 = eta*np.ceil(np.log2(eta))*(np.ceil(np.log2(eta))-1)/4* (comparison_N + swaps_N)
         antisymmetrization = Step_2*2 + Step_4
 
         ### Main algorithm
 
         t = 4.7/epsilon_PEA
-        r = np.e*lambd_U_V*t #Alternatively 2*lambd_U_V*t/np.log(2); lambd_T is necessary to take tau = 1
+        r = np.ceil(np.e*lambd_U_V*t) #Alternatively 2*lambd_U_V*t/np.log(2); lambd_T is necessary to take tau = 1
         
         # Notice that K is a bit different than in other articles 
         K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1))  # Same as in the previous function

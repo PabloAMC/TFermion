@@ -26,10 +26,10 @@ class Plane_waves_methods:
         r = np.sqrt(2*t**3/epsilon_HS *(max_T**2*(max_U + max_V) + max_T*(max_U + max_V)**2))
 
         # Arbitrary precision rotations, does not include the Ry gates in F_2
-        single_qubit_rotations = 8*N + 8*N*(8*N-1) + 8*N + N*np.log2(N/2) # U, V, T and FFFT single rotations
+        single_qubit_rotations = 8*N + 2*8*N*(8*N-1) + 8*N + N*np.log2(N/2) # U, V, T and FFFT single rotations; the 2 comes from the controlled rotations, see appendix A
         epsilon_SS = epsilon_S/single_qubit_rotations
         
-        exp_UV_cost = (8*N*(8*N-1) + 8*N)*self.tools.pauli_rotation_synthesis(epsilon_SS)
+        exp_UV_cost = 8*N*(8*N-1)*self.tools.c_pauli_rotation_synthesis(epsilon_SS) + 8*N*self.tools.pauli_rotation_synthesis(epsilon_SS)
         exp_T_cost = 8*N*self.tools.pauli_rotation_synthesis(epsilon_SS)
         F2 = 2
         FFFT_cost = N/2*np.log2(N)*F2 + N/2*(np.log2(N)-1)*self.tools.pauli_rotation_synthesis(epsilon_SS) 
