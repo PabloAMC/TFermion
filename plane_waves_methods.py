@@ -26,18 +26,18 @@ class Plane_waves_methods:
         r = np.sqrt(2*t**3/epsilon_HS *(max_T**2*(max_U + max_V) + max_T*(max_U + max_V)**2))
 
         # Arbitrary precision rotations, does not include the Ry gates in F_2
-        single_qubit_rotations = 8*N + 2*8*N*(8*N-1) + 8*N + N*np.log2(N/2) # U, V, T and FFFT single rotations; the 2 comes from the controlled rotations, see appendix A
+        single_qubit_rotations = 8*N + 2*8*N*(8*N-1) + 8*N + N*np.ceil(np.log2(N/2)) # U, V, T and FFFT single rotations; the 2 comes from the controlled rotations, see appendix A
         epsilon_SS = epsilon_S/single_qubit_rotations
         
         exp_UV_cost = 8*N*(8*N-1)*self.tools.c_pauli_rotation_synthesis(epsilon_SS) + 8*N*self.tools.pauli_rotation_synthesis(epsilon_SS)
         exp_T_cost = 8*N*self.tools.pauli_rotation_synthesis(epsilon_SS)
         F2 = 2
-        FFFT_cost = N/2*np.log2(N)*F2 + N/2*(np.log2(N)-1)*self.tools.pauli_rotation_synthesis(epsilon_SS) 
+        FFFT_cost = N/2*np.ceil(np.log2(N))*F2 + N/2*(np.ceil(np.log2(N))-1)*self.tools.pauli_rotation_synthesis(epsilon_SS) 
         
         return r*(2*exp_UV_cost + exp_T_cost + 2*FFFT_cost )
 
     # Low depth quantum simulation of materials (babbush2018low) Taylor
-    def low_depth_taylor(self, epsilons, N, lambda_value, Lambda_value, H_norm_lambda_ratio):
+    def low_depth_taylor(self, epsilons, N, lambda_value, H_norm_lambda_ratio):
 
         epsilon_PEA = epsilons[0]
         epsilon_HS = epsilons[1]
@@ -49,39 +49,39 @@ class Plane_waves_methods:
         M = (N/2)**(1/D) # Same as in linear-T method. See also beginning of appendix I in https://journals.aps.org/prx/pdf/10.1103/PhysRevX.8.011044.
 
         t = 4.7/epsilon_PEA
-        r = t*Lambda_value/np.log(2)
+        r = t*lambda_value/np.log(2)
 
         K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1)) 
 
         epsilon_SS = epsilon_S /(r*3*2*K*(2+4*D+2)) # In the sum the first 2 is due to Uniform_3, next 2D are due to 2 uses of Uniform_M^{otimes D}, and the final two due to the controlled rotation theta angles
         
-        mu = np.ceil(np.log2(2*np.sqrt(2)*Lambda_value/epsilon_PEA) + np.log2(1 + epsilon_PEA/(8*lambda_value)) + np.log2(1 - (H_norm_lambda_ratio)**2))
+        mu = np.ceil(np.log2(2*np.sqrt(2)*lambda_value/epsilon_PEA) + np.log2(1 + epsilon_PEA/(8*lambda_value)) + np.log2(1 - (H_norm_lambda_ratio)**2))
         
         # The number of total rotations is r*2* number of rotations for each preparation P (in this case 2D+1)
         z_rot_synt = self.tools.pauli_rotation_synthesis(epsilon_SS)
 
         def uniform_cost(L, k=0, z_rot_synt = z_rot_synt, controlled = False):
             if controlled:
-                return 2*k+10*np.log2(L) + 2*z_rot_synt
+                return 2*k+10*np.ceil(np.log2(L)) + 2*z_rot_synt
             else:
-                return 8*np.log2(L) + 2*z_rot_synt
+                return 8*np.ceil(np.log2(L)) + 2*z_rot_synt
 
         def QROM_cost(N): return 4*N
 
         compare = self.tools.compare_cost(mu)
-        sum = self.tools.compare_cost(D*np.log2(M))
+        sum = self.tools.compare_cost(D*np.ceil(np.log2(M)))
         Fredkin_cost = 4 # The controlled swaps
 
-        Subprepare = QROM_cost(3*M**D) + uniform_cost(3) + D*uniform_cost(M) + 2*compare + (3+D*np.log2(M))*Fredkin_cost
-        Prepare = Subprepare + D*uniform_cost(M, controlled=True) + D*np.log2(M)*Fredkin_cost + sum + 2*self.tools.multi_controlled_not(np.log2(N))
-        
-        Select = 3*QROM_cost(N) + 2*np.log2(N)*Fredkin_cost
+        Subprepare = QROM_cost(3*M**D) + uniform_cost(3) + D*uniform_cost(M) + 2*compare + (3+D*np.ceil(np.log2(M)))*Fredkin_cost
+        Prepare = Subprepare + D*uniform_cost(M, controlled=True) + D*np.ceil(np.log2(M))*Fredkin_cost + sum + 2*self.tools.multi_controlled_not(np.ceil(np.log2(N)))
+
+        Select = 3*QROM_cost(N) + 2*np.ceil(np.log2(N))*Fredkin_cost
         crot_synt = self.tools.c_pauli_rotation_synthesis(epsilon_SS) # due to the preparation of the theta angles
         prepare_beta = K*(Prepare + crot_synt) # The 2*rot_synt is due to the preparation of the theta angles
         QPE_adaptation = self.tools.multi_controlled_not(np.ceil(K/2) + 1) 
         select_V = K*(Select) + QPE_adaptation
 
-        R = self.tools.multi_controlled_not(2*np.log2(N)+2*mu+N) # Based on the number qubits needed in the Linear T QRom article
+        R = self.tools.multi_controlled_not(2*np.ceil(np.log2(N))+2*mu+N) # Based on the number qubits needed in the Linear T QRom article
         result = r*(3*(2*prepare_beta + select_V) + 2*R)
 
         return result
@@ -132,16 +132,16 @@ class Plane_waves_methods:
 
         sample_w = prepare_p_equal_q + prepare_p_neq_q + prepare_p_q_0
 
-        kickback = 2*(self.tools.sum_cost(np.log2(M)) + self.tools.compare_cost(np.log2(M))) # The 2 accounts for unpreparing the ancilla
+        kickback = 2*(self.tools.sum_cost(np.ceil(np.log2(M))) + self.tools.compare_cost(np.ceil(np.log2(M)))) # The 2 accounts for unpreparing the ancilla
 
         prepare_W = 2*sample_w + kickback
         crot_synt = self.tools.c_pauli_rotation_synthesis(epsilon_SS)
         prepare_beta = K*(prepare_W + crot_synt)
-        select_H = (12*N + 8*np.log2(N))
+        select_H = (12*N + 8* np.ceil(np.log2(N)))
         QPE_adaptation = self.tools.multi_controlled_not(np.ceil(K/2) + 1) 
         select_V = K*select_H + QPE_adaptation
 
-        R = self.tools.multi_controlled_not((K+1)*np.log2(Gamma) + N) # The prepare qubits and the select qubits (in Jordan-Wigner there are N)
+        R = self.tools.multi_controlled_not((K+1)*np.ceil(np.log2(Gamma)) + N) # The prepare qubits and the select qubits (in Jordan-Wigner there are N)
         result = r*(3*(2*prepare_beta + select_V) + 2*R)
         
         return result

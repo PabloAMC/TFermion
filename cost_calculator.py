@@ -207,10 +207,9 @@ class Cost_calculator:
 
                 N_grid = self.molecule.N_grid
                 lambda_value_grid  = self.molecule.lambda_value_grid 
-                Lambda_value_grid  = self.molecule.Lambda_value_grid 
                 H_norm_lambda_ratio = self.tools.config_variables['h_norm_lambda_ratio']
 
-                arguments = (N_grid, lambda_value_grid, Lambda_value_grid, H_norm_lambda_ratio)
+                arguments = (N_grid, lambda_value_grid, H_norm_lambda_ratio)
 
                 # generate value for errors epsilon_PEA, epsilon_HS, epsilon_S
                 for _ in range(self.runs):
@@ -220,7 +219,6 @@ class Cost_calculator:
                         optimized_errors.x,
                         N_grid, 
                         lambda_value_grid, 
-                        Lambda_value_grid, 
                         H_norm_lambda_ratio)]
 
             elif method == 'low_depth_taylor_on_the_fly':
