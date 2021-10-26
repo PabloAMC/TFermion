@@ -1,23 +1,54 @@
-# QPhase
+<div align="center">    
+ 
+# T-Fermion     
 
-QPhase is a repository that allows to calculate the expected cost T-gate cost of performing Phase Estimation with different methods.
+[![Paper](http://img.shields.io/badge/arxiv-quant-ph:2110.05899.svg)](https://arxiv.org/abs/2110.05899)
+  <img width="1059" alt="T-Fermion" src="https://user-images.githubusercontent.com/20182937/138862534-b84836fb-9be1-4690-817b-766c68fc2d3e.png">
 
-Things that need to be done
-1. Copy from QFold the code that allows to retrieve a given molecule from pubchem
-2. Implement a code from OpenFermion that allows to calculate the constants required to calculate the T-gate cost.
-  2.1 Most important variables are the number of orbitals (dependent on the basis) N and the sum of one and two body integrals $\lambda$
-  2.2 Several basis are required, so we have to find a way to them.
+<!--
+[![Conference](http://img.shields.io/badge/NeurIPS-2019-4b44ce.svg)](https://papers.nips.cc/book/advances-in-neural-information-processing-systems-31-2018)
+[![Conference](http://img.shields.io/badge/ICLR-2019-4b44ce.svg)](https://papers.nips.cc/book/advances-in-neural-information-processing-systems-31-2018)
+[![Conference](http://img.shields.io/badge/AnyConference-year-4b44ce.svg)](https://papers.nips.cc/book/advances-in-neural-information-processing-systems-31-2018)  
+ARXIV   
+[![Paper](http://img.shields.io/badge/arxiv-quant-ph:2110.05899.svg)](https://arxiv.org/abs/2110.05899)
+![CI testing](https://github.com/PyTorchLightning/deep-learning-project-template/workflows/CI%20testing/badge.svg?branch=master&event=push)
+-->
 
-Steps to install PSI4 + OpenFermion + OpenFermionPSI4 (from https://github.com/quantumlib/OpenFermion-Psi4/issues/44)
+<!--  
+Conference   
+-->   
+</div>
+ 
+## Description   
+T-Fermion is a library that allows to calculate the expected cost T-gate cost of performing Phase Estimation with different methods, originally developed .
 
-conda create -n openfermion python=3.6
+## How to install  
+First, install dependencies   
+```bash
+# clone project   
+git clone https://github.com/PabloAMC/TFermion
 
-conda activate openfermion
+# install project
+conda create -n tfermion python=3.6
+conda activate tfermion
+pip install pyscf
+pip install openfermion
+pip install openfermionpyscf
+ ```   
 
-conda install -c psi4 psi4 as done here
+## How to run
+```
+python main.py [molecule name] [method name]
+```
 
-pip install git+https://github.com/quantumlib/OpenFermion.git@master
-
-pip install git+https://github.com/quantumlib/OpenFermion-Psi4.git@master
-
-All this version are aligned.
+### Citation   
+```
+@article{casares2021t,
+  title={T-Fermion: A non-Clifford gate cost assessment library of quantum phase estimation algorithms for quantum chemistry},
+  author={Casares, PAM and Campos, Roberto and Martin-Delgado, MA},
+  journal={arXiv preprint arXiv:2110.05899},
+  year={2021}
+}
+```   
+![UCM Logo](https://user-images.githubusercontent.com/20182937/138861126-660e548e-71fe-40ef-a8d3-f4385726f792.png)
+<img width="1059" alt="T-Fermion" src="https://user-images.githubusercontent.com/20182937/138862534-b84836fb-9be1-4690-817b-766c68fc2d3e.png">
