@@ -6,7 +6,7 @@ import importlib
 import sys
 from openfermion.transforms.opconversions.term_reordering import normal_ordered
 
-from openfermionpsi4 import run_psi4
+#from openfermionpsi4 import run_psi4
 from openfermionpyscf import run_pyscf
 from openfermionpyscf._run_pyscf import prepare_pyscf_molecule, compute_integrals, compute_scf
 
