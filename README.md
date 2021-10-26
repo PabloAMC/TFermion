@@ -4,7 +4,7 @@
 
 
 <div align="center">
-[![Paper](http://img.shields.io/badge/arxiv-quant.ph.2110.05899-B31B1B.svg)](https://arxiv.org/abs/2110.05899)
+![Paper](http://img.shields.io/badge/arxiv-quant.ph.2110.05899-B31B1B.svg)(https://arxiv.org/abs/2110.05899)
 </div>
  
 ## Description   
