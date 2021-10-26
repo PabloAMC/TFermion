@@ -4,7 +4,7 @@
 
 [![Paper](http://img.shields.io/badge/arxiv-quant.ph.2110.05899-B31B1B.svg)](https://arxiv.org/abs/2110.05899)
   
- <img width="1059" alt="T-Fermion" src="https://user-images.githubusercontent.com/20182937/138862534-b84836fb-9be1-4690-817b-766c68fc2d3e.png">
+ <img width="200" alt="T-Fermion" src="https://user-images.githubusercontent.com/20182937/138862534-b84836fb-9be1-4690-817b-766c68fc2d3e.png">
 
 <!--
 [![Conference](http://img.shields.io/badge/NeurIPS-2019-4b44ce.svg)](https://papers.nips.cc/book/advances-in-neural-information-processing-systems-31-2018)
@@ -21,7 +21,7 @@ Conference
 </div>
  
 ## Description   
-T-Fermion is a library that allows to calculate the expected cost T-gate cost of performing Phase Estimation with different methods, originally developed .
+T-Fermion is a library that allows to calculate the expected cost T-gate cost of performing Phase Estimation with different methods.
 
 ## How to install  
 First, install dependencies   
@@ -51,5 +51,6 @@ python main.py [molecule name] [method name]
   year={2021}
 }
 ```   
-![UCM Logo](https://user-images.githubusercontent.com/20182937/138861126-660e548e-71fe-40ef-a8d3-f4385726f792.png)
-
+<div align="center">    
+![UCM Logo](https://user-images.githubusercontent.com/20182937/138861126-660e548e-71fe-40ef-a8d3-f4385726f792.png| width=100)
+</div>
