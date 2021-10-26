@@ -50,5 +50,5 @@ python main.py [molecule name] [method name]
 }
 ```   
 <div align="center">    
-<img width="100" alt="UCM-Logo" https://user-images.githubusercontent.com/20182937/138861126-660e548e-71fe-40ef-a8d3-f4385726f792.png>
+<img width="100" alt="UCM-Logo" src="https://user-images.githubusercontent.com/20182937/138861126-660e548e-71fe-40ef-a8d3-f4385726f792.png">
 </div>
