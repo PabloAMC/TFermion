@@ -2,8 +2,9 @@
  
 # T-Fermion     
 
-[![Paper](http://img.shields.io/badge/arxiv-quant-ph:2110.05899.svg)](https://arxiv.org/abs/2110.05899)
-  <img width="1059" alt="T-Fermion" src="https://user-images.githubusercontent.com/20182937/138862534-b84836fb-9be1-4690-817b-766c68fc2d3e.png">
+[![Paper](http://img.shields.io/badge/arxiv-quant.ph.2110.05899-B31B1B.svg)](https://arxiv.org/abs/2110.05899)
+  
+ <img width="1059" alt="T-Fermion" src="https://user-images.githubusercontent.com/20182937/138862534-b84836fb-9be1-4690-817b-766c68fc2d3e.png">
 
 <!--
 [![Conference](http://img.shields.io/badge/NeurIPS-2019-4b44ce.svg)](https://papers.nips.cc/book/advances-in-neural-information-processing-systems-31-2018)
@@ -51,4 +52,4 @@ python main.py [molecule name] [method name]
 }
 ```   
 ![UCM Logo](https://user-images.githubusercontent.com/20182937/138861126-660e548e-71fe-40ef-a8d3-f4385726f792.png)
-<img width="1059" alt="T-Fermion" src="https://user-images.githubusercontent.com/20182937/138862534-b84836fb-9be1-4690-817b-766c68fc2d3e.png">
+
