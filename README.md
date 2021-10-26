@@ -1,9 +1,11 @@
 <div align="center">    
  <img width="500" alt="T-Fermion" src="https://user-images.githubusercontent.com/20182937/138862534-b84836fb-9be1-4690-817b-766c68fc2d3e.png">   
 
+ <pre>
  
  
  [![Paper](http://img.shields.io/badge/arxiv-quant.ph.2110.05899-B31B1B.svg)](https://arxiv.org/abs/2110.05899)
+ </pre>
 </div>
  
 ## Description   
@@ -37,6 +39,8 @@ python main.py [molecule name] [method name]
   year={2021}
 }
 ```   
+### Citation
+Developed by PAM Casares, R Campos and MA Martin-Delgado
 <div align="center">    
 <img width="100" alt="UCM-Logo" src="https://user-images.githubusercontent.com/20182937/138861126-660e548e-71fe-40ef-a8d3-f4385726f792.png">
 </div>
