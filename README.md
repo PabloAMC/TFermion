@@ -1,6 +1,6 @@
 <div align="center">    
  
- <img width="200" alt="T-Fermion" src="https://user-images.githubusercontent.com/20182937/138862534-b84836fb-9be1-4690-817b-766c68fc2d3e.png">   
+ <img width="500" alt="T-Fermion" src="https://user-images.githubusercontent.com/20182937/138862534-b84836fb-9be1-4690-817b-766c68fc2d3e.png">   
 
 [![Paper](http://img.shields.io/badge/arxiv-quant.ph.2110.05899-B31B1B.svg)](https://arxiv.org/abs/2110.05899)
 
