@@ -1,5 +1,5 @@
 <div align="center">    
- <img width="500" alt="T-Fermion" src="https://user-images.githubusercontent.com/20182937/138862534-b84836fb-9be1-4690-817b-766c68fc2d3e.png">   
+ <img width="500" alt="T-Fermion" src="https://user-images.githubusercontent.com/20182937/139062847-e45efa4c-b45c-4de4-9a0e-73bffbc2ff76.png">   
 
 
  
@@ -38,8 +38,12 @@ python main.py [molecule name] [method name]
   year={2021}
 }
 ```   
+### Contributors  
+[P. A. M. Casares](https://github.com/PabloAMC) (Universidad Complutense de Madrid) and [R Campos](https://github.com/roberCo) (Universidad Complutense de Madrid).
 
-Developed by PAM Casares, R Campos and MA Martin-Delgado
-<div align="center">    
-<img width="100" alt="UCM-Logo" src="https://user-images.githubusercontent.com/20182937/138861126-660e548e-71fe-40ef-a8d3-f4385726f792.png">
+
+<div align="center">
+
+<img width="300" alt="UCM-Logo" src="https://user-images.githubusercontent.com/20182937/139063409-d33a6078-9218-4a8d-8016-78fb93c0b483.jpg">
 </div>
+
