@@ -1,8 +1,5 @@
 <div align="center">    
  <img width="500" alt="T-Fermion" src="https://user-images.githubusercontent.com/20182937/139062847-e45efa4c-b45c-4de4-9a0e-73bffbc2ff76.png">   
-
-
- 
  
  [![Paper](http://img.shields.io/badge/arxiv-quant.ph:2110.05899-B31B1B.svg)](https://arxiv.org/abs/2110.05899)
 </div>
@@ -29,6 +26,7 @@ pip install openfermionpyscf
 python main.py [molecule name] [method name]
 ```
 
+## Authorship
 ### Citation   
 ```
 @article{casares2021t,
@@ -41,9 +39,9 @@ python main.py [molecule name] [method name]
 ### Contributors  
 [P. A. M. Casares](https://github.com/PabloAMC) (Universidad Complutense de Madrid) and [R Campos](https://github.com/roberCo) (Universidad Complutense de Madrid).
 
+### Disclaimer
+Copyrights 2021, Apache 2.0 license
 
 <div align="center">
-
-<img width="300" alt="UCM-Logo" src="https://user-images.githubusercontent.com/20182937/139063409-d33a6078-9218-4a8d-8016-78fb93c0b483.jpg">
+<img width="300" alt="UCM-Logo" src="https://user-images.githubusercontent.com/20182937/139064090-2f3ddc11-a140-44da-8339-0de2c86a6b7d.png">
 </div>
-
