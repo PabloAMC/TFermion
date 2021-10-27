@@ -40,7 +40,7 @@ python main.py [molecule name] [method name]
 [P. A. M. Casares](https://github.com/PabloAMC) (Universidad Complutense de Madrid) and [R Campos](https://github.com/roberCo) (Universidad Complutense de Madrid).
 
 ### Disclaimer
-Copyrights 2021, Apache 2.0 license
+Copyrights 2021, TFermion authors Apache 2.0 license
 
 <div align="center">
 <img width="300" alt="UCM-Logo" src="https://user-images.githubusercontent.com/20182937/139064090-2f3ddc11-a140-44da-8339-0de2c86a6b7d.png">
