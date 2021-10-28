@@ -5,7 +5,27 @@
 </div>
  
 ## Description   
-T-Fermion is a library that allows to calculate the expected cost T-gate cost of performing Phase Estimation with different methods.
+T-Fermion is a library that allows to calculate the expected cost T-gate cost of performing Quantum Phase Estimation with different methods for arbitrary molecules and Hamiltonians. It uses methods from [OpenFermion](https://github.com/quantumlib/OpenFermion) and [Pyscf](https://github.com/pyscf/pyscf) and interfaces with [PubChem](https://pubchem.ncbi.nlm.nih.gov/) to download the corresponding molecular data. 
+
+You can read our paper at [T-Fermion: A non-Clifford gate cost assessment library of quantum phase estimation algorithms for quantum chemistry](https://arxiv.org/abs/2110.05899).
+
+The current implemented methods (we list the arxiv papers) are:
+- `qdrift`, the qDRIFT method from [https://arxiv.org/abs/1811.08017](https://arxiv.org/abs/1811.08017).
+- `rand_ham`, the Random Hamiltonian simulation method from [https://arxiv.org/abs/1811.08017](https://arxiv.org/abs/1811.08017).
+- `taylor_naive`, the Naïve Taylorization method from from [https://arxiv.org/abs/1506.01020](https://arxiv.org/abs/1506.01020).
+- `taylor_on_the_fly`, the Taylor on-the-fly method from [https://arxiv.org/abs/1506.01020](https://arxiv.org/abs/1506.01020).
+- `configuration_interaction`, the method from [https://arxiv.org/abs/1506.01029](https://arxiv.org/abs/1506.01029).
+- `low_depth_trotter`, the Trotterization method in plane waves from [https://arxiv.org/abs/1706.00023](https://arxiv.org/abs/1706.00023).
+- `low_depth_taylor`, the Naïve Taylorization method in plane waves from [https://arxiv.org/abs/1706.00023](https://arxiv.org/abs/1706.00023).
+- `low_depth_taylor_on_the_fly`, the on-the-fly Taylorization method in plane waves from [https://arxiv.org/abs/1706.00023](https://arxiv.org/abs/1706.00023).
+- `linear_t`, the method from [https://arxiv.org/abs/1805.03662](https://arxiv.org/abs/1805.03662).
+- `sparsity_low_rank`, the method from [https://arxiv.org/abs/1902.02134](https://arxiv.org/abs/1902.02134).
+- `interaction_picture`, the method from [https://arxiv.org/abs/1805.00675](https://arxiv.org/abs/1805.00675).
+
+Other methods not yet implemented include:
+- The double rank factorization from [https://arxiv.org/abs/2007.14460](https://arxiv.org/abs/2007.14460).
+- The tensor hypercontraction method from [https://arxiv.org/abs/2011.03494](https://arxiv.org/abs/2011.03494).
+- The qubitization and interaction picture methods from [https://arxiv.org/abs/1807.09802](https://arxiv.org/abs/1807.09802) and [https://arxiv.org/abs/2105.12767](https://arxiv.org/abs/2105.12767).
 
 ## How to install  
 First, install dependencies   
