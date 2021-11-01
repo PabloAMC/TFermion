@@ -1,0 +1,10 @@
+{
+    "basis": "6-31G",
+    "optimization_method": "SLSQP",
+    "runs": 1000, 
+    "h_norm_lambda_ratio": 0.7,
+    "gauss2plane_overhead": 100,
+    "xmax_mult_factor_taylor": 1,
+    "molecules": ["h2", "hydrofluoric acid", "water", "ammonia", "methane", "O2", "CO2", "NaCl"]
+}
+
