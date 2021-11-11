@@ -146,9 +146,4 @@ class Plane_waves_methods:
         
         return result
 
-    def f(self, x, y):
-            return 1/(x**2 + y**2)
-    def I(self, N0):
-        return integrate.nquad(self.tools.f, [[1, N0],[1, N0]])[0]
-
     def quadratic_sum(self, N): return N*(N+1)*(2*N + 1)**3
