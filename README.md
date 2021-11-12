@@ -46,6 +46,11 @@ pip install openfermionpyscf
 python main.py [molecule name] [method name]
 ```
 
+## Contributing
+We would love T-Fermion to become an useful tool for reseachers. If you want to join this mission, drop me a line at pabloamo@ucm.es.
+Things that can be done include implementing new methods, or counting qubits. Also, some adaptation for periodic systems might be useful.
+
+
 ## Authorship
 ### Citation   
 ```
