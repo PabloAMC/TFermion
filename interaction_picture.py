@@ -116,69 +116,15 @@ class Interaction_picture:
         '''
 
         epsilon_PEA = epsilons[0]
-        epsilon_M = epsilons[1]
-        epsilon_R = epsilons[2]
-        epsilon_T = epsilons[3]
-        #epsilon_br = epsilons[4] # This is not an error term, but we'll have to optimize over br
 
-        n_p = np.ceil(np.log2(N**(1/3) + 1))
+        # calculate parameters
         a = 3 if amplitude_amplification else 1
 
-        #Ps(n,br) #eq 59
-        def Ps(n,br):
-            theta = 2*np.pi/(2**br)*np.round((2**br)/2*np.pi*np.arcsin(np.sqrt(2**(np.ceil(np.log2(n)))/(4*n)))) #eq 60
-            braket = (1+(2-4*n/(2**np.ceil(np.log2(n)))*(np.sin(theta))**2))**2 + (np.sin(2*theta))**2
-            return n/(2**np.ceil(np.log2(n)))*braket
-
-        Peq = Ps(3,8)*Ps(eta+2*lambda_zeta,br)*(Ps(eta, br))**2
-
-        # Lambda values. See eq 25
-        # for lambda_nu see eq F6 in Low-depth article and D18 in T-Fermion
-        lambda_nu = 4*np.pi*(np.sqrt(3)*N**(1/3)/2 - 1) + 3 - 3/N**(1/3) + 3*self.tools.I(N**(1/3))
-        lambda_U = eta*lambda_zeta*lambda_nu/(np.pi*Omega**(1/3))
-        lambda_V = eta*(eta-1)*lambda_nu/(2*np.pi*Omega**(1/3))
-        lambda_prime_T = 6*eta * np.pi**2 * 2**(2*n_p-2) / (Omega**(2/3)) #eq 71
-
-        n_eta = np.ceil(np.log2(eta))
-        n_eta_zeta = np.ceil(np.log2(eta+2*lambda_zeta))
-
-        # n_M
-        n_M = np.ceil(np.log2( (2*eta)*(eta-1+2*lambda_zeta)*(7*2**(n_p+1)-9*n_p+11-3*2**(-n_p))/(epsilon_M*np.pi*Omega**(1/3)) ))
-        M  = 2**n_M
-
-        # n_R
-        suma1_nu = 0
-        B_mus = [ [] for _ in range((n_p-1)) ]
-        for nu in itertools.product(range(-2**(n_p), 2**(n_p)+1), repeat = 3):
-            nu = np.array(nu)
-            if list(nu) != [0,0,0]:
-                suma1_nu += 1/np.linalg.norm(nu)
-                mu = np.floor(np.log2(np.max(nu)))
-                B_mus[mu].append(nu)
-        n_R = np.ceil(np.log2( eta*lambda_zeta/(epsilon_R*Omega**(1/3))*suma1_nu ))
-
-        # n_T
-        p_nu = 0
-        for mu in range((n_p-1)):
-            for nu in B_mus[mu]:
-                p_nu += np.ceil(M*((2**mu)/np.linalg.norm(nu))**2)/(M*2**(2*mu+2)*2**(n_p+1))
-        if amplitude_amplification:
-            lambda_value = np.max(lambda_prime_T+lambda_U+lambda_V, (lambda_U+lambda_V/(1-1/eta))/p_nu)/Peq
-        else:
-            p_nu_amp = (np.sin(3*np.arcsin(np.sqrt(p_nu))))**2
-            lambda_value = np.max(lambda_prime_T+lambda_U+lambda_V, (lambda_U+lambda_V/(1-1/eta))/p_nu_amp)/Peq
-        n_T = np.ceil(np.log2( np.pi*lambda_value/epsilon_T ))
-
-        def Er(x): 
-            logx = np.log2(x)
-            fres = 2**(np.floor(logx/2)) + np.ceil(2**(-np.floor(logx/2))*x)
-            cres = 2**(np.ceil(logx/2)) + np.ceil(2**(-np.ceil(logx/2))*x)
-            return min(fres, cres)
-
-
+        n_p, n_eta, n_eta_zeta, n_M, n_R, n_T, lambda_value = self.calculate_number_bits_parameters(epsilons, br, N, eta, lambda_zeta, Omega, amplitude_amplification)
+        
         # todo: do we want to use the multiplier indicated at the end?
         cost = [2*(n_T + 4*n_eta_zeta + 2*br-12) + 14*n_eta +8*br -36+a*(3*n_p**2+15*n_p-7+4*n_M*(n_p+1))
-        +lambda_zeta+Er(lambda_zeta) + 2*(2*n_p + 2*br-7) + 12*eta*n_p+5*(n_p-1) + 2 + 24*n_p+6*n_p*n_R +18
+        +lambda_zeta+self.Er(lambda_zeta) + 2*(2*n_p + 2*br-7) + 12*eta*n_p+5*(n_p-1) + 2 + 24*n_p+6*n_p*n_R +18
         +n_eta_zeta +2*n_eta + 6*n_p + n_M+16]*np.ceil(np.pi*lambda_value/(2*epsilon_PEA))
 
         # Remember: the multiplier by 4 is Toffoli -> T gate
@@ -322,3 +268,73 @@ class Interaction_picture:
 
         cost = r*(exp_T + TDS)
         return cost + antisymmetrization
+
+    def Ps(n,br): #eq 59 from https://journals.aps.org/prxquantum/pdf/10.1103/PRXQuantum.2.040332
+
+            theta = 2*np.pi/(2**br)*np.round((2**br)/2*np.pi*np.arcsin(np.sqrt(2**(np.ceil(np.log2(n)))/(4*n)))) #eq 60
+            braket = (1+(2-4*n/(2**np.ceil(np.log2(n)))*(np.sin(theta))**2))**2 + (np.sin(2*theta))**2
+            
+            return n/(2**np.ceil(np.log2(n)))*braket
+
+    def calculate_lambdas(self, N, eta, lambda_zeta, Omega, n_p):
+
+        # for lambda_nu see eq F6 in Low-depth article and D18 in T-Fermion
+        lambda_nu = 4*np.pi*(np.sqrt(3)*N**(1/3)/2 - 1) + 3 - 3/N**(1/3) + 3*self.tools.I(N**(1/3))
+        lambda_U = eta*lambda_zeta*lambda_nu/(np.pi*Omega**(1/3))
+        lambda_V = eta*(eta-1)*lambda_nu/(2*np.pi*Omega**(1/3))
+        lambda_prime_T = 6*eta * np.pi**2 * 2**(2*n_p-2) / (Omega**(2/3)) #eq 71 https://journals.aps.org/prxquantum/pdf/10.1103/PRXQuantum.2.040332
+
+        return lambda_U, lambda_V, lambda_prime_T
+
+    def calculate_number_bits_parameters(self, epsilons, br, N, eta, lambda_zeta, Omega, amplitude_amplification):
+
+        _, epsilon_M, epsilon_R, epsilon_T = epsilons
+
+        # n_p
+        n_p = np.ceil(np.log2(N**(1/3) + 1))
+        Peq = self.Ps(3,8)*self.Ps(eta+2*lambda_zeta,br)*(self.Ps(eta, br))**2
+        
+        # Lambda values. See eq 25 from https://journals.aps.org/prxquantum/pdf/10.1103/PRXQuantum.2.040332
+        lambda_U, lambda_V, lambda_prime_T = self.calculate_lambdas(N, eta, lambda_zeta, Omega, n_p)
+
+        # n_eta
+        n_eta = np.ceil(np.log2(eta))
+        
+        # n_eta_zeta
+        n_eta_zeta = np.ceil(np.log2(eta+2*lambda_zeta))
+        
+        # n_M
+        n_M = np.ceil(np.log2( (2*eta)*(eta-1+2*lambda_zeta)*(7*2**(n_p+1)-9*n_p+11-3*2**(-n_p))/(epsilon_M*np.pi*Omega**(1/3))))
+
+        # n_R
+        suma1_nu = 0
+        B_mus = [ [] for _ in range((n_p-1)) ]
+        for nu in itertools.product(range(-2**(n_p), 2**(n_p)+1), repeat = 3):
+            nu = np.array(nu)
+            if list(nu) != [0,0,0]:
+                suma1_nu += 1/np.linalg.norm(nu)
+                mu = np.floor(np.log2(np.max(nu)))
+                B_mus[mu].append(nu)
+        n_R = np.ceil(np.log2( eta*lambda_zeta/(epsilon_R*Omega**(1/3))*suma1_nu ))
+
+        # n_T
+        M  = 2**n_M
+        p_nu = 0
+        for mu in range((n_p-1)):
+            for nu in B_mus[mu]:
+                p_nu += np.ceil(M*((2**mu)/np.linalg.norm(nu))**2)/(M*2**(2*mu+2)*2**(n_p+1))
+        if amplitude_amplification:
+            lambda_value = np.max(lambda_prime_T+lambda_U+lambda_V, (lambda_U+lambda_V/(1-1/eta))/p_nu)/Peq
+        else:
+            p_nu_amp = (np.sin(3*np.arcsin(np.sqrt(p_nu))))**2
+            lambda_value = np.max(lambda_prime_T+lambda_U+lambda_V, (lambda_U+lambda_V/(1-1/eta))/p_nu_amp)/Peq
+        n_T = np.ceil(np.log2( np.pi*lambda_value/epsilon_T ))
+
+
+        return n_eta, n_eta_zeta, n_M, n_R, n_T, lambda_value
+
+    def Er(x): 
+        logx = np.log2(x)
+        fres = 2**(np.floor(logx/2)) + np.ceil(2**(-np.floor(logx/2))*x)
+        cres = 2**(np.ceil(logx/2)) + np.ceil(2**(-np.ceil(logx/2))*x)
+        return min(fres, cres)
