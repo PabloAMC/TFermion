@@ -304,7 +304,7 @@ class Cost_calculator:
                         H_norm_lambda_ratio,
                         sparsity_d)]
         
-        elif method == 'interaction_picture' or method == 'sublinear_scaling':
+        elif method == 'interaction_picture' or method == 'sublinear_scaling' or method == 'first_quantization_qubitization':
 
             methods_interaction_picture = interaction_picture.Interaction_picture(self.tools)
 
@@ -369,6 +369,32 @@ class Cost_calculator:
                         lambda_value_T, 
                         lambda_value_U_V,
                         J)]
+
+            elif method == 'first_quantization_qubitization':
+
+                grid_length = int(round((self.molecule.N * self.tools.config_variables['gauss2plane_overhead']) ** (1/3)))
+                if not hasattr(self.molecule, 'eta') or not hasattr(self.molecule, 'Omega') or not hasattr(self.molecule, 'N_grid'):
+                    grid = self.molecule.build_grid(grid_length)
+
+                N_grid = self.molecule.N_grid
+                eta = self.molecule.eta
+                lambda_zeta = self.molecule.lambda_zeta # for Li2FeSiO4 is 78
+                Omega = self.molecule.Omega
+                amplitude_amplification = True
+
+                arguments = (N_grid, eta, lambda_zeta, Omega, amplitude_amplification)
+
+                # generate value for errors epsilon_S, epsilon_HS, epsilon_PEA, epsilon_mu, epsilon_M_0, epsilon_R
+                for _ in range(self.runs):
+                    optimized_errors = self.calculate_optimized_errors(4, methods_interaction_picture.first_quantization_qubitization, arguments)
+
+                    self.costs['first_quantization_qubitization'] += [methods_interaction_picture.first_quantization_qubitization(
+                        optimized_errors.x,
+                        N_grid, 
+                        eta, 
+                        lambda_zeta, 
+                        Omega,
+                        amplitude_amplification)]
 
         else:
             print('<*> ERROR: method', method, 'not implemented or not existing')
