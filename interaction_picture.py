@@ -101,7 +101,7 @@ class Interaction_picture:
         cost = r*(exp_U_V + TDS)
         return cost
 
-    def first_quantization_qubitization(self, epsilons, N, eta, lambda_zeta, Omega, amplitude_amplification = True):
+    def first_quantization_qubitization(self, optimized_parameters, N, eta, lambda_zeta, Omega, amplitude_amplification = True):
         '''
         Based on the qubitization method from Fault-Tolerant Quantum Simulations of Chemistry in First Quantization
 
@@ -115,12 +115,13 @@ class Interaction_picture:
         return Toffoli gate cost.
         '''
 
-        epsilon_PEA = epsilons[0]
+        epsilon_PEA = optimized_parameters[0]
+        br = optimized_parameters[4]
 
         # calculate parameters
         a = 3 if amplitude_amplification else 1
 
-        n_p, n_eta, n_eta_zeta, n_M, n_R, n_T, lambda_value = self.calculate_number_bits_parameters(epsilons, br, N, eta, lambda_zeta, Omega, amplitude_amplification)
+        n_p, n_eta, n_eta_zeta, n_M, n_R, n_T, lambda_value = self.calculate_number_bits_parameters(optimized_parameters, br, N, eta, lambda_zeta, Omega, amplitude_amplification)
         
         # todo: do we want to use the multiplier indicated at the end?
         cost = [2*(n_T + 4*n_eta_zeta + 2*br-12) + 14*n_eta +8*br -36+a*(3*n_p**2+15*n_p-7+4*n_M*(n_p+1))
@@ -286,9 +287,9 @@ class Interaction_picture:
 
         return lambda_U, lambda_V, lambda_prime_T
 
-    def calculate_number_bits_parameters(self, epsilons, br, N, eta, lambda_zeta, Omega, amplitude_amplification):
+    def calculate_number_bits_parameters(self, optimized_parameters, br, N, eta, lambda_zeta, Omega, amplitude_amplification):
 
-        _, epsilon_M, epsilon_R, epsilon_T = epsilons
+        _, epsilon_M, epsilon_R, epsilon_T = optimized_parameters
 
         # n_p
         n_p = np.ceil(np.log2(N**(1/3) + 1))

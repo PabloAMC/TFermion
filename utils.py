@@ -180,7 +180,7 @@ class Utils():
     
 
     # It is necessary to generate two constraints: one linear (each value should be in the range greather than 0 and chemical_accuracy) and one non linear (errors sum should be in the range 0 and chemical accuracy)
-    def generate_constraints(self, number_errors):
+    def generate_error_constraints(self, number_errors):
 
         
         # In the linear constraint it is necessary to define the shape of the constraint. For example, if there is three errors:
