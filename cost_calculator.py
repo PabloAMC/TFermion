@@ -397,7 +397,7 @@ class Cost_calculator:
                 arguments = (N_grid, eta, lambda_zeta, Omega, amplitude_amplification)
 
                 # generate value for errors epsilon_S, epsilon_HS, epsilon_PEA, epsilon_mu, epsilon_M_0, epsilon_R
-                parameters_to_optimize = ['epsilon_S', 'epsilon_HS', 'epsilon_PEA', 'epsilon_mu', 'epsilon_M_0', 'epsilon_R']
+                parameters_to_optimize = ['epsilon_S', 'epsilon_HS', 'epsilon_PEA', 'epsilon_mu', 'epsilon_M_0', 'epsilon_R', 'br']
                 for _ in range(self.runs):
                     optimized_parameters = self.calculate_optimized_parameters(parameters_to_optimize, methods_interaction_picture.first_quantization_qubitization, arguments)
 
@@ -418,8 +418,7 @@ class Cost_calculator:
 
     def calculate_optimized_parameters(self, parameters_to_optimize, cost_method, arguments):
 
-        constraints = self.tools.generate_error_constraints(number_errors)
-        initial_values = self.tools.generate_initial_error_values(number_errors)
+        constraints, initial_values = self.tools.generate_optimization_conditions(parameters_to_optimize)
 
         optimized_parameters = minimize(
             fun=cost_method,

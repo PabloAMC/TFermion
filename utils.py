@@ -179,6 +179,30 @@ class Utils():
         return 8*n
     
 
+    def generate_optimization_conditions(self, parameters_to_optimize):
+
+        BR_INITIAL_VALUE = 7
+        constraints = []
+        initial_values = []
+
+        error_parameters = 0
+        for param in parameters_to_optimize:
+
+            if 'epsilon' in param:
+                error_parameters += 1
+            
+            elif 'br' == param:
+                constraints.append(self.generate_br_constraint())
+                initial_values.append(BR_INITIAL_VALUE)
+
+
+        if error_parameters > 0:
+
+            constraints.append(self.generate_error_constraints(error_parameters))
+            initial_values.append(self.generate_initial_error_values(error_parameters))
+
+        return constraints, initial_values
+
     # It is necessary to generate two constraints: one linear (each value should be in the range greather than 0 and chemical_accuracy) and one non linear (errors sum should be in the range 0 and chemical accuracy)
     def generate_error_constraints(self, number_errors):
 
