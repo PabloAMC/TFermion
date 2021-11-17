@@ -10,6 +10,8 @@ from scipy.optimize import NonlinearConstraint, LinearConstraint
 from itertools import groupby
 import os
 
+BR_INITIAL_VALUE = 7
+
 class Utils():
 
     def __init__(self, config_path=''):
@@ -181,7 +183,6 @@ class Utils():
 
     def generate_optimization_conditions(self, parameters_to_optimize):
 
-        BR_INITIAL_VALUE = 7
         constraints = []
         initial_values = []
 
@@ -228,6 +229,13 @@ class Utils():
         nonlinear_constraint = NonlinearConstraint(fun=self.sum_constraint, lb=0, ub=CHEMICAL_ACCURACY)
 
         return linear_constraint, nonlinear_constraint
+
+    def generate_br_constraint():
+
+        lower_bound = BR_INITIAL_VALUE/2
+        upper_bound = BR_INITIAL_VALUE*2
+
+        return LinearConstraint(A=[1], lb=lower_bound, up=upper_bound)
 
     def generate_initial_error_values(self, number_errors):
 
