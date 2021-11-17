@@ -309,12 +309,12 @@ class Interaction_picture:
 
         # n_R
         suma1_nu = 0
-        B_mus = [ [] for _ in range(0, n_p+2) ]
+        B_mus = [ [] for _ in range(2, n_p+4) ]
         for nu in itertools.product(range(-2**(n_p), 2**(n_p)+1), repeat = 3):
             nu = np.array(nu)
             if list(nu) != [0,0,0]:
                 suma1_nu += 1/np.linalg.norm(nu)
-                mu = int(np.floor(np.log2(np.max(abs(nu)))))
+                mu = int(np.floor(np.log2(np.max(abs(nu)))))+2
                 B_mus[mu].append(nu)
         n_R = np.ceil(np.log2( eta*lambda_zeta/(epsilon_R*Omega**(1/3))*suma1_nu ))
 
