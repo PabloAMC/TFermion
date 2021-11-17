@@ -8,11 +8,11 @@ from molecule import Molecule
 from molecule import Molecule_Hamiltonian
 import numpy as np
 
-print('\n###################################################################')
-print('##                             QPHASE                            ##')
-print('##                                                               ##')
-print('##      We will see what it is that (Not Google paper copy)      ##')
-print('###################################################################\n')
+print('\n################################################################################################')
+print('##                                          T-FERMION                                         ##')
+print('##                                                                                            ##')
+print('## Tool to calculate the T gate cost of a quantum method for energy calculation of a molecule ##')
+print('################################################################################################\n')
 
 start_time = time.time()
 
