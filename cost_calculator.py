@@ -9,11 +9,10 @@ from scipy.optimize import minimize, NonlinearConstraint
 
 class Cost_calculator:
 
-    def __init__(self, molecule, tools, molecule_info_type):
+    def __init__(self, molecule, tools):
 
         self.molecule = molecule
         self.tools = tools
-        self.molecule_info_type = molecule_info_type
         self.costs = {'qdrift': [],
                     'rand_ham': [],
                     'taylor_naive': [],
@@ -24,14 +23,15 @@ class Cost_calculator:
                     'low_depth_taylor_on_the_fly': [],
                     'linear_t': [],
                     'sparsity_low_rank': [],
-                    'interaction_picture': []
+                    'interaction_picture': [],
+                    'first_quantization_qubitization' : []
                     }
         self.basis = self.tools.config_variables['basis']
         self.runs = self.tools.config_variables['runs']
 
     def calculate_cost(self, method): 
 
-        if self.molecule_info_type == 'name':
+        if self.molecule.molecule_info_type == 'name':
             
             json_name = str(self.molecule.molecule_info)+ '_' +  str(self.basis)
             self.molecule.load(json_name = 'parameters/'+json_name+'_'+str(self.tools.config_variables['gauss2plane_overhead']))
@@ -384,7 +384,7 @@ class Cost_calculator:
 
             elif method == 'first_quantization_qubitization':
 
-                grid_length = int(round((self.molecule.N * self.tools.config_variables['gauss2plane_overhead']) ** (1/3)))
+                # grid_length = int(round((self.molecule.N * self.tools.config_variables['gauss2plane_overhead']) ** (1/3)))
                 if not hasattr(self.molecule, 'eta') or not hasattr(self.molecule, 'Omega') or not hasattr(self.molecule, 'N_grid'):
                     grid = self.molecule.build_grid(grid_length)
 
@@ -396,8 +396,8 @@ class Cost_calculator:
 
                 arguments = (N_grid, eta, lambda_zeta, Omega, amplitude_amplification)
 
-                # generate value for errors epsilon_S, epsilon_HS, epsilon_PEA, epsilon_mu, epsilon_M_0, epsilon_R
-                parameters_to_optimize = ['epsilon_S', 'epsilon_HS', 'epsilon_PEA', 'epsilon_mu', 'epsilon_M_0', 'epsilon_R', 'br']
+                # generate value for errors epsilon_PEA, epsilon_M, epsilon_R, epsilon_T, br
+                parameters_to_optimize = ['epsilon_PEA', 'epsilon_M', 'epsilon_R', 'epsilon_T', 'br']
                 for _ in range(self.runs):
                     optimized_parameters = self.calculate_optimized_parameters(parameters_to_optimize, methods_interaction_picture.first_quantization_qubitization, arguments)
 

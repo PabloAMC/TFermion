@@ -654,6 +654,7 @@ class Molecule:
             if 'lambda_value_grid' in molecule_properties.keys(): self.lambda_value_grid = molecule_properties["lambda_value_grid"]
             if 'Lambda_value_grid' in molecule_properties.keys(): self.Lambda_value_grid = molecule_properties["Lambda_value_grid"]
             if 'lambda_value_low_rank' in molecule_properties.keys(): self.lambda_value_low_rank = molecule_properties["lambda_value_low_rank"]
+            if 'lambda_zeta' in molecule_properties.keys(): self.lambda_zeta = molecule_properties["lambda_zeta"]
             if 'Gamma_grid' in molecule_properties.keys(): self.Gamma_grid = molecule_properties["Gamma_grid"]
             if 'eta' in molecule_properties.keys(): self.eta = molecule_properties["eta"]
             if 'Omega' in molecule_properties.keys(): self.Omega = molecule_properties["Omega"]

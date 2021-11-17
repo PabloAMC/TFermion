@@ -85,7 +85,7 @@ else:
     #molecule.low_rank_approximation(occupied_indices = [0,1,2], active_indices = [3,4], virtual_indices = [5,6], sparsify = True)
     #ne_act_cas, n_mocore, n_mocas, n_movir = molecule.active_space(ao_labels=['O 2pz'])
 
-    c_calculator = cost_calculator.Cost_calculator(molecule, tools, molecule_info_type)
+    c_calculator = cost_calculator.Cost_calculator(molecule, tools)
     c_calculator.calculate_cost(args.method)
     median = np.nanmedian(c_calculator.costs[args.method])
 
