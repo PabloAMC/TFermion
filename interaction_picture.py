@@ -123,9 +123,98 @@ class Interaction_picture:
         n_p, n_eta, n_eta_zeta, n_M, n_R, n_T, lambda_value = self.calculate_number_bits_parameters(epsilons, br, N, eta, lambda_zeta, Omega, amplitude_amplification)
         
         # todo: do we want to use the multiplier indicated at the end?
-        cost = [2*(n_T + 4*n_eta_zeta + 2*br-12) + 14*n_eta +8*br -36+a*(3*n_p**2+15*n_p-7+4*n_M*(n_p+1))
-        +lambda_zeta+self.Er(lambda_zeta) + 2*(2*n_p + 2*br-7) + 12*eta*n_p+5*(n_p-1) + 2 + 24*n_p+6*n_p*n_R +18
-        +n_eta_zeta +2*n_eta + 6*n_p + n_M+16]*np.ceil(np.pi*lambda_value/(2*epsilon_PEA))
+        #cost = [2*(n_T + 4*n_eta_zeta + 2*br-12) + 14*n_eta +8*br -36+a*(3*n_p**2+15*n_p-7+4*n_M*(n_p+1))
+        #+lambda_zeta+self.Er(lambda_zeta) + 2*(2*n_p + 2*br-7) + 12*eta*n_p+5*(n_p-1) + 2 + 24*n_p+6*n_p*n_R +18
+        #+n_eta_zeta +2*n_eta + 6*n_p + n_M+16]*np.ceil(np.pi*lambda_value/(2*epsilon_PEA))
+
+        # Section A
+        ## weigthings between T and U+V, and U and V.
+        weight_T_UV = n_T-3
+
+        eq_superp_T_UV = 3*n_eta_zeta + 2*br - 9
+        ineq_test = n_eta_zeta - 1
+        weight_U_V = eq_superp_T_UV +  ineq_test + 1
+
+        prep_qubit_TUV = weight_T_UV + weight_U_V
+
+        ## superposition between i and j
+        bin_super = 3*n_eta + 2*br - 9
+        equality_test = n_eta
+        inv_equality_test = n_eta
+        inv_bin_super = 3*n_eta + 2*br - 9
+
+        prep_i_j = 2*bin_super + equality_test + inv_equality_test + 2*inv_bin_super
+
+        ## success check
+        success_check = 3
+
+        # Section B: Qubitization of T 
+        
+        ## Superposition w,r,s
+        sup_w = 3*2 + 2*br - 9 # = 3*n + 2*br - 9 with n = 2. br is suggested to be 8
+        sup_r = n_p - 2
+        prep_wrs_T = sup_w + 2*sup_r # 2 for r and s
+
+        ## Sel T
+        control_swap_i_j_ancilla = 2*2*(eta-2)
+        swap_i_j_ancilla = 2*2*3*eta*n_p # 3 components, 2 for i and j, 2 for in and out
+        cswap_p_q = control_swap_i_j_ancilla + swap_i_j_ancilla
+
+        control_copy_w = 3*(n_p-1)
+        copy_r = n_p - 1
+        copy_s = n_p - 1
+        control_phase = 1
+        erasure = 0
+        control_qubit_T = 1
+        Sel_T = control_copy_w + copy_r + copy_s + control_phase + erasure + control_qubit_T
+
+        # Section C: Preparation U and V
+        nested_boxes = n_p-1
+        coord_prep = 3*(n_p-1)
+        minus_zero_flag = 3*n_p +2
+        inside_box_test = 3*n_p
+
+        sum_squares = 3*n_p**2-n_p-1
+        multiplication = 2*n_M*(2*n_p+2)-n_M
+        comparison = 2*n_p + n_M + 2
+        success_flag = 3
+
+        inversion_c_hadamards = nested_boxes + coord_prep
+
+        Prep_1_nu_and_inv = nested_boxes + coord_prep + minus_zero_flag + inside_box_test + sum_squares + multiplication + comparison + success_flag + inversion_c_hadamards
+
+        QROM_Rl = lambda_zeta + self.Er(lambda_zeta)
+
+        # Section D: Sel U and V
+
+        swap_i_j_ancilla = 2*2*3*eta*n_p # 3 components, 2 for i and j, 2 for in and out  (Duplicated from Sel T)
+
+        ## Controlled sum and substraction with change from signed integer to 2's complement
+        signed2twos = 2*3*(n_p-2) # the 2 is for p and q, the 3 for their components
+        addition = n_p+1
+        controlled = n_p+1
+        controlled_addition = 2*3*(addition + controlled)
+        twos2signed = 2*3*(n_p) #Same as above, now with two extra qubits
+        controlled_sum_substraction_nu = signed2twos + controlled_addition + twos2signed
+
+        # No control-Z on |+> on Sel
+
+        if n_R > n_p: # eq 97
+            U_phase = 3*(2*n_p*n_R-n_p*(n_p+1)-1)
+        else:
+            U_phase = 3*n_R*(n_R-1)
+
+        # Total cost of Prepare and unprepare
+        Prep = 2*prep_qubit_TUV + prep_i_j + success_check + 2*prep_wrs_T + a*Prep_1_nu_and_inv + QROM_Rl
+
+        # Total cost of Select
+        Sel = cswap_p_q + Sel_T + controlled_sum_substraction_nu + U_phase
+
+        # Rotation in definition of Q
+        Rot = n_eta_zeta + 2*n_eta + 6*n_p + n_M + 16
+
+        # Final cost
+        cost = np.ceil(4.7*lambda_value/epsilon_PEA)*(Prep + Sel + Rot)
 
         # Remember: the multiplier by 4 is Toffoli -> T gate
         return 4*cost
@@ -320,9 +409,9 @@ class Interaction_picture:
         # n_T
         M  = 2**n_M
         p_nu = 0
-        for mu in range((n_p-1)):
+        for mu in range(2,(n_p+2)):
             for nu in B_mus[mu]:
-                p_nu += np.ceil(M*((2**mu)/np.linalg.norm(nu))**2)/(M*2**(2*mu+2)*2**(n_p+1))
+                p_nu += np.ceil(M*((2**mu)/np.linalg.norm(nu))**2)/(M*2**(2*mu)*2**(n_p+1))
         if amplitude_amplification:
             lambda_value = np.max(lambda_prime_T+lambda_U+lambda_V, (lambda_U+lambda_V/(1-1/eta))/p_nu)/Peq
         else:
