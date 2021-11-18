@@ -10,6 +10,8 @@ from scipy.optimize import NonlinearConstraint, LinearConstraint
 from itertools import groupby
 import os
 
+BR_INITIAL_VALUE = 7
+
 class Utils():
 
     def __init__(self, config_path=''):
@@ -179,38 +181,63 @@ class Utils():
         return 8*n
     
 
-    # It is necessary to generate two constraints: one linear (each value should be in the range greather than 0 and chemical_accuracy) and one non linear (errors sum should be in the range 0 and chemical accuracy)
-    def generate_constraints(self, number_errors):
+    def generate_optimization_conditions(self, parameters_to_optimize):
 
+        constraints = []
+        initial_values = []
+
+        constraints = [self.generate_linear_constraints(parameters_to_optimize)] + [self.generate_non_linear_constraint()]
+
+        initial_values += self.generate_initial_error_values(parameters_to_optimize)
+
+        return constraints, initial_values
+
+    def generate_linear_constraints(self, parameters_to_optimize):
+
+        min_values_linear_constraint = []
+        max_values_linear_constraint = []
         
-        # In the linear constraint it is necessary to define the shape of the constraint. For example, if there is three errors:
+        # In the shape constraint it is necessary to define the shape of the constraint. For example, if there is three errors:
         # 0 > 1*e_1 + 0*e_2 + 0*e_3 > CHEMICAL ACCURACY     [  1,  0,  0] [e_1]
         # 0 > 0*e_1 + 1*e_2 + 0*e_3 > CHEMICAL ACCURACY     [  0,  1,  0] [e_2]
         # 0 > 0*e_1 + 0*e_2 + 1*e_3 > CHEMICAL ACCURACY     [  0,  0,  1] [e_3]
-        
-        shape_linear_constraint = []
-        for index in range(number_errors):
-            row_linear_constraint = []
+        shape_constraint = np.diag(np.full(len(parameters_to_optimize),1))
 
-            for index_row in range(number_errors):
-                row_linear_constraint.append(1) if index_row == index else row_linear_constraint.append(0)
+        for param in parameters_to_optimize:
 
-            shape_linear_constraint.append(row_linear_constraint)
+            if 'epsilon' in param:
+                min_values_linear_constraint.append(1e-10)
+                max_values_linear_constraint.append(CHEMICAL_ACCURACY)
 
-        min_values_linear_constraint = [1e-10 for _ in range(number_errors)]
-        max_values_linear_constraint = [CHEMICAL_ACCURACY for _ in range(number_errors)]
+            elif 'br' == param:
+                min_values_linear_constraint.append(BR_INITIAL_VALUE/2)
+                max_values_linear_constraint.append(BR_INITIAL_VALUE*2)
 
-        linear_constraint = LinearConstraint(A=shape_linear_constraint, lb=min_values_linear_constraint, ub=max_values_linear_constraint)
+        return LinearConstraint(A=shape_constraint, lb=min_values_linear_constraint, ub=max_values_linear_constraint)
+
+    # It is necessary to generate two constraints: one linear (each value should be in the range greather than 0 and chemical_accuracy) and one non linear (errors sum should be in the range 0 and chemical accuracy)
+    def generate_non_linear_constraint(self):
+
         nonlinear_constraint = NonlinearConstraint(fun=self.sum_constraint, lb=0, ub=CHEMICAL_ACCURACY)
 
-        return linear_constraint, nonlinear_constraint
+        return nonlinear_constraint
 
-    def generate_initial_error_values(self, number_errors):
+    def generate_br_constraint(self):
 
-        maximum_value = CHEMICAL_ACCURACY/number_errors
-        minimum_value = maximum_value/2
+        lower_bound = BR_INITIAL_VALUE/2
+        upper_bound = BR_INITIAL_VALUE*2
 
-        return [rnd.uniform(minimum_value, maximum_value) for _ in range(number_errors)]
+        return LinearConstraint(A=[1], lb=lower_bound, ub=upper_bound)
+
+    def generate_initial_error_values(self, parameters_to_optimize):
+
+        initial_values = []
+        number_errors = len([s for s in parameters_to_optimize if "epsilon" in s])
+
+        for param in parameters_to_optimize:
+            initial_values += [rnd.uniform((CHEMICAL_ACCURACY/number_errors)/2, CHEMICAL_ACCURACY/number_errors)] if 'epsilon' in param else [rnd.uniform(BR_INITIAL_VALUE/2, BR_INITIAL_VALUE*2)]
+
+        return initial_values
 
     def parse_geometry_file(self, molecule_info):
 

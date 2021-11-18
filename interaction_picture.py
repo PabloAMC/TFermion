@@ -101,7 +101,7 @@ class Interaction_picture:
         cost = r*(exp_U_V + TDS)
         return cost
 
-    def first_quantization_qubitization(self, epsilons, N, eta, lambda_zeta, Omega, amplitude_amplification = True):
+    def first_quantization_qubitization(self, optimized_parameters, N, eta, lambda_zeta, Omega, amplitude_amplification = True):
         '''
         Based on the qubitization method from Fault-Tolerant Quantum Simulations of Chemistry in First Quantization
 
@@ -115,12 +115,13 @@ class Interaction_picture:
         return Toffoli gate cost.
         '''
 
-        epsilon_PEA = epsilons[0]
+        epsilon_PEA = optimized_parameters[0]
+        br = optimized_parameters[4]
 
         # calculate parameters
         a = 3 if amplitude_amplification else 1
 
-        n_p, n_eta, n_eta_zeta, n_M, n_R, n_T, lambda_value = self.calculate_number_bits_parameters(epsilons, br, N, eta, lambda_zeta, Omega, amplitude_amplification)
+        n_p, n_eta, n_eta_zeta, n_M, n_R, n_T, lambda_value = self.calculate_number_bits_parameters(optimized_parameters, N, eta, lambda_zeta, Omega, amplitude_amplification)
         
         # todo: do we want to use the multiplier indicated at the end?
         #cost = [2*(n_T + 4*n_eta_zeta + 2*br-12) + 14*n_eta +8*br -36+a*(3*n_p**2+15*n_p-7+4*n_M*(n_p+1))
@@ -358,7 +359,7 @@ class Interaction_picture:
         cost = r*(exp_T + TDS)
         return cost + antisymmetrization
 
-    def Ps(n,br): #eq 59 from https://journals.aps.org/prxquantum/pdf/10.1103/PRXQuantum.2.040332
+    def Ps(self, n, br): #eq 59 from https://journals.aps.org/prxquantum/pdf/10.1103/PRXQuantum.2.040332
 
             theta = 2*np.pi/(2**br)*np.round((2**br)/2*np.pi*np.arcsin(np.sqrt(2**(np.ceil(np.log2(n)))/(4*n)))) #eq 60
             braket = (1+(2-4*n/(2**np.ceil(np.log2(n)))*(np.sin(theta))**2))**2 + (np.sin(2*theta))**2
@@ -375,12 +376,12 @@ class Interaction_picture:
 
         return lambda_U, lambda_V, lambda_prime_T
 
-    def calculate_number_bits_parameters(self, epsilons, br, N, eta, lambda_zeta, Omega, amplitude_amplification):
+    def calculate_number_bits_parameters(self, optimized_parameters, N, eta, lambda_zeta, Omega, amplitude_amplification):
 
-        _, epsilon_M, epsilon_R, epsilon_T = epsilons
+        _, epsilon_M, epsilon_R, epsilon_T, br = optimized_parameters
 
         # n_p
-        n_p = np.ceil(np.log2(N**(1/3) + 1))
+        n_p = int(np.ceil(np.log2(N**(1/3) + 1)))
         Peq = self.Ps(3,8)*self.Ps(eta+2*lambda_zeta,br)*(self.Ps(eta, br))**2
         
         # Lambda values. See eq 25 from https://journals.aps.org/prxquantum/pdf/10.1103/PRXQuantum.2.040332
@@ -397,32 +398,34 @@ class Interaction_picture:
 
         # n_R
         suma1_nu = 0
-        B_mus = [ [] for _ in range((n_p-1)) ]
+        B_mus = [ [] for _ in range(2, n_p+4) ]
         for nu in itertools.product(range(-2**(n_p), 2**(n_p)+1), repeat = 3):
             nu = np.array(nu)
             if list(nu) != [0,0,0]:
                 suma1_nu += 1/np.linalg.norm(nu)
-                mu = np.floor(np.log2(np.max(nu)))
+                mu = int(np.floor(np.log2(np.max(abs(nu)))))+2
                 B_mus[mu].append(nu)
         n_R = np.ceil(np.log2( eta*lambda_zeta/(epsilon_R*Omega**(1/3))*suma1_nu ))
 
         # n_T
         M  = 2**n_M
         p_nu = 0
-        for mu in range(2,(n_p+2)):
+        n_mu = n_p+1 # after eq. C1 (9b)
+
+        for mu in range(2, (n_p+2)):
             for nu in B_mus[mu]:
-                p_nu += np.ceil(M*((2**mu)/np.linalg.norm(nu))**2)/(M*2**(2*mu)*2**(n_p+1))
+                p_nu += np.ceil(M*((2**(mu-2))/np.linalg.norm(nu))**2)/(M*2**(2*mu)*2**(n_mu+1))
         if amplitude_amplification:
-            lambda_value = np.max(lambda_prime_T+lambda_U+lambda_V, (lambda_U+lambda_V/(1-1/eta))/p_nu)/Peq
+            lambda_value = np.maximum(lambda_prime_T+lambda_U+lambda_V, (lambda_U+lambda_V/(1-1/eta))/p_nu)/Peq
         else:
             p_nu_amp = (np.sin(3*np.arcsin(np.sqrt(p_nu))))**2
-            lambda_value = np.max(lambda_prime_T+lambda_U+lambda_V, (lambda_U+lambda_V/(1-1/eta))/p_nu_amp)/Peq
+            lambda_value = np.maximium(lambda_prime_T+lambda_U+lambda_V, (lambda_U+lambda_V/(1-1/eta))/p_nu_amp)/Peq
         n_T = np.ceil(np.log2( np.pi*lambda_value/epsilon_T ))
 
 
-        return n_eta, n_eta_zeta, n_M, n_R, n_T, lambda_value
+        return n_p, n_eta, n_eta_zeta, n_M, n_R, n_T, lambda_value
 
-    def Er(x): 
+    def Er(self, x):
         logx = np.log2(x)
         fres = 2**(np.floor(logx/2)) + np.ceil(2**(-np.floor(logx/2))*x)
         cres = 2**(np.ceil(logx/2)) + np.ceil(2**(-np.ceil(logx/2))*x)

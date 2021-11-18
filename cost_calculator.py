@@ -9,11 +9,10 @@ from scipy.optimize import minimize, NonlinearConstraint
 
 class Cost_calculator:
 
-    def __init__(self, molecule, tools, molecule_info_type):
+    def __init__(self, molecule, tools):
 
         self.molecule = molecule
         self.tools = tools
-        self.molecule_info_type = molecule_info_type
         self.costs = {'qdrift': [],
                     'rand_ham': [],
                     'taylor_naive': [],
@@ -24,14 +23,15 @@ class Cost_calculator:
                     'low_depth_taylor_on_the_fly': [],
                     'linear_t': [],
                     'sparsity_low_rank': [],
-                    'interaction_picture': []
+                    'interaction_picture': [],
+                    'first_quantization_qubitization' : []
                     }
         self.basis = self.tools.config_variables['basis']
         self.runs = self.tools.config_variables['runs']
 
     def calculate_cost(self, method): 
 
-        if self.molecule_info_type == 'name':
+        if self.molecule.molecule_info_type == 'name':
             
             json_name = str(self.molecule.molecule_info)+ '_' +  str(self.basis)
             self.molecule.load(json_name = 'parameters/'+json_name+'_'+str(self.tools.config_variables['gauss2plane_overhead']))
@@ -50,8 +50,9 @@ class Cost_calculator:
                 arguments = (lambda_value)
 
                 # generate values for errors epsilon_PEA, epsilon_HS, epsilon_S
+                parameters_to_optimize = ['epsilon_PEA', 'epsilon_HS', 'epsilon_S']
                 for _ in range(self.runs):
-                    optimized_errors = self.calculate_optimized_errors(3, methods_trotter.calc_qdrift_resources, arguments)
+                    optimized_errors = self.calculate_optimized_parameters(parameters_to_optimize, methods_trotter.calc_qdrift_resources, arguments)
                     
                     
                     self.costs['qdrift'] += [methods_trotter.calc_qdrift_resources(
@@ -66,8 +67,9 @@ class Cost_calculator:
                 arguments = (Lambda_value, Gamma)
 
                 # generate values for errors epsilon_PEA, epsilon_HS, epsilon_S
+                parameters_to_optimize = ['epsilon_PEA', 'epsilon_HS', 'epsilon_S']
                 for _ in range(self.runs):
-                    optimized_errors = self.calculate_optimized_errors(3, methods_trotter.calc_rand_ham_resources, arguments)
+                    optimized_errors = self.calculate_optimized_parameters(parameters_to_optimize, methods_trotter.calc_rand_ham_resources, arguments)
                     
                     self.costs['rand_ham'] += [methods_trotter.calc_rand_ham_resources(
                                                 optimized_errors.x,
@@ -92,8 +94,9 @@ class Cost_calculator:
                 arguments = (lambda_value, Gamma, N)
 
                 # generate values for errors epsilon_PEA, epsilon_HS, epsilon_S
+                parameters_to_optimize = ['epsilon_PEA', 'epsilon_HS', 'epsilon_S']
                 for _ in range(self.runs):
-                    optimized_errors = self.calculate_optimized_errors(3, methods_taylor.taylor_naive, arguments)
+                    optimized_errors = self.calculate_optimized_parameters(parameters_to_optimize, methods_taylor.taylor_naive, arguments)
 
                     self.costs['taylor_naive'] += [methods_taylor.taylor_naive(
                         optimized_errors.x,
@@ -117,8 +120,9 @@ class Cost_calculator:
                 arguments = (N, Gamma, phi_max, dphi_max, zeta_max_i, J)
 
                 # generate values for errors epsilon_PEA, epsilon_HS, epsilon_S, eps_H, eps_taylor
+                parameters_to_optimize = ['epsilon_PEA', 'epsilon_HS', 'epsilon_S', 'eps_H', 'eps_taylor']
                 for _ in range(self.runs):
-                    optimized_errors = self.calculate_optimized_errors(5, methods_taylor.taylor_on_the_fly, arguments)
+                    optimized_errors = self.calculate_optimized_parameters(parameters_to_optimize, methods_taylor.taylor_on_the_fly, arguments)
 
                     self.costs['taylor_on_the_fly'] += [methods_taylor.taylor_on_the_fly(
                         optimized_errors.x,
@@ -152,8 +156,9 @@ class Cost_calculator:
                 arguments = (N, eta, alpha, gamma1, gamma2, zeta_max_i, phi_max, J)
 
                 # generate values for errors epsilon_PEA, epsilon_HS, epsilon_S, eps_H, eps_taylor
+                parameters_to_optimize  = ['epsilon_PEA', 'epsilon_HS', 'epsilon_S', 'eps_H', 'eps_taylor']
                 for _ in range(self.runs):
-                    optimized_errors = self.calculate_optimized_errors(5, methods_taylor.configuration_interaction, arguments)
+                    optimized_errors = self.calculate_optimized_parameters(parameters_to_optimize, methods_taylor.configuration_interaction, arguments)
 
                     # alpha, gamma1, gamma2 are used to calculate K0, K1, K2 (see eq D14 in overleaf)
                     self.costs['configuration_interaction'] += [methods_taylor.configuration_interaction(
@@ -190,8 +195,9 @@ class Cost_calculator:
                 arguments = (N_grid, eta, Omega)
 
                 # generate values for errors epsilon_PEA, epsilon_HS, epsilon_S
+                parameters_to_optimize = ['epsilon_PEA', 'epsilon_HS', 'epsilon_S']
                 for _ in range(self.runs):
-                    optimized_errors = self.calculate_optimized_errors(3, methods_plane_waves.low_depth_trotter, arguments)
+                    optimized_errors = self.calculate_optimized_parameters(parameters_to_optimize, methods_plane_waves.low_depth_trotter, arguments)
 
                     self.costs['low_depth_trotter'] += [methods_plane_waves.low_depth_trotter(
                         optimized_errors.x,
@@ -212,8 +218,9 @@ class Cost_calculator:
                 arguments = (N_grid, lambda_value_grid, H_norm_lambda_ratio)
 
                 # generate value for errors epsilon_PEA, epsilon_HS, epsilon_S
+                parameters_to_optimize = ['epsilon_PEA', 'epsilon_HS', 'epsilon_S']
                 for _ in range(self.runs):
-                    optimized_errors = self.calculate_optimized_errors(3, methods_plane_waves.low_depth_taylor, arguments)
+                    optimized_errors = self.calculate_optimized_parameters(parameters_to_optimize, methods_plane_waves.low_depth_taylor, arguments)
 
                     self.costs['low_depth_taylor'] += [methods_plane_waves.low_depth_taylor(
                         optimized_errors.x,
@@ -239,8 +246,9 @@ class Cost_calculator:
                 arguments = (N_grid, eta, Gamma_grid, lambda_value_grid, Omega, J, x_max)
 
                 # generate value for errors epsilon_PEA, epsilon_HS, epsilon_S, epsilon_H, epsilon_tay
+                parameters_to_optimize = ['epsilon_PEA', 'epsilon_HS', 'epsilon_S', 'epsilon_H', 'epsilon_tay']
                 for _ in range(self.runs):
-                    optimized_errors = self.calculate_optimized_errors(5, methods_plane_waves.low_depth_taylor_on_the_fly, arguments)
+                    optimized_errors = self.calculate_optimized_parameters(parameters_to_optimize, methods_plane_waves.low_depth_taylor_on_the_fly, arguments)
 
                     # find x_max from cell volume assuming a perfect cube centered on 0
                     self.costs['low_depth_taylor_on_the_fly'] += [methods_plane_waves.low_depth_taylor_on_the_fly(
@@ -270,8 +278,9 @@ class Cost_calculator:
                 arguments = (N_grid, lambda_value_grid, H_norm_lambda_ratio)
 
                 # generate value for errors epsilon_PEA, epsilon_S
+                parameters_to_optimize = ['epsilon_PEA', 'epsilon_S']
                 for _ in range(self.runs):
-                    optimized_errors = self.calculate_optimized_errors(2, methods_qrom.linear_T, arguments)
+                    optimized_errors = self.calculate_optimized_parameters(parameters_to_optimize, methods_qrom.linear_T, arguments)
                     
                     self.costs['linear_t'] += [methods_qrom.linear_T(
                         optimized_errors.x,
@@ -293,8 +302,9 @@ class Cost_calculator:
                 arguments = (N, lambda_value, final_rank, H_norm_lambda_ratio, sparsity_d)
                 
                 # generate value for errors epsilon_PEA, epsilon_S
+                parameters_to_optimize = ['epsilon_PEA', 'epsilon_S']
                 for _ in range(self.runs):
-                    optimized_errors = self.calculate_optimized_errors(2, methods_qrom.sparsity_low_rank, arguments)
+                    optimized_errors = self.calculate_optimized_parameters(parameters_to_optimize, methods_qrom.sparsity_low_rank, arguments)
 
                     self.costs['sparsity_low_rank'] += [methods_qrom.sparsity_low_rank(
                         optimized_errors.x,
@@ -325,8 +335,9 @@ class Cost_calculator:
                 arguments = (N_grid, Gamma_grid, lambda_value_T, lambda_value_U_V)
 
                 # generate value for errors epsilon_S, epsilon_HS, epsilon_PEA
+                parameters_to_optimize = ['epsilon_S', 'epsilon_HS', 'epsilon_PEA']
                 for _ in range(self.runs):
-                    optimized_errors = self.calculate_optimized_errors(3, methods_interaction_picture.interaction_picture, arguments)
+                    optimized_errors = self.calculate_optimized_parameters(parameters_to_optimize, methods_interaction_picture.interaction_picture, arguments)
 
                     self.costs['interaction_picture'] += [methods_interaction_picture.interaction_picture(
                         optimized_errors.x,
@@ -358,8 +369,9 @@ class Cost_calculator:
                 arguments = (N_grid, eta, Gamma_grid , lambda_value_T, lambda_value_U_V, J)
 
                 # generate value for errors epsilon_S, epsilon_HS, epsilon_PEA, epsilon_mu, epsilon_M_0, epsilon_R
+                parameters_to_optimize = ['epsilon_S', 'epsilon_HS', 'epsilon_PEA', 'epsilon_mu', 'epsilon_M_0', 'epsilon_R']
                 for _ in range(self.runs):
-                    optimized_errors = self.calculate_optimized_errors(6, methods_interaction_picture.sublinear_scaling_interaction, arguments)
+                    optimized_errors = self.calculate_optimized_parameters(parameters_to_optimize, methods_interaction_picture.sublinear_scaling_interaction, arguments)
 
                     self.costs['sublinear_scaling'] += [methods_interaction_picture.sublinear_scaling_interaction(
                         optimized_errors.x,
@@ -372,7 +384,7 @@ class Cost_calculator:
 
             elif method == 'first_quantization_qubitization':
 
-                grid_length = int(round((self.molecule.N * self.tools.config_variables['gauss2plane_overhead']) ** (1/3)))
+                # grid_length = int(round((self.molecule.N * self.tools.config_variables['gauss2plane_overhead']) ** (1/3)))
                 if not hasattr(self.molecule, 'eta') or not hasattr(self.molecule, 'Omega') or not hasattr(self.molecule, 'N_grid'):
                     grid = self.molecule.build_grid(grid_length)
 
@@ -384,12 +396,13 @@ class Cost_calculator:
 
                 arguments = (N_grid, eta, lambda_zeta, Omega, amplitude_amplification)
 
-                # generate value for errors epsilon_S, epsilon_HS, epsilon_PEA, epsilon_mu, epsilon_M_0, epsilon_R
+                # generate value for errors epsilon_PEA, epsilon_M, epsilon_R, epsilon_T, br
+                parameters_to_optimize = ['epsilon_PEA', 'epsilon_M', 'epsilon_R', 'epsilon_T', 'br']
                 for _ in range(self.runs):
-                    optimized_errors = self.calculate_optimized_errors(4, methods_interaction_picture.first_quantization_qubitization, arguments)
+                    optimized_parameters = self.calculate_optimized_parameters(parameters_to_optimize, methods_interaction_picture.first_quantization_qubitization, arguments)
 
                     self.costs['first_quantization_qubitization'] += [methods_interaction_picture.first_quantization_qubitization(
-                        optimized_errors.x,
+                        optimized_parameters.x,
                         N_grid, 
                         eta, 
                         lambda_zeta, 
@@ -403,12 +416,11 @@ class Cost_calculator:
             json_name = str(self.molecule.molecule_info)+ '_' +  str(self.basis)
             self.molecule.save(json_name = 'parameters/'+json_name+'_'+str(self.tools.config_variables['gauss2plane_overhead']))
 
-    def calculate_optimized_errors(self, number_errors, cost_method, arguments):
+    def calculate_optimized_parameters(self, parameters_to_optimize, cost_method, arguments):
 
-        constraints = self.tools.generate_constraints(number_errors)
-        initial_values = self.tools.generate_initial_error_values(number_errors)
+        constraints, initial_values = self.tools.generate_optimization_conditions(parameters_to_optimize)
 
-        optimized_errors = minimize(
+        optimized_parameters = minimize(
             fun=cost_method,
             x0=initial_values,
             method=self.tools.config_variables['optimization_method'],
@@ -416,7 +428,7 @@ class Cost_calculator:
             args=arguments,
         )
 
-        return optimized_errors
+        return optimized_parameters
 
 
     def calculate_time(self, T_gates, p_fail = 1e-1, p_surface_step = 1e-3, P_inject = 5e-3, P_threshold = 5.7e-3, t_cycle = 2e-7, AAA_factories = 1e3):

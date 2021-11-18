@@ -8,11 +8,11 @@ from molecule import Molecule
 from molecule import Molecule_Hamiltonian
 import numpy as np
 
-print('\n###################################################################')
-print('##                             QPHASE                            ##')
-print('##                                                               ##')
-print('##      We will see what it is that (Not Google paper copy)      ##')
-print('###################################################################\n')
+print('\n################################################################################################')
+print('##                                          T-FERMION                                         ##')
+print('##                                                                                            ##')
+print('## Tool to calculate the T gate cost of a quantum method for energy calculation of a molecule ##')
+print('################################################################################################\n')
 
 start_time = time.time()
 
@@ -85,7 +85,7 @@ else:
     #molecule.low_rank_approximation(occupied_indices = [0,1,2], active_indices = [3,4], virtual_indices = [5,6], sparsify = True)
     #ne_act_cas, n_mocore, n_mocas, n_movir = molecule.active_space(ao_labels=['O 2pz'])
 
-    c_calculator = cost_calculator.Cost_calculator(molecule, tools, molecule_info_type)
+    c_calculator = cost_calculator.Cost_calculator(molecule, tools)
     c_calculator.calculate_cost(args.method)
     median = np.nanmedian(c_calculator.costs[args.method])
 
