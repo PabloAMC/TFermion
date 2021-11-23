@@ -414,25 +414,26 @@ class Interaction_picture:
         M  = 2**n_M
         p_nu = 0
         n_mu = n_p+1 # after eq. C1 (9b)
-        p_nu = 1/(2**5*(2**(n_mu)-2))*self.tools.sum_1_over_nu_squared(2**(n_mu-1)-1)
+        #p_nu = 1/(2**5*(2**(n_mu)-2))*self.tools.sum_1_over_nu_squared(2**(n_mu-1)-1)
         '''for mu in range(2, (n_p+2)):
             for nu in B_mus[mu]:
                 p_nu += np.ceil(M*((2**(mu-2))/np.linalg.norm(nu))**2)/(M*2**(2*mu)*2**(n_mu+1))'''
         
         G = sympy.S.Catalan.evalf()
-        y = sympy.Symbol('y')
-        x = sympy.Symbol('x')
-        Ti = sympy.integrate(sympy.atan(y)/y, (y, 0, x)).evalf(subs={x:3-sympy.sqrt(8)})
+        #y = sympy.Symbol('y')
+        #x = sympy.Symbol('x')
+        #Ti = sympy.integrate(sympy.atan(y)/y, (y, 0, x)).evalf(subs={x:3-sympy.sqrt(8)})
+        Ti = 0.171017553023190
 
-        p_nu = 1-3/8*(Ti - G +np.pi/2*np.log(1+np.sqrt(2)))
+        p_nu = float(1-3/8*(Ti - G +np.pi/2*np.log(1+np.sqrt(2))))
         if n_p < 9: # eq 40 in https://www.nature.com/articles/s41534-019-0199-y
             raise Warning('The result might be innacurate when n_p is smaller than 9')
 
         if amplitude_amplification:
             p_nu_amp = (np.sin(3*np.arcsin(np.sqrt(p_nu))))**2
-            lambda_value = np.maximium(lambda_prime_T+lambda_U+lambda_V, (lambda_U+lambda_V/(1-1/eta))/p_nu_amp)/Peq
+            lambda_value = max(lambda_prime_T+lambda_U+lambda_V, (lambda_U+lambda_V/(1-1/eta))/p_nu_amp)/Peq
         else:
-            lambda_value = np.maximum(lambda_prime_T+lambda_U+lambda_V, (lambda_U+lambda_V/(1-1/eta))/p_nu)/Peq
+            lambda_value = max(lambda_prime_T+lambda_U+lambda_V, (lambda_U+lambda_V/(1-1/eta))/p_nu)/Peq
         n_T = np.ceil(np.log2( np.pi*lambda_value/epsilon_T ))
 
 
