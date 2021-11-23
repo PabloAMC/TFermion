@@ -71,6 +71,7 @@ class Molecule:
             with open(molecule_info) as json_file: 
                 molecule_geometry = json.load(json_file)['atoms']
 
+        '''
         [self.molecule_geometry, self.molecule_data] = self.calculate_geometry_params(molecule_geometry, charge)
 
         #Add possibility of boundary conditions https://sunqm.github.io/pyscf/tutorial.html#initializing-a-crystal -> Seems quite complicated and not straightforward
@@ -86,7 +87,7 @@ class Molecule:
         self.virtual_indices = []
 
         self.N  = self.molecule_data.n_orbitals * 2 # The 2 is due to orbitals -> spin orbitals
-
+        '''
         #self.build_grid()
         #self.get_basic_parameters()
 

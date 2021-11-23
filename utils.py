@@ -129,6 +129,11 @@ class Utils():
         return 1/(x**2 + y**2)
     def I(self, N0):
         return integrate.nquad(self.f, [[1, N0],[1, N0]])[0]
+    def sum_1_over_nu(self,N):
+        return 2*np.pi*N**(2/3) # based on integrate(r*sin(t), (r, 0, N), (p, 0, 2*pi), (t, 0, pi)) and eq 13 in https://www.nature.com/articles/s41534-019-0199-y
+    def sum_1_over_nu_squared(self,N):
+        return 4*np.pi*N**(1/3) # based on integrate(sin(t), (r, 0, N), (p, 0, 2*pi), (t, 0, pi)) and eq 13 in https://www.nature.com/articles/s41534-019-0199-y
+
 
     def bisection(self, symbol, expr, upper_bound = 1e10, lower_bound = 100):
         top = upper_bound

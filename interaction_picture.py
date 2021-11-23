@@ -1,5 +1,5 @@
 import numpy as np
-import itertools
+import sympy
 
 class Interaction_picture:
 
@@ -397,7 +397,7 @@ class Interaction_picture:
         n_M = np.ceil(np.log2( (2*eta)*(eta-1+2*lambda_zeta)*(7*2**(n_p+1)-9*n_p+11-3*2**(-n_p))/(epsilon_M*np.pi*Omega**(1/3))))
 
         # n_R
-        suma1_nu = 0
+        '''suma1_nu = 0
         B_mus = {}
         for j in range(2, n_p+4):
             B_mus[j] = []
@@ -406,22 +406,33 @@ class Interaction_picture:
             if list(nu) != [0,0,0]:
                 suma1_nu += 1/np.linalg.norm(nu)
                 mu = int(np.floor(np.log2(np.max(abs(nu)))))+2
-                B_mus[mu].append(nu)
-        n_R = np.ceil(np.log2( eta*lambda_zeta/(epsilon_R*Omega**(1/3))*suma1_nu ))
+                B_mus[mu].append(nu)'''
+
+        n_R = np.ceil(np.log2( eta*lambda_zeta/(epsilon_R*Omega**(1/3))*self.tools.sum_1_over_nu(N)))
 
         # n_T
         M  = 2**n_M
         p_nu = 0
         n_mu = n_p+1 # after eq. C1 (9b)
-
-        for mu in range(2, (n_p+2)):
+        p_nu = 1/(2**5*(2**(n_mu)-2))*self.tools.sum_1_over_nu_squared(2**(n_mu-1)-1)
+        '''for mu in range(2, (n_p+2)):
             for nu in B_mus[mu]:
-                p_nu += np.ceil(M*((2**(mu-2))/np.linalg.norm(nu))**2)/(M*2**(2*mu)*2**(n_mu+1))
+                p_nu += np.ceil(M*((2**(mu-2))/np.linalg.norm(nu))**2)/(M*2**(2*mu)*2**(n_mu+1))'''
+        
+        G = sympy.S.Catalan.evalf()
+        y = sympy.Symbol('y')
+        x = sympy.Symbol('x')
+        Ti = sympy.integrate(sympy.atan(y)/y, (y, 0, x)).evalf(subs={x:3-sympy.sqrt(8)})
+
+        p_nu = 1-3/8*(Ti - G +np.pi/2*np.log(1+np.sqrt(2)))
+        if n_p < 9: # eq 40 in https://www.nature.com/articles/s41534-019-0199-y
+            raise Warning('The result might be innacurate when n_p is smaller than 9')
+
         if amplitude_amplification:
-            lambda_value = np.maximum(lambda_prime_T+lambda_U+lambda_V, (lambda_U+lambda_V/(1-1/eta))/p_nu)/Peq
-        else:
             p_nu_amp = (np.sin(3*np.arcsin(np.sqrt(p_nu))))**2
             lambda_value = np.maximium(lambda_prime_T+lambda_U+lambda_V, (lambda_U+lambda_V/(1-1/eta))/p_nu_amp)/Peq
+        else:
+            lambda_value = np.maximum(lambda_prime_T+lambda_U+lambda_V, (lambda_U+lambda_V/(1-1/eta))/p_nu)/Peq
         n_T = np.ceil(np.log2( np.pi*lambda_value/epsilon_T ))
 
 
