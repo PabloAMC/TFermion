@@ -1,7 +1,7 @@
 {
     "basis": "6-31G",
     "optimization_method": "SLSQP",
-    "runs": 1000, 
+    "runs": 50, 
     "h_norm_lambda_ratio": 0.7,
     "gauss2plane_overhead": 100,
     "xmax_mult_factor_taylor": 1,
