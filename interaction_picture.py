@@ -116,7 +116,7 @@ class Interaction_picture:
         '''
 
         epsilon_PEA = optimized_parameters[0]
-        br = optimized_parameters[4]
+        br = int(np.round(optimized_parameters[4]))
 
         # calculate parameters
         a = 3 if amplitude_amplification else 1
@@ -398,7 +398,9 @@ class Interaction_picture:
 
         # n_R
         suma1_nu = 0
-        B_mus = [ [] for _ in range(2, n_p+4) ]
+        B_mus = {}
+        for j in range(2, n_p+4):
+            B_mus[j] = []
         for nu in itertools.product(range(-2**(n_p), 2**(n_p)+1), repeat = 3):
             nu = np.array(nu)
             if list(nu) != [0,0,0]:
