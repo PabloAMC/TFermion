@@ -1,5 +1,6 @@
 import numpy as np
 import sympy
+import itertools
 
 class Interaction_picture:
 
@@ -124,10 +125,10 @@ class Interaction_picture:
         n_p, n_eta, n_eta_zeta, n_M, n_R, n_T, lambda_value = self.calculate_number_bits_parameters(optimized_parameters, N, eta, lambda_zeta, Omega, amplitude_amplification)
         
         # todo: do we want to use the multiplier indicated at the end?
-        #cost = [2*(n_T + 4*n_eta_zeta + 2*br-12) + 14*n_eta +8*br -36+a*(3*n_p**2+15*n_p-7+4*n_M*(n_p+1))
-        #+lambda_zeta+self.Er(lambda_zeta) + 2*(2*n_p + 2*br-7) + 12*eta*n_p+5*(n_p-1) + 2 + 24*n_p+6*n_p*n_R +18
-        #+n_eta_zeta +2*n_eta + 6*n_p + n_M+16]*np.ceil(np.pi*lambda_value/(2*epsilon_PEA))
-
+        '''cost = (2*(n_T + 4*n_eta_zeta + 2*br-12) + 14*n_eta +8*br -36+a*(3*n_p**2+15*n_p-7+4*n_M*(n_p+1))
+        +lambda_zeta+self.Er(lambda_zeta) + 2*(2*n_p + 2*br-7) + 12*eta*n_p+5*(n_p-1) + 2 + 24*n_p+6*n_p*n_R +18
+        +n_eta_zeta +2*n_eta + 6*n_p + n_M+16)*np.ceil(np.pi*lambda_value/(2*epsilon_PEA))
+        return cost'''
         # Section A
         ## weigthings between T and U+V, and U and V.
         weight_T_UV = n_T-3
@@ -215,10 +216,10 @@ class Interaction_picture:
         Rot = n_eta_zeta + 2*n_eta + 6*n_p + n_M + 16
 
         # Final cost
-        cost = np.ceil(4.7*lambda_value/epsilon_PEA)*(Prep + Sel + Rot)
+        cost = np.ceil(np.pi*lambda_value/(2*epsilon_PEA))*(Prep + Sel + Rot)
 
         # Remember: the multiplier by 4 is Toffoli -> T gate
-        return 4*cost
+        return cost
 
 
     ## Sublinear scaling and interaction picture babbush2019quantum
@@ -424,10 +425,27 @@ class Interaction_picture:
         #x = sympy.Symbol('x')
         #Ti = sympy.integrate(sympy.atan(y)/y, (y, 0, x)).evalf(subs={x:3-sympy.sqrt(8)})
         Ti = 0.171017553023190
-
-        p_nu = float(1-3/8*(Ti - G +np.pi/2*np.log(1+np.sqrt(2))))
-        if n_p < 9: # eq 40 in https://www.nature.com/articles/s41534-019-0199-y
-            raise Warning('The result might be innacurate when n_p is smaller than 9')
+        if n_mu > 7:
+            p_nu = float(1-3/8*(Ti - G +np.pi/2*np.log(1+np.sqrt(2))))
+        elif n_p == 7 and n_M > 12: # Precalculated to avoid numerical delays
+            p_nu = 0.23779
+        elif n_p == 6 and n_M > 12: # Precalculated to avoid numerical delays
+            p_nu = 0.23577
+        elif n_p == 5 and n_M > 12: # Precalculated to avoid numerical delays
+            p_nu = 0.23173
+        else: # eq 40 in https://www.nature.com/articles/s41534-019-0199-y
+            B_mus = {}
+            p_nu = 0
+            for j in range(2, n_p+4):
+                B_mus[j] = []
+            for nu in itertools.product(range(-2**(n_p), 2**(n_p)+1), repeat = 3):
+                nu = np.array(nu)
+                if list(nu) != [0,0,0]:
+                    mu = int(np.floor(np.log2(np.max(abs(nu)))))+2
+                    B_mus[mu].append(nu)
+            for mu in range(2, (n_p+2)):
+                for nu in B_mus[mu]:
+                    p_nu += np.ceil(M*((2**(mu-2))/np.linalg.norm(nu))**2)/(M*2**(2*mu)*2**(n_p+2))
 
         if amplitude_amplification:
             p_nu_amp = (np.sin(3*np.arcsin(np.sqrt(p_nu))))**2
