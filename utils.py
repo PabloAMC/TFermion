@@ -148,7 +148,7 @@ class Utils():
         return eval_r
 
     def sum_constraint(self, x):
-        return sum(x)
+        return sum(x[:self.number_errors])
 
     def arbitrary_state_synthesis(self, n):
         '''
@@ -199,6 +199,8 @@ class Utils():
 
     def generate_linear_constraints(self, parameters_to_optimize):
 
+        self.number_errors = 0
+
         min_values_linear_constraint = []
         max_values_linear_constraint = []
         
@@ -213,6 +215,7 @@ class Utils():
             if 'epsilon' in param:
                 min_values_linear_constraint.append(1e-10)
                 max_values_linear_constraint.append(CHEMICAL_ACCURACY)
+                self.number_errors += 1
 
             elif 'br' == param:
                 min_values_linear_constraint.append(BR_INITIAL_VALUE/2)
