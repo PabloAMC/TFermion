@@ -1,6 +1,6 @@
 {
     "basis": "6-31G",
-    "optimization_method": "SLSQP",
+    "optimization_method": "COBYLA",
     "runs": 50, 
     "h_norm_lambda_ratio": 0.7,
     "gauss2plane_overhead": 100,
