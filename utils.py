@@ -129,6 +129,11 @@ class Utils():
         return 1/(x**2 + y**2)
     def I(self, N0):
         return integrate.nquad(self.f, [[1, N0],[1, N0]])[0]
+    def sum_1_over_nu(self,N):
+        return 2*np.pi*N**(2/3) # based on integrate(r*sin(t), (r, 0, N), (p, 0, 2*pi), (t, 0, pi)) and eq 13 in https://www.nature.com/articles/s41534-019-0199-y
+    def sum_1_over_nu_squared(self,N):
+        return 4*np.pi*N**(1/3) # based on integrate(sin(t), (r, 0, N), (p, 0, 2*pi), (t, 0, pi)) and eq 13 in https://www.nature.com/articles/s41534-019-0199-y
+
 
     def bisection(self, symbol, expr, upper_bound = 1e10, lower_bound = 100):
         top = upper_bound
@@ -145,14 +150,13 @@ class Utils():
     def fun_constraint(self, x):
 
         if self.config_variables['error_optimization_function'] == 'sum':
-            return sum(x)
+            return sum(x[:self.number_errors])
 
         elif self.config_variables['error_optimization_function'] == 'rmse':
-            return math.sqrt(sum([x_value**2 for x_value in x]))
+            return math.sqrt(sum([x_value**2 for x_value in x[:self.number_errors]]))
 
         else:
             raise Exception("Function to optimize constraints not recognized")
-        
 
     def arbitrary_state_synthesis(self, n):
         '''
@@ -203,6 +207,8 @@ class Utils():
 
     def generate_linear_constraints(self, parameters_to_optimize):
 
+        self.number_errors = 0
+
         min_values_linear_constraint = []
         max_values_linear_constraint = []
         
@@ -217,6 +223,7 @@ class Utils():
             if 'epsilon' in param:
                 min_values_linear_constraint.append(1e-10)
                 max_values_linear_constraint.append(CHEMICAL_ACCURACY)
+                self.number_errors += 1
 
             elif 'br' == param:
                 min_values_linear_constraint.append(BR_INITIAL_VALUE/2)

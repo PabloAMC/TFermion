@@ -1,8 +1,8 @@
 {
     "basis": "6-31G",
-    "optimization_method": "SLSQP",
     "error_optimization_function": "rmse",
-    "runs": 1000, 
+    "optimization_method": "COBYLA",
+    "runs": 50, 
     "h_norm_lambda_ratio": 0.7,
     "gauss2plane_overhead": 100,
     "xmax_mult_factor_taylor": 1,

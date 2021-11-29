@@ -411,10 +411,10 @@ class Cost_calculator:
 
         else:
             print('<*> ERROR: method', method, 'not implemented or not existing')
-
-        if self.molecule_info_type == 'name':
-            json_name = str(self.molecule.molecule_info)+ '_' +  str(self.basis)
-            self.molecule.save(json_name = 'parameters/'+json_name+'_'+str(self.tools.config_variables['gauss2plane_overhead']))
+        if hasattr(self, 'molecule_info_type'):
+            if self.molecule_info_type == 'name':
+                json_name = str(self.molecule.molecule_info)+ '_' +  str(self.basis)
+                self.molecule.save(json_name = 'parameters/'+json_name+'_'+str(self.tools.config_variables['gauss2plane_overhead']))
 
     def calculate_optimized_parameters(self, parameters_to_optimize, cost_method, arguments):
 

@@ -1,4 +1,5 @@
 import numpy as np
+import sympy
 import itertools
 
 class Interaction_picture:
@@ -116,7 +117,7 @@ class Interaction_picture:
         '''
 
         epsilon_PEA = optimized_parameters[0]
-        br = optimized_parameters[4]
+        br = int(np.round(optimized_parameters[4]))
 
         # calculate parameters
         a = 3 if amplitude_amplification else 1
@@ -124,12 +125,101 @@ class Interaction_picture:
         n_p, n_eta, n_eta_zeta, n_M, n_R, n_T, lambda_value = self.calculate_number_bits_parameters(optimized_parameters, N, eta, lambda_zeta, Omega, amplitude_amplification)
         
         # todo: do we want to use the multiplier indicated at the end?
-        cost = [2*(n_T + 4*n_eta_zeta + 2*br-12) + 14*n_eta +8*br -36+a*(3*n_p**2+15*n_p-7+4*n_M*(n_p+1))
+        '''cost = (2*(n_T + 4*n_eta_zeta + 2*br-12) + 14*n_eta +8*br -36+a*(3*n_p**2+15*n_p-7+4*n_M*(n_p+1))
         +lambda_zeta+self.Er(lambda_zeta) + 2*(2*n_p + 2*br-7) + 12*eta*n_p+5*(n_p-1) + 2 + 24*n_p+6*n_p*n_R +18
-        +n_eta_zeta +2*n_eta + 6*n_p + n_M+16]*np.ceil(np.pi*lambda_value/(2*epsilon_PEA))
+        +n_eta_zeta +2*n_eta + 6*n_p + n_M+16)*np.ceil(np.pi*lambda_value/(2*epsilon_PEA))
+        return cost'''
+        # Section A
+        ## weigthings between T and U+V, and U and V.
+        weight_T_UV = n_T-3
+
+        eq_superp_T_UV = 3*n_eta_zeta + 2*br - 9
+        ineq_test = n_eta_zeta - 1
+        weight_U_V = eq_superp_T_UV +  ineq_test + 1
+
+        prep_qubit_TUV = weight_T_UV + weight_U_V
+
+        ## superposition between i and j
+        bin_super = 3*n_eta + 2*br - 9
+        equality_test = n_eta
+        inv_equality_test = n_eta
+        inv_bin_super = 3*n_eta + 2*br - 9
+
+        prep_i_j = 2*bin_super + equality_test + inv_equality_test + 2*inv_bin_super
+
+        ## success check
+        success_check = 3
+
+        # Section B: Qubitization of T 
+        
+        ## Superposition w,r,s
+        sup_w = 3*2 + 2*br - 9 # = 3*n + 2*br - 9 with n = 2. br is suggested to be 8
+        sup_r = n_p - 2
+        prep_wrs_T = sup_w + 2*sup_r # 2 for r and s
+
+        ## Sel T
+        control_swap_i_j_ancilla = 2*2*(eta-2)
+        swap_i_j_ancilla = 2*2*3*eta*n_p # 3 components, 2 for i and j, 2 for in and out
+        cswap_p_q = control_swap_i_j_ancilla + swap_i_j_ancilla
+
+        control_copy_w = 3*(n_p-1)
+        copy_r = n_p - 1
+        copy_s = n_p - 1
+        control_phase = 1
+        erasure = 0
+        control_qubit_T = 1
+        Sel_T = control_copy_w + copy_r + copy_s + control_phase + erasure + control_qubit_T
+
+        # Section C: Preparation U and V
+        nested_boxes = n_p-1
+        coord_prep = 3*(n_p-1)
+        minus_zero_flag = 3*n_p +2
+        inside_box_test = 3*n_p
+
+        sum_squares = 3*n_p**2-n_p-1
+        multiplication = 2*n_M*(2*n_p+2)-n_M
+        comparison = 2*n_p + n_M + 2
+        success_flag = 3
+
+        inversion_c_hadamards = nested_boxes + coord_prep
+
+        Prep_1_nu_and_inv = nested_boxes + coord_prep + minus_zero_flag + inside_box_test + sum_squares + multiplication + comparison + success_flag + inversion_c_hadamards
+
+        QROM_Rl = lambda_zeta + self.Er(lambda_zeta)
+
+        # Section D: Sel U and V
+
+        swap_i_j_ancilla = 2*2*3*eta*n_p # 3 components, 2 for i and j, 2 for in and out  (Duplicated from Sel T)
+
+        ## Controlled sum and substraction with change from signed integer to 2's complement
+        signed2twos = 2*3*(n_p-2) # the 2 is for p and q, the 3 for their components
+        addition = n_p+1
+        controlled = n_p+1
+        controlled_addition = 2*3*(addition + controlled)
+        twos2signed = 2*3*(n_p) #Same as above, now with two extra qubits
+        controlled_sum_substraction_nu = signed2twos + controlled_addition + twos2signed
+
+        # No control-Z on |+> on Sel
+
+        if n_R > n_p: # eq 97
+            U_phase = 3*(2*n_p*n_R-n_p*(n_p+1)-1)
+        else:
+            U_phase = 3*n_R*(n_R-1)
+
+        # Total cost of Prepare and unprepare
+        Prep = 2*prep_qubit_TUV + prep_i_j + success_check + 2*prep_wrs_T + a*Prep_1_nu_and_inv + QROM_Rl
+
+        # Total cost of Select
+        Sel = cswap_p_q + Sel_T + controlled_sum_substraction_nu + U_phase
+
+        # Rotation in definition of Q
+        Rot = n_eta_zeta + 2*n_eta + 6*n_p + n_M + 16
+
+        # Final cost
+        cost = np.ceil(np.pi*lambda_value/(2*epsilon_PEA))*(Prep + Sel + Rot)
 
         # Remember: the multiplier by 4 is Toffoli -> T gate
-        return 4*cost
+        return cost
 
 
     ## Sublinear scaling and interaction picture babbush2019quantum
@@ -308,29 +398,60 @@ class Interaction_picture:
         n_M = np.ceil(np.log2( (2*eta)*(eta-1+2*lambda_zeta)*(7*2**(n_p+1)-9*n_p+11-3*2**(-n_p))/(epsilon_M*np.pi*Omega**(1/3))))
 
         # n_R
-        suma1_nu = 0
-        B_mus = [ [] for _ in range(2, n_p+4) ]
+        '''suma1_nu = 0
+        B_mus = {}
+        for j in range(2, n_p+4):
+            B_mus[j] = []
         for nu in itertools.product(range(-2**(n_p), 2**(n_p)+1), repeat = 3):
             nu = np.array(nu)
             if list(nu) != [0,0,0]:
                 suma1_nu += 1/np.linalg.norm(nu)
                 mu = int(np.floor(np.log2(np.max(abs(nu)))))+2
-                B_mus[mu].append(nu)
-        n_R = np.ceil(np.log2( eta*lambda_zeta/(epsilon_R*Omega**(1/3))*suma1_nu ))
+                B_mus[mu].append(nu)'''
+
+        n_R = np.ceil(np.log2( eta*lambda_zeta/(epsilon_R*Omega**(1/3))*self.tools.sum_1_over_nu(N)))
 
         # n_T
         M  = 2**n_M
         p_nu = 0
         n_mu = n_p+1 # after eq. C1 (9b)
-
-        for mu in range(2, (n_p+2)):
+        #p_nu = 1/(2**5*(2**(n_mu)-2))*self.tools.sum_1_over_nu_squared(2**(n_mu-1)-1)
+        '''for mu in range(2, (n_p+2)):
             for nu in B_mus[mu]:
-                p_nu += np.ceil(M*((2**(mu-2))/np.linalg.norm(nu))**2)/(M*2**(2*mu)*2**(n_mu+1))
+                p_nu += np.ceil(M*((2**(mu-2))/np.linalg.norm(nu))**2)/(M*2**(2*mu)*2**(n_mu+1))'''
+        
+        G = sympy.S.Catalan.evalf()
+        #y = sympy.Symbol('y')
+        #x = sympy.Symbol('x')
+        #Ti = sympy.integrate(sympy.atan(y)/y, (y, 0, x)).evalf(subs={x:3-sympy.sqrt(8)})
+        Ti = 0.171017553023190
+        if n_mu > 7:
+            p_nu = float(1-3/8*(Ti - G +np.pi/2*np.log(1+np.sqrt(2))))
+        elif n_p == 7 and n_M > 12: # Precalculated to avoid numerical delays
+            p_nu = 0.23779
+        elif n_p == 6 and n_M > 12: # Precalculated to avoid numerical delays
+            p_nu = 0.23577
+        elif n_p == 5 and n_M > 12: # Precalculated to avoid numerical delays
+            p_nu = 0.23173
+        else: # eq 40 in https://www.nature.com/articles/s41534-019-0199-y
+            B_mus = {}
+            p_nu = 0
+            for j in range(2, n_p+4):
+                B_mus[j] = []
+            for nu in itertools.product(range(-2**(n_p), 2**(n_p)+1), repeat = 3):
+                nu = np.array(nu)
+                if list(nu) != [0,0,0]:
+                    mu = int(np.floor(np.log2(np.max(abs(nu)))))+2
+                    B_mus[mu].append(nu)
+            for mu in range(2, (n_p+2)):
+                for nu in B_mus[mu]:
+                    p_nu += np.ceil(M*((2**(mu-2))/np.linalg.norm(nu))**2)/(M*2**(2*mu)*2**(n_p+2))
+
         if amplitude_amplification:
-            lambda_value = np.maximum(lambda_prime_T+lambda_U+lambda_V, (lambda_U+lambda_V/(1-1/eta))/p_nu)/Peq
-        else:
             p_nu_amp = (np.sin(3*np.arcsin(np.sqrt(p_nu))))**2
-            lambda_value = np.maximium(lambda_prime_T+lambda_U+lambda_V, (lambda_U+lambda_V/(1-1/eta))/p_nu_amp)/Peq
+            lambda_value = max(lambda_prime_T+lambda_U+lambda_V, (lambda_U+lambda_V/(1-1/eta))/p_nu_amp)/Peq
+        else:
+            lambda_value = max(lambda_prime_T+lambda_U+lambda_V, (lambda_U+lambda_V/(1-1/eta))/p_nu)/Peq
         n_T = np.ceil(np.log2( np.pi*lambda_value/epsilon_T ))
 
 
