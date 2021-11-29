@@ -142,8 +142,17 @@ class Utils():
                 bottom = eval_r
         return eval_r
 
-    def sum_constraint(self, x):
-        return sum(x)
+    def fun_constraint(self, x):
+
+        if self.config_variables['error_optimization_function'] == 'sum':
+            return sum(x)
+
+        elif self.config_variables['error_optimization_function'] == 'rmse':
+            return math.sqrt(sum([x_value**2 for x_value in x]))
+
+        else:
+            raise Exception("Function to optimize constraints not recognized")
+        
 
     def arbitrary_state_synthesis(self, n):
         '''
@@ -218,7 +227,7 @@ class Utils():
     # It is necessary to generate two constraints: one linear (each value should be in the range greather than 0 and chemical_accuracy) and one non linear (errors sum should be in the range 0 and chemical accuracy)
     def generate_non_linear_constraint(self):
 
-        nonlinear_constraint = NonlinearConstraint(fun=self.sum_constraint, lb=0, ub=CHEMICAL_ACCURACY)
+        nonlinear_constraint = NonlinearConstraint(fun=self.fun_constraint, lb=0, ub=CHEMICAL_ACCURACY)
 
         return nonlinear_constraint
 
