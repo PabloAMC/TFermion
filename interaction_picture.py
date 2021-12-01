@@ -131,7 +131,7 @@ class Interaction_picture:
 
         # HF initial rotations
 
-        N_small = 1e5
+        N_small = 112896
 
         epsilon_S = 1e-5 #todo: parameter
         epsilon_SS = epsilon_S / (2*eta*(N_small-eta))
