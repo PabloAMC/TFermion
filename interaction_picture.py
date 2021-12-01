@@ -124,11 +124,33 @@ class Interaction_picture:
 
         n_p, n_eta, n_eta_zeta, n_M, n_R, n_T, lambda_value = self.calculate_number_bits_parameters(optimized_parameters, N, eta, lambda_zeta, Omega, amplitude_amplification)
         
-        # todo: do we want to use the multiplier indicated at the end?
         '''cost = (2*(n_T + 4*n_eta_zeta + 2*br-12) + 14*n_eta +8*br -36+a*(3*n_p**2+15*n_p-7+4*n_M*(n_p+1))
         +lambda_zeta+self.Er(lambda_zeta) + 2*(2*n_p + 2*br-7) + 12*eta*n_p+5*(n_p-1) + 2 + 24*n_p+6*n_p*n_R +18
         +n_eta_zeta +2*n_eta + 6*n_p + n_M+16)*np.ceil(np.pi*lambda_value/(2*epsilon_PEA))
         return cost'''
+
+        # HF initial rotations
+
+        N_small = 1e5
+
+        epsilon_S = 1e-5 #todo: parameter
+        epsilon_SS = epsilon_S / (2*eta*(N_small-eta))
+
+        Givens = 2*2* (2*(np.ceil(np.log2(N_small))-2-1)) # Using Barenco lemma 7.2: 2 MCX + uncomputations
+        T_givens = 2*self.tools.pauli_rotation_synthesis(epsilon_SS)*eta*(N_small-eta)
+        #print('Required number of T gates in Givens rotations for HF:', T_givens)
+        HF = eta*(N_small-eta)*Givens
+
+
+        # Initial state antisymmetrization
+        comparison_eta = self.tools.compare_cost(np.ceil(np.log2(eta**2)))/4
+        comparison_N = self.tools.compare_cost(np.ceil(np.log2(N)))/4
+        swaps_eta = np.ceil(np.log2(eta**2))
+        swaps_N = np.ceil(np.log2(N))
+        Step_2 = eta*np.ceil(np.log2(eta))*(np.ceil(np.log2(eta))-1)/4* (comparison_eta + swaps_eta)
+        Step_4 = eta*np.ceil(np.log2(eta))*(np.ceil(np.log2(eta))-1)/4* (comparison_N + swaps_N)
+        antisymmetrization = Step_2*2 + Step_4 #the *2 is due to expected success rate
+
         # Section A
         ## weigthings between T and U+V, and U and V.
         weight_T_UV = n_T-3
@@ -219,7 +241,7 @@ class Interaction_picture:
         cost = np.ceil(np.pi*lambda_value/(2*epsilon_PEA))*(Prep + Sel + Rot)
 
         # Remember: the multiplier by 4 is Toffoli -> T gate
-        return cost
+        return cost + antisymmetrization +  HF
 
 
     ## Sublinear scaling and interaction picture babbush2019quantum
