@@ -30,7 +30,7 @@ class Taylor_based_methods:
         epsilon_S = epsilons[2]
         
         t = 4.7/epsilon_PEA
-        r = np.ceil(t*lambda_value / np.log(2)) # Number of time segments
+        r = np.ceil(t*lambda_value / (2*np.log(2))) # Number of time segments
     
         K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1)) 
         arb_state_synt = self.tools.arbitrary_state_synthesis(4*np.ceil(np.log2(N)))
@@ -81,7 +81,7 @@ class Taylor_based_methods:
         
         Vol_max_w_gamma = (2**6*phi_max**4 * x_max**5) # eq 66 in the original article
         lambda_value = Gamma*Vol_max_w_gamma # eq 60 in the original article
-        r = np.ceil(lambda_value* t / np.log(2)) 
+        r = np.ceil(lambda_value* t / (2*np.log(2))) 
         K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1))
 
         # zeta = epsilon_HS /(2*3*K*r*Gamma*Vol); eq 55 in the original article

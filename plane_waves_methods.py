@@ -23,7 +23,7 @@ class Plane_waves_methods:
         nu_max = np.sqrt(3*(N**(1/3))**2)
         max_T = 2*np.pi**2*eta/(Omega**(2/3))* nu_max**2
         
-        r = np.sqrt(2*t**3/epsilon_HS *(max_T**2*(max_U + max_V) + max_T*(max_U + max_V)**2))
+        r = np.ceil(np.sqrt(2*t**3/(2*epsilon_HS) *(max_T**2*(max_U + max_V) + max_T*(max_U + max_V)**2)))
 
         # Arbitrary precision rotations, does not include the Ry gates in F_2
         single_qubit_rotations = 8*N + 2*8*N*(8*N-1) + 8*N + N*np.ceil(np.log2(N/2)) # U, V, T and FFFT single rotations; the 2 comes from the controlled rotations, see appendix A
@@ -49,7 +49,7 @@ class Plane_waves_methods:
         M = (N/2)**(1/D) # Same as in linear-T method. See also beginning of appendix I in https://journals.aps.org/prx/pdf/10.1103/PhysRevX.8.011044.
 
         t = 4.7/epsilon_PEA
-        r = t*lambda_value/np.log(2)
+        r = np.ceil(t*lambda_value/(2*np.log(2)))
 
         K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1)) 
 
@@ -102,7 +102,7 @@ class Plane_waves_methods:
         sum_nu = self.quadratic_sum(int(N**(1/3)))
         lambda_value = ((2*eta+1)/(4*np.pi*Omega**(1/3)) - (np.pi**2)/(N*Omega**(2/3)))*(8*N)**3 
         t = 4.7/epsilon_PEA
-        r = t*lambda_value/np.log(2)
+        r = np.ceil(t*lambda_value/(2*np.log(2)))
         
         K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1))
         zeta = epsilon_H/(r*Gamma*3*2*K)
