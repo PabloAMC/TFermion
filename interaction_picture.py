@@ -133,7 +133,7 @@ class Interaction_picture:
 
         N_small = 112896
 
-        epsilon_S = 1e-5 #todo: parameter
+        epsilon_S = 1e-2 #todo: parameter
         epsilon_SS = epsilon_S / (2*eta*(N_small-eta))
 
         Givens = 2*2* (2*(np.ceil(np.log2(N_small))-2-1)) # Using Barenco lemma 7.2: 2 MCX + uncomputations
@@ -180,7 +180,7 @@ class Interaction_picture:
         prep_wrs_T = sup_w + 2*sup_r # 2 for r and s
 
         ## Sel T
-        control_swap_i_j_ancilla = 2*2*(eta-2)
+        control_swap_i_j_ancilla = 2*2*(eta-2) #unary iteration for i and j, and for in and out
         swap_i_j_ancilla = 2*2*3*eta*n_p # 3 components, 2 for i and j, 2 for in and out
         cswap_p_q = control_swap_i_j_ancilla + swap_i_j_ancilla
 
@@ -384,9 +384,8 @@ class Interaction_picture:
 
     def Ps(self, n, br): #eq 59 from https://journals.aps.org/prxquantum/pdf/10.1103/PRXQuantum.2.040332
 
-            theta = 2*np.pi/(2**br)*np.round((2**br)/2*np.pi*np.arcsin(np.sqrt(2**(np.ceil(np.log2(n)))/(4*n)))) #eq 60
-            braket = (1+(2-4*n/(2**np.ceil(np.log2(n)))*(np.sin(theta))**2))**2 + (np.sin(2*theta))**2
-            
+            theta = 2*np.pi/(2**br)*np.round((2**br)/(2*np.pi)*np.arcsin(np.sqrt(2**(np.ceil(np.log2(n)))/(4*n)))) #eq 60
+            braket = (1+(2-(4*n)/(2**np.ceil(np.log2(n))))*(np.sin(theta))**2)**2 + (np.sin(2*theta))**2
             return n/(2**np.ceil(np.log2(n)))*braket
 
     def calculate_lambdas(self, N, eta, lambda_zeta, Omega, n_p):
@@ -405,7 +404,7 @@ class Interaction_picture:
 
         # n_p
         n_p = int(np.ceil(np.log2(N**(1/3) + 1)))
-        Peq = self.Ps(3,8)*self.Ps(eta+2*lambda_zeta,br)*(self.Ps(eta, br))**2
+        Peq = self.Ps(3,br)*self.Ps(eta+2*lambda_zeta,br)*(self.Ps(eta, br))**2
         
         # Lambda values. See eq 25 from https://journals.aps.org/prxquantum/pdf/10.1103/PRXQuantum.2.040332
         lambda_U, lambda_V, lambda_prime_T = self.calculate_lambdas(N, eta, lambda_zeta, Omega, n_p)
@@ -447,8 +446,8 @@ class Interaction_picture:
         #x = sympy.Symbol('x')
         #Ti = sympy.integrate(sympy.atan(y)/y, (y, 0, x)).evalf(subs={x:3-sympy.sqrt(8)})
         Ti = 0.171017553023190
-        if n_mu > 7:
-            p_nu = float(1-3/8*(Ti - G +np.pi/2*np.log(1+np.sqrt(2))))
+        if n_p > 7 or np.isnan(n_M):
+            p_nu = 1-float(1-3/8*(Ti - G +np.pi/2*np.log(1+np.sqrt(2))))
         elif n_p == 7 and n_M > 12: # Precalculated to avoid numerical delays
             p_nu = 0.23779
         elif n_p == 6 and n_M > 12: # Precalculated to avoid numerical delays
