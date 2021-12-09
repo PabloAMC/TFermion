@@ -7,6 +7,9 @@ import interaction_picture
 import numpy as np
 from scipy.optimize import minimize, NonlinearConstraint
 
+import numpy as np
+from alive_progress import alive_bar
+
 class Cost_calculator:
 
     def __init__(self, molecule, tools):
@@ -394,20 +397,30 @@ class Cost_calculator:
                 Omega = self.molecule.Omega
                 amplitude_amplification = True
 
-                arguments = (N_grid, eta, lambda_zeta, Omega, amplitude_amplification)
+                number_samples = 200
+                with alive_bar(number_samples) as bar:
+                    for n_grid_value in np.logspace(5, 12, num=number_samples):
 
-                # generate value for errors epsilon_PEA, epsilon_M, epsilon_R, epsilon_T, br
-                parameters_to_optimize = ['epsilon_PEA', 'epsilon_M', 'epsilon_R', 'epsilon_T', 'br']
-                for _ in range(self.runs):
-                    optimized_parameters = self.calculate_optimized_parameters(parameters_to_optimize, methods_interaction_picture.first_quantization_qubitization, arguments)
+                        arguments = (n_grid_value, eta, lambda_zeta, Omega, amplitude_amplification)
 
-                    self.costs['first_quantization_qubitization'] += [methods_interaction_picture.first_quantization_qubitization(
-                        optimized_parameters.x,
-                        N_grid, 
-                        eta, 
-                        lambda_zeta, 
-                        Omega,
-                        amplitude_amplification)]
+                        # generate value for errors epsilon_PEA, epsilon_M, epsilon_R, epsilon_T, br
+                        parameters_to_optimize = ['epsilon_PEA', 'epsilon_M', 'epsilon_R', 'epsilon_T', 'br']
+
+                        cost_values = []
+                        for _ in range(self.runs):
+                            optimized_parameters = self.calculate_optimized_parameters(parameters_to_optimize, methods_interaction_picture.first_quantization_qubitization, arguments)
+
+                            cost_values += [methods_interaction_picture.first_quantization_qubitization(
+                                optimized_parameters.x,
+                                n_grid_value, 
+                                eta, 
+                                lambda_zeta, 
+                                Omega,
+                                amplitude_amplification)]
+
+                        bar()
+
+                        self.costs['first_quantization_qubitization'].append([n_grid_value, cost_values])
 
         else:
             print('<*> ERROR: method', method, 'not implemented or not existing')
