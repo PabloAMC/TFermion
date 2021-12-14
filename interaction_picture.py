@@ -238,7 +238,7 @@ class Interaction_picture:
         Rot = n_eta_zeta + 2*n_eta + 6*n_p + n_M + 16
 
         # Final cost
-        cost = np.ceil(4.7*np.e*lambda_value/(2*epsilon_PEA))*(Prep + Sel + Rot)
+        cost = np.ceil(4.7*lambda_value/(2*epsilon_PEA))*(Prep + Sel + Rot)
 
         # Remember: the multiplier by 4 is Toffoli -> T gate
         return cost + antisymmetrization +  HF
