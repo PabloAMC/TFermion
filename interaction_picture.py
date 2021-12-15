@@ -388,15 +388,23 @@ class Interaction_picture:
             braket = (1+(2-(4*n)/(2**np.ceil(np.log2(n))))*(np.sin(theta))**2)**2 + (np.sin(2*theta))**2
             return n/(2**np.ceil(np.log2(n)))*braket
 
-    def calculate_lambdas(self, N, eta, lambda_zeta, Omega, n_p):
+    def calculate_lambdas(self, N, eta, lambda_zeta, Omega, n_p, M):
 
         # for lambda_nu see eq F6 in Low-depth article and D18 in T-Fermion
         lambda_nu = 4*np.pi*(np.sqrt(3)*N**(1/3)/2 - 1) + 3 - 3/N**(1/3) + 3*self.tools.I(N**(1/3))
         lambda_U = eta*lambda_zeta*lambda_nu/(np.pi*Omega**(1/3))
         lambda_V = eta*(eta-1)*lambda_nu/(2*np.pi*Omega**(1/3))
+        
+        # lambda_T is corrected in eq 71 of https://journals.aps.org/prxquantum/abstract/10.1103/PRXQuantum.2.040332 for failure in comparison of i and j
         lambda_prime_T = 6*eta * np.pi**2 * 2**(2*n_p-2) / (Omega**(2/3)) #eq 71 https://journals.aps.org/prxquantum/pdf/10.1103/PRXQuantum.2.040332
+        
+        # lambda_U and lambda_V are corrected in eq 123 and 124 of https://journals.aps.org/prxquantum/abstract/10.1103/PRXQuantum.2.040332
+        # eps is taken from their eq 113. If a - b < eps, then a < b + eps = b(1+eps/b). We have to scale the norm of U and V by (1+eps/b) where b = lambda_nu
+        eps = 4/M*(7*2**(n_p+1) + 9*n_p -11 -3*2**(-n_p))
+        lambda_U_prime = lambda_U*(1+eps/lambda_nu)
+        lambda_V_prime = lambda_V*(1+eps/lambda_nu)
 
-        return lambda_U, lambda_V, lambda_prime_T
+        return lambda_U_prime, lambda_V_prime, lambda_prime_T
 
     def calculate_number_bits_parameters(self, optimized_parameters, N, eta, lambda_zeta, Omega, amplitude_amplification):
 
@@ -405,9 +413,6 @@ class Interaction_picture:
         # n_p
         n_p = int(np.ceil(np.log2(N**(1/3) + 1)))
         Peq = self.Ps(3,br)*self.Ps(eta+2*lambda_zeta,br)*(self.Ps(eta, br))**2
-        
-        # Lambda values. See eq 25 from https://journals.aps.org/prxquantum/pdf/10.1103/PRXQuantum.2.040332
-        lambda_U, lambda_V, lambda_prime_T = self.calculate_lambdas(N, eta, lambda_zeta, Omega, n_p)
 
         # n_eta
         n_eta = np.ceil(np.log2(eta))
@@ -419,28 +424,12 @@ class Interaction_picture:
         n_M = np.ceil(np.log2( (2*eta)*(eta-1+2*lambda_zeta)*(7*2**(n_p+1)-9*n_p+11-3*2**(-n_p))/(epsilon_M*np.pi*Omega**(1/3))))
 
         # n_R
-        '''suma1_nu = 0
-        B_mus = {}
-        for j in range(2, n_p+4):
-            B_mus[j] = []
-        for nu in itertools.product(range(-2**(n_p), 2**(n_p)+1), repeat = 3):
-            nu = np.array(nu)
-            if list(nu) != [0,0,0]:
-                suma1_nu += 1/np.linalg.norm(nu)
-                mu = int(np.floor(np.log2(np.max(abs(nu)))))+2
-                B_mus[mu].append(nu)'''
-
         n_R = np.ceil(np.log2( eta*lambda_zeta/(epsilon_R*Omega**(1/3))*self.tools.sum_1_over_nu(N)))
 
         # n_T
         M  = 2**n_M
         p_nu = 0
-        n_mu = n_p+1 # after eq. C1 (9b)
-        #p_nu = 1/(2**5*(2**(n_mu)-2))*self.tools.sum_1_over_nu_squared(2**(n_mu-1)-1)
-        '''for mu in range(2, (n_p+2)):
-            for nu in B_mus[mu]:
-                p_nu += np.ceil(M*((2**(mu-2))/np.linalg.norm(nu))**2)/(M*2**(2*mu)*2**(n_mu+1))'''
-        
+        n_mu = n_p+1        
         G = sympy.S.Catalan.evalf()
         #y = sympy.Symbol('y')
         #x = sympy.Symbol('x')
@@ -468,11 +457,15 @@ class Interaction_picture:
                 for nu in B_mus[mu]:
                     p_nu += np.ceil(M*((2**(mu-2))/np.linalg.norm(nu))**2)/(M*2**(2*mu)*2**(n_p+2))
 
+        # Lambda values. See eq 25 from https://journals.aps.org/prxquantum/pdf/10.1103/PRXQuantum.2.040332
+        # and also eq 126 and 127
+        lambda_U_prime, lambda_V_prime, lambda_prime_T = self.calculate_lambdas(N, eta, lambda_zeta, Omega, n_p, M)
+
         if amplitude_amplification:
             p_nu_amp = (np.sin(3*np.arcsin(np.sqrt(p_nu))))**2
-            lambda_value = max(lambda_prime_T+lambda_U+lambda_V, (lambda_U+lambda_V/(1-1/eta))/p_nu_amp)/Peq
+            lambda_value = max(lambda_prime_T+lambda_U_prime+lambda_V_prime, (lambda_U_prime+lambda_V_prime/(1-1/eta))/p_nu_amp)/Peq
         else:
-            lambda_value = max(lambda_prime_T+lambda_U+lambda_V, (lambda_U+lambda_V/(1-1/eta))/p_nu)/Peq
+            lambda_value = max(lambda_prime_T+lambda_U_prime+lambda_V_prime, (lambda_U_prime+lambda_V_prime/(1-1/eta))/p_nu)/Peq
         n_T = np.ceil(np.log2( np.pi*lambda_value/epsilon_T ))
 
 
