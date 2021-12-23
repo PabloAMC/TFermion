@@ -102,7 +102,7 @@ class Interaction_picture:
         cost = r*(exp_U_V + TDS)
         return cost
 
-    def first_quantization_qubitization(self, optimized_parameters, N, eta, lambda_zeta, Omega, amplitude_amplification = True):
+    def first_quantization_qubitization(self, optimized_parameters, N, eta, lambda_zeta, Omega, amplitude_amplification = True, vec_a: np.array = None):
         '''
         Based on the qubitization method from Fault-Tolerant Quantum Simulations of Chemistry in First Quantization
 
@@ -115,6 +115,12 @@ class Interaction_picture:
 
         return Toffoli gate cost.
         '''
+        if vec_a:
+            vec_b = 1/np.array(vec_a)
+            vec_b /= np.min(vec_b)
+        else:
+            vec_b = np.array([1,1,1])
+
 
         epsilon_PEA = optimized_parameters[0]
         br = int(np.round(optimized_parameters[4]))
@@ -132,18 +138,20 @@ class Interaction_picture:
         # HF initial rotations
 
         N_small = 112896
+        r = np.ceil(4.7*lambda_value/(2*epsilon_PEA))
 
-        epsilon_S = 1e-2 #todo: parameter
-        epsilon_SS = epsilon_S / (2*eta*(N_small-eta))
+        epsilon_S = 1e-2 #todo: parameter to be optimized for T gates
+        epsilon_SS = epsilon_S / (2*eta*(N_small-eta)+r*(2*2+2*(n_p+n_R)))# the +2*2 comes from w preparation and unprepartion, the 2*(n_p + n_R) from c-paulis in U-Phase
 
         Givens = 2*2* (2*(np.ceil(np.log2(N_small))-2-1)) # Using Barenco lemma 7.2: 2 MCX + uncomputations
         T_givens = 2*self.tools.pauli_rotation_synthesis(epsilon_SS)*eta*(N_small-eta)
+        #todo: T gates
         #print('Required number of T gates in Givens rotations for HF:', T_givens)
         HF = eta*(N_small-eta)*Givens
 
 
         # Initial state antisymmetrization
-        comparison_eta = self.tools.compare_cost(np.ceil(np.log2(eta**2)))/4
+        comparison_eta = self.tools.compare_cost(np.ceil(np.log2(eta**2)))/4#todo: compare cost
         comparison_N = self.tools.compare_cost(np.ceil(np.log2(N)))/4
         swaps_eta = np.ceil(np.log2(eta**2))
         swaps_N = np.ceil(np.log2(N))
@@ -175,13 +183,15 @@ class Interaction_picture:
         # Section B: Qubitization of T 
         
         ## Superposition w,r,s
-        sup_w = 3*2 + 2*br - 9 # = 3*n + 2*br - 9 with n = 2. br is suggested to be 8
+        #sup_w = 3*2 + 2*br - 9 # = 3*n + 2*br - 9 with n = 2. br is suggested to be 8 
+        T_sup_w = self.tools.pauli_rotation_synthesis(epsilon_SS) + self.tools.c_pauli_rotation_synthesis(epsilon_SS) 
+        #todo: this cost is in T gates, not Toffoli 
         sup_r = n_p - 2
-        prep_wrs_T = sup_w + 2*sup_r # 2 for r and s
+        prep_wrs_T = 2*sup_r # 2 for r and s
 
         ## Sel T
         control_swap_i_j_ancilla = 2*2*(eta-2) #unary iteration for i and j, and for in and out
-        swap_i_j_ancilla = 2*2*3*eta*n_p # 3 components, 2 for i and j, 2 for in and out
+        swap_i_j_ancilla = 2*2*3*eta*n_p # 3 components, 2 for i and j, 2 for in and out. Also used in Sel_U_V
         cswap_p_q = control_swap_i_j_ancilla + swap_i_j_ancilla
 
         control_copy_w = 3*(n_p-1)
@@ -198,14 +208,16 @@ class Interaction_picture:
         minus_zero_flag = 3*n_p +2
         inside_box_test = 3*n_p
 
-        sum_squares = 3*n_p**2-n_p-1
+        n_sums = sum([str(bin(vec_b[i]**2))[:2*n_p+2].count('1') for i in range(len(vec_b))])   # rescales the nu components according to vec_b items
+        sums = n_sums*self.tools.sum_cost(2*n_p+2)/4
+        squares = 3*n_p**2-n_p-1
         multiplication = 2*n_M*(2*n_p+2)-n_M
         comparison = 2*n_p + n_M + 2
         success_flag = 3
 
         inversion_c_hadamards = nested_boxes + coord_prep
 
-        Prep_1_nu_and_inv = nested_boxes + coord_prep + minus_zero_flag + inside_box_test + sum_squares + multiplication + comparison + success_flag + inversion_c_hadamards
+        Prep_1_nu_and_inv = nested_boxes + coord_prep + minus_zero_flag + inside_box_test + 2*sums + squares + multiplication + comparison + success_flag + inversion_c_hadamards
 
         QROM_Rl = lambda_zeta + self.Er(lambda_zeta)
 
@@ -223,10 +235,13 @@ class Interaction_picture:
 
         # No control-Z on |+> on Sel
 
-        if n_R > n_p: # eq 97
+        if n_R > n_p: # eq 97 # the product R_l \cdot k_\nu cancels the terms a_i
             U_phase = 3*(2*n_p*n_R-n_p*(n_p+1)-1)
         else:
             U_phase = 3*n_R*(n_R-1)
+
+        #todo: pauli rotation synthesis
+        U_phase_T_gates = (n_p+n_R)*self.tools.c_pauli_rotation_synthesis(epsilon_SS) # arbitrary single rotations
 
         # Total cost of Prepare and unprepare
         Prep = 2*prep_qubit_TUV + prep_i_j + success_check + 2*prep_wrs_T + a*Prep_1_nu_and_inv + QROM_Rl
@@ -238,7 +253,7 @@ class Interaction_picture:
         Rot = n_eta_zeta + 2*n_eta + 6*n_p + n_M + 16
 
         # Final cost
-        cost = np.ceil(4.7*lambda_value/(2*epsilon_PEA))*(Prep + Sel + Rot)
+        cost = r*(Prep + Sel + Rot)
 
         # Remember: the multiplier by 4 is Toffoli -> T gate
         return cost + antisymmetrization +  HF
