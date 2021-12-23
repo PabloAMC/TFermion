@@ -399,35 +399,44 @@ class Cost_calculator:
 
                 # calculate cost of the function for different N values
                 # these N values should be selected in a way that n_p is an integer
-                MIN_N_GRID = 1e3
+                MIN_N_GRID = 1e2
                 MAX_N_GRID = 1e9
                 n_grid_values = self.calculate_n_grid_values(MIN_N_GRID, MAX_N_GRID)
 
-                number_samples = len(n_grid_values)
+                number_samples = len(n_grid_values)*4
                 with alive_bar(number_samples) as bar:
 
-                    for n_grid_val in n_grid_values:
+                    all_costs = []
+                    for chemical_acc in [1/3, 1, 3, 9]:
 
-                        arguments = (n_grid_val, eta, lambda_zeta, Omega, amplitude_amplification)
+                        costs_for_chem_acc = []
 
-                        # generate value for errors epsilon_PEA, epsilon_M, epsilon_R, epsilon_T, br
-                        parameters_to_optimize = ['epsilon_PEA', 'epsilon_M', 'epsilon_R', 'epsilon_T', 'br']
+                        for n_grid_val in n_grid_values:
 
-                        cost_values = []
-                        for _ in range(self.runs):
-                            optimized_parameters = self.calculate_optimized_parameters(parameters_to_optimize, methods_interaction_picture.first_quantization_qubitization, arguments)
+                            arguments = (n_grid_val, eta, lambda_zeta, Omega, amplitude_amplification)
 
-                            cost_values += [methods_interaction_picture.first_quantization_qubitization(
-                                optimized_parameters.x,
-                                n_grid_val,
-                                eta, 
-                                lambda_zeta, 
-                                Omega,
-                                amplitude_amplification)]
+                            # generate value for errors epsilon_PEA, epsilon_M, epsilon_R, epsilon_T, br
+                            parameters_to_optimize = ['epsilon_PEA', 'epsilon_M', 'epsilon_R', 'epsilon_T', 'br']
 
-                        bar()
+                            cost_values = []
+                            for _ in range(self.runs):
+                                optimized_parameters = self.calculate_optimized_parameters(parameters_to_optimize, chemical_acc, methods_interaction_picture.first_quantization_qubitization, arguments)
 
-                        self.costs['first_quantization_qubitization'].append([n_grid_val, cost_values])
+                                cost_values += [methods_interaction_picture.first_quantization_qubitization(
+                                    optimized_parameters.x,
+                                    n_grid_val,
+                                    eta, 
+                                    lambda_zeta, 
+                                    Omega,
+                                    amplitude_amplification)]
+
+                            bar()
+
+                            costs_for_chem_acc.append([n_grid_val, cost_values])
+
+                        all_costs.append(costs_for_chem_acc)
+
+                    self.costs['first_quantization_qubitization'] = all_costs
 
         else:
             print('<*> ERROR: method', method, 'not implemented or not existing')
@@ -436,9 +445,9 @@ class Cost_calculator:
                 json_name = str(self.molecule.molecule_info)+ '_' +  str(self.basis)
                 self.molecule.save(json_name = 'parameters/'+json_name+'_'+str(self.tools.config_variables['gauss2plane_overhead']))
 
-    def calculate_optimized_parameters(self, parameters_to_optimize, cost_method, arguments):
+    def calculate_optimized_parameters(self, parameters_to_optimize, chemical_acc, cost_method, arguments):
 
-        constraints, initial_values = self.tools.generate_optimization_conditions(parameters_to_optimize)
+        constraints, initial_values = self.tools.generate_optimization_conditions(parameters_to_optimize, chemical_acc)
 
         optimized_parameters = minimize(
             fun=cost_method,

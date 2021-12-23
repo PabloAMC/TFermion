@@ -90,30 +90,56 @@ else:
     c_calculator = cost_calculator.Cost_calculator(molecule, tools)
     c_calculator.calculate_cost(args.method)
 
-    x_points = []
-    y_points = []
-
-    points = c_calculator.costs[args.method]
-    for cost_object in points:
-        
-        x_value = cost_object[0]
-
-        median = np.nanmedian(cost_object[1])
-
-        x_points.append(x_value)
-        y_points.append(median)
-
     p = figure(
         #title='Evolution of tts with different steps', # Usually graphs do not have title
         x_axis_type="log",
         y_axis_type="log",
-        x_range= (10**2, 10**10), 
+        x_range= (10**2, 10**10),
         y_range= (10**12, 10**16),
         plot_height=800,
         plot_width=800)
 
-    # add a line renderer
-    p.hex(x_points, y_points, size=20, color="navy", alpha=0.5)
+    points = c_calculator.costs[args.method]
+
+    counter = -1
+    for chemical_acc in points:
+
+        counter+=1
+
+        for cost_object in chemical_acc:
+        
+            x_value = cost_object[0]
+
+            median = np.nanmedian(cost_object[1])
+        
+            if counter == 0:
+
+                # add legend with chemical accuracy
+
+                # add a line renderer
+                p.hex(x_value, median, size=20, color="navy", alpha=0.5)
+
+            elif counter == 1:
+
+                # add legend with chemical accuracy
+
+                # add a line renderer
+                p.square_pin(x_value, median, size=20, color="olive", alpha=0.5)
+
+            if counter == 2:
+
+                # add legend with chemical accuracy
+
+                # add a line renderer
+                p.star(x_value, median, size=20, color="red", alpha=0.5)
+
+            if counter == 3:
+
+                # add legend with chemical accuracy
+
+                # add a line renderer
+                p.diamond(x_value, median, size=20, color="green", alpha=0.5)
+
     p.grid.visible = False
 
     p.yaxis.axis_label = 'Toffoli gate cost'
