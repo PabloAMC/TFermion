@@ -397,11 +397,18 @@ class Cost_calculator:
                 Omega = self.molecule.Omega
                 amplitude_amplification = True
 
-                number_samples = 200
-                with alive_bar(number_samples) as bar:
-                    for n_grid_value in np.logspace(5, 12, num=number_samples):
+                # calculate cost of the function for different N values
+                # these N values should be selected in a way that n_p is an integer
+                MIN_N_GRID = 1e3
+                MAX_N_GRID = 1e9
+                n_grid_values = self.calculate_n_grid_values(MIN_N_GRID, MAX_N_GRID)
 
-                        arguments = (n_grid_value, eta, lambda_zeta, Omega, amplitude_amplification)
+                number_samples = len(n_grid_values)
+                with alive_bar(number_samples) as bar:
+
+                    for n_grid_val in n_grid_values:
+
+                        arguments = (n_grid_val, eta, lambda_zeta, Omega, amplitude_amplification)
 
                         # generate value for errors epsilon_PEA, epsilon_M, epsilon_R, epsilon_T, br
                         parameters_to_optimize = ['epsilon_PEA', 'epsilon_M', 'epsilon_R', 'epsilon_T', 'br']
@@ -412,7 +419,7 @@ class Cost_calculator:
 
                             cost_values += [methods_interaction_picture.first_quantization_qubitization(
                                 optimized_parameters.x,
-                                n_grid_value, 
+                                n_grid_val,
                                 eta, 
                                 lambda_zeta, 
                                 Omega,
@@ -420,7 +427,7 @@ class Cost_calculator:
 
                         bar()
 
-                        self.costs['first_quantization_qubitization'].append([n_grid_value, cost_values])
+                        self.costs['first_quantization_qubitization'].append([n_grid_val, cost_values])
 
         else:
             print('<*> ERROR: method', method, 'not implemented or not existing')
@@ -443,6 +450,21 @@ class Cost_calculator:
 
         return optimized_parameters
 
+    def calculate_n_grid_values(self, min_n_grid, max_n_grid):
+
+        n_grid_values = []
+
+        n_p = 0
+        n_grid_val = (2**n_p-1)**3
+        while n_grid_val < max_n_grid:
+
+            if n_grid_val > min_n_grid:
+                n_grid_values.append(n_grid_val)
+
+            n_p+=1
+            n_grid_val = (2**n_p-1)**3
+
+        return n_grid_values
 
     def calculate_time(self, T_gates, p_fail = 1e-1, p_surface_step = 1e-3, P_inject = 5e-3, P_threshold = 5.7e-3, t_cycle = 2e-7, AAA_factories = 1e3):
         '''

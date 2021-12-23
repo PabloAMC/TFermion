@@ -8,7 +8,7 @@ from molecule import Molecule
 from molecule import Molecule_Hamiltonian
 import numpy as np
 
-from bokeh.plotting import figure, output_file, show
+from bokeh.plotting import figure, output_file, show, save
 
 print('\n################################################################################################')
 print('##                                          T-FERMION                                         ##')
@@ -107,25 +107,22 @@ else:
         #title='Evolution of tts with different steps', # Usually graphs do not have title
         x_axis_type="log",
         y_axis_type="log",
-        x_range= (10**4, 10**13), 
-        y_range= (10**13, 10**19),
+        x_range= (10**2, 10**10), 
+        y_range= (10**12, 10**16),
         plot_height=800,
         plot_width=800)
 
     # add a line renderer
-    p.line(x_points, y_points, line_width=2)
+    p.hex(x_points, y_points, size=20, color="navy", alpha=0.5)
     p.grid.visible = False
 
-    p.yaxis.axis_label = 'T gates cost'
+    p.yaxis.axis_label = 'Toffoli gate cost'
     p.yaxis.axis_label_text_font_size = "15pt"
 
     p.yaxis.major_label_orientation = "vertical"
 
-    p.xaxis.axis_label = 'Number plane waves'
+    p.xaxis.axis_label = 'Number of plane waves, N'
     p.xaxis.axis_label_text_font_size = "15pt"
-
-    print(x_points)
-    print(y_points)
 
     show(p)
 
