@@ -2,7 +2,7 @@
     "basis": "6-31G",
     "error_optimization_function": "rmse",
     "optimization_method": "COBYLA",
-    "runs": 50, 
+    "runs": 5, 
     "h_norm_lambda_ratio": 0.7,
     "gauss2plane_overhead": 100,
     "xmax_mult_factor_taylor": 1,
