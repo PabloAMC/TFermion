@@ -94,9 +94,9 @@ else:
         #title='Evolution of tts with different steps', # Usually graphs do not have title
         x_axis_type="log",
         y_axis_type="log",
-        x_range= (10**2, 10**10),
-        y_range= (10**12, 10**16),
-        plot_height=800,
+        x_range= (10**2, 10**9),
+        y_range= (10**11, 10**16),
+        plot_height=700,
         plot_width=800)
 
     points = c_calculator.costs[args.method]
@@ -117,38 +117,55 @@ else:
                 # add legend with chemical accuracy
 
                 # add a line renderer
-                p.hex(x_value, median, size=20, color="navy", alpha=0.5)
+                p.hex_dot(x_value, median, size=25, color="blue", alpha=0.5, legend_label="1/3*Chemical Accuracy")
 
             elif counter == 1:
 
                 # add legend with chemical accuracy
 
                 # add a line renderer
-                p.square_pin(x_value, median, size=20, color="olive", alpha=0.5)
+                p.square_dot(x_value, median, size=25, color="green", alpha=0.5, legend_label="1*Chemical Accuracy")
+
 
             if counter == 2:
 
                 # add legend with chemical accuracy
 
                 # add a line renderer
-                p.star(x_value, median, size=20, color="red", alpha=0.5)
+                p.star_dot(x_value, median, size=25, color="orange", alpha=0.5, legend_label="3*Chemical Accuracy")
+
 
             if counter == 3:
 
                 # add legend with chemical accuracy
 
                 # add a line renderer
-                p.diamond(x_value, median, size=20, color="green", alpha=0.5)
+                p.diamond_dot(x_value, median, size=25, color="red", alpha=0.5, legend_label="9*Chemical Accuracy")
+
 
     p.grid.visible = False
 
-    p.yaxis.axis_label = 'Toffoli gate cost'
-    p.yaxis.axis_label_text_font_size = "15pt"
+    p.yaxis.axis_label = r"\[Toffoli\ gate\ cost\]"
+    p.yaxis.axis_label_text_font_size = "20pt"
 
     p.yaxis.major_label_orientation = "vertical"
+    p.xaxis.axis_label = r"\[Number\ of\ plane\ waves,\ N\]"
+    p.xaxis.axis_label_text_font_size = "20pt"
 
-    p.xaxis.axis_label = 'Number of plane waves, N'
-    p.xaxis.axis_label_text_font_size = "15pt"
+    p.legend.location = "top_left"
+    
+    # change appearance of legend text
+    p.legend.label_text_font = "times"
+    p.legend.label_text_font_style = "italic"
+    p.legend.label_text_font_size = "15pt"
+
+    # change border and background of legend
+    p.legend.border_line_width = 2
+    p.legend.border_line_color = "black"
+    p.legend.border_line_alpha = 0.8
+    p.legend.background_fill_color = "black"
+    p.legend.background_fill_alpha = 0.05
+
 
     show(p)
 
