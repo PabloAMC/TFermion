@@ -397,30 +397,46 @@ class Cost_calculator:
                 Omega = self.molecule.Omega
                 amplitude_amplification = True
 
-                number_samples = 200
+                # calculate cost of the function for different N values
+                # these N values should be selected in a way that n_p is an integer
+                MIN_N_GRID = 1e2
+                MAX_N_GRID = 1e9
+                n_grid_values = self.calculate_n_grid_values(MIN_N_GRID, MAX_N_GRID)
+
+                number_samples = len(n_grid_values)*4
                 with alive_bar(number_samples) as bar:
-                    for n_grid_value in np.logspace(5, 12, num=number_samples):
 
-                        arguments = (n_grid_value, eta, lambda_zeta, Omega, amplitude_amplification)
+                    all_costs = []
+                    for chemical_acc in [1/3, 1, 3, 9]:
 
-                        # generate value for errors epsilon_PEA, epsilon_M, epsilon_R, epsilon_T, br
-                        parameters_to_optimize = ['epsilon_PEA', 'epsilon_M', 'epsilon_R', 'epsilon_T', 'br']
+                        costs_for_chem_acc = []
 
-                        cost_values = []
-                        for _ in range(self.runs):
-                            optimized_parameters = self.calculate_optimized_parameters(parameters_to_optimize, methods_interaction_picture.first_quantization_qubitization, arguments)
+                        for n_grid_val in n_grid_values:
 
-                            cost_values += [methods_interaction_picture.first_quantization_qubitization(
-                                optimized_parameters.x,
-                                n_grid_value, 
-                                eta, 
-                                lambda_zeta, 
-                                Omega,
-                                amplitude_amplification)]
+                            arguments = (n_grid_val, eta, lambda_zeta, Omega, amplitude_amplification)
 
-                        bar()
+                            # generate value for errors epsilon_PEA, epsilon_M, epsilon_R, epsilon_T, br
+                            parameters_to_optimize = ['epsilon_PEA', 'epsilon_M', 'epsilon_R', 'epsilon_T', 'br']
 
-                        self.costs['first_quantization_qubitization'].append([n_grid_value, cost_values])
+                            cost_values = []
+                            for _ in range(self.runs):
+                                optimized_parameters = self.calculate_optimized_parameters(parameters_to_optimize, chemical_acc, methods_interaction_picture.first_quantization_qubitization, arguments)
+
+                                cost_values += [methods_interaction_picture.first_quantization_qubitization(
+                                    optimized_parameters.x,
+                                    n_grid_val,
+                                    eta, 
+                                    lambda_zeta, 
+                                    Omega,
+                                    amplitude_amplification)]
+
+                            bar()
+
+                            costs_for_chem_acc.append([n_grid_val, cost_values])
+
+                        all_costs.append(costs_for_chem_acc)
+
+                    self.costs['first_quantization_qubitization'] = all_costs
 
         else:
             print('<*> ERROR: method', method, 'not implemented or not existing')
@@ -429,9 +445,9 @@ class Cost_calculator:
                 json_name = str(self.molecule.molecule_info)+ '_' +  str(self.basis)
                 self.molecule.save(json_name = 'parameters/'+json_name+'_'+str(self.tools.config_variables['gauss2plane_overhead']))
 
-    def calculate_optimized_parameters(self, parameters_to_optimize, cost_method, arguments):
+    def calculate_optimized_parameters(self, parameters_to_optimize, chemical_acc, cost_method, arguments):
 
-        constraints, initial_values = self.tools.generate_optimization_conditions(parameters_to_optimize)
+        constraints, initial_values = self.tools.generate_optimization_conditions(parameters_to_optimize, chemical_acc)
 
         optimized_parameters = minimize(
             fun=cost_method,
@@ -443,6 +459,21 @@ class Cost_calculator:
 
         return optimized_parameters
 
+    def calculate_n_grid_values(self, min_n_grid, max_n_grid):
+
+        n_grid_values = []
+
+        n_p = 0
+        n_grid_val = (2**n_p-1)**3
+        while n_grid_val < max_n_grid:
+
+            if n_grid_val > min_n_grid:
+                n_grid_values.append(n_grid_val)
+
+            n_p+=1
+            n_grid_val = (2**n_p-1)**3
+
+        return n_grid_values
 
     def calculate_time(self, T_gates, p_fail = 1e-1, p_surface_step = 1e-3, P_inject = 5e-3, P_threshold = 5.7e-3, t_cycle = 2e-7, AAA_factories = 1e3):
         '''

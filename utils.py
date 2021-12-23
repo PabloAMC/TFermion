@@ -194,18 +194,18 @@ class Utils():
         return 8*n
     
 
-    def generate_optimization_conditions(self, parameters_to_optimize):
+    def generate_optimization_conditions(self, parameters_to_optimize, chemical_acc_modifier):
 
         constraints = []
         initial_values = []
 
-        constraints = [self.generate_linear_constraints(parameters_to_optimize)] + [self.generate_non_linear_constraint()]
+        constraints = [self.generate_linear_constraints(parameters_to_optimize, chemical_acc_modifier)] + [self.generate_non_linear_constraint(chemical_acc_modifier)]
 
-        initial_values += self.generate_initial_error_values(parameters_to_optimize)
+        initial_values += self.generate_initial_error_values(parameters_to_optimize, chemical_acc_modifier)
 
         return constraints, initial_values
 
-    def generate_linear_constraints(self, parameters_to_optimize):
+    def generate_linear_constraints(self, parameters_to_optimize, chemical_acc_modifier):
 
         self.number_errors = 0
 
@@ -222,7 +222,7 @@ class Utils():
 
             if 'epsilon' in param:
                 min_values_linear_constraint.append(1e-10)
-                max_values_linear_constraint.append(CHEMICAL_ACCURACY)
+                max_values_linear_constraint.append(CHEMICAL_ACCURACY*chemical_acc_modifier)
                 self.number_errors += 1
 
             elif 'br' == param:
@@ -232,9 +232,9 @@ class Utils():
         return LinearConstraint(A=shape_constraint, lb=min_values_linear_constraint, ub=max_values_linear_constraint)
 
     # It is necessary to generate two constraints: one linear (each value should be in the range greather than 0 and chemical_accuracy) and one non linear (errors sum should be in the range 0 and chemical accuracy)
-    def generate_non_linear_constraint(self):
+    def generate_non_linear_constraint(self, chemical_acc_modifier):
 
-        nonlinear_constraint = NonlinearConstraint(fun=self.fun_constraint, lb=0, ub=CHEMICAL_ACCURACY)
+        nonlinear_constraint = NonlinearConstraint(fun=self.fun_constraint, lb=0, ub=CHEMICAL_ACCURACY*chemical_acc_modifier)
 
         return nonlinear_constraint
 
@@ -245,13 +245,13 @@ class Utils():
 
         return LinearConstraint(A=[1], lb=lower_bound, ub=upper_bound)
 
-    def generate_initial_error_values(self, parameters_to_optimize):
+    def generate_initial_error_values(self, parameters_to_optimize, chemical_acc_modifier):
 
         initial_values = []
         number_errors = len([s for s in parameters_to_optimize if "epsilon" in s])
 
         for param in parameters_to_optimize:
-            initial_values += [rnd.uniform((CHEMICAL_ACCURACY/number_errors)/2, CHEMICAL_ACCURACY/number_errors)] if 'epsilon' in param else [rnd.uniform(BR_INITIAL_VALUE/2, BR_INITIAL_VALUE*2)]
+            initial_values += [rnd.uniform((CHEMICAL_ACCURACY*chemical_acc_modifier/number_errors)/2, CHEMICAL_ACCURACY*chemical_acc_modifier/number_errors)] if 'epsilon' in param else [rnd.uniform(BR_INITIAL_VALUE/2, BR_INITIAL_VALUE*2)]
 
         return initial_values
 
