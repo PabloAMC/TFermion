@@ -8,7 +8,8 @@ from molecule import Molecule
 from molecule import Molecule_Hamiltonian
 import numpy as np
 
-from bokeh.plotting import figure, output_file, show, save
+import matplotlib.pyplot as plt
+from matplotlib.legend_handler import HandlerTuple
 
 print('\n################################################################################################')
 print('##                                          T-FERMION                                         ##')
@@ -90,6 +91,7 @@ else:
     c_calculator = cost_calculator.Cost_calculator(molecule, tools)
     c_calculator.calculate_cost(args.method)
 
+    '''
     p = figure(
         #title='Evolution of tts with different steps', # Usually graphs do not have title
         x_axis_type="log",
@@ -98,6 +100,14 @@ else:
         y_range= (10**11, 10**16),
         plot_height=700,
         plot_width=800)
+    '''
+
+    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(8,6))
+
+    ax.set_xlim([10**2, 10**9])
+    ax.set_ylim([10**11, 10**16])
+    ax.set_yscale("log")
+    ax.set_xscale("log")
 
     points = c_calculator.costs[args.method]
 
@@ -114,60 +124,47 @@ else:
         
             if counter == 0:
 
-                # add legend with chemical accuracy
-
                 # add a line renderer
-                p.hex_dot(x_value, median, size=25, color="blue", alpha=0.5, legend_label="1/3*Chemical Accuracy")
+                ax.scatter(x_value, median, marker="h", c="blue", alpha=0.5, s=200, label=r'$\epsilon_{PEA}=0.014eV$')
 
             elif counter == 1:
 
-                # add legend with chemical accuracy
-
                 # add a line renderer
-                p.square_dot(x_value, median, size=25, color="green", alpha=0.5, legend_label="1*Chemical Accuracy")
+                ax.scatter(x_value, median, marker="s", c="green", alpha=0.5, s=200, label=r'$\epsilon_{PEA}=0.043eV$')
 
 
             if counter == 2:
 
-                # add legend with chemical accuracy
-
                 # add a line renderer
-                p.star_dot(x_value, median, size=25, color="orange", alpha=0.5, legend_label="3*Chemical Accuracy")
+                ax.scatter(x_value, median, marker="*", c="orange", alpha=0.5, s=200, label=r'$\epsilon_{PEA}=0.129eV$')
 
 
             if counter == 3:
 
-                # add legend with chemical accuracy
-
                 # add a line renderer
-                p.diamond_dot(x_value, median, size=25, color="red", alpha=0.5, legend_label="9*Chemical Accuracy")
+                ax.scatter(x_value, median, marker="d", c="red", alpha=0.5, s=200, label=r'$\epsilon_{PEA}=0.387eV$')
 
+    ax.set_ylabel("Toffoli gate cost", fontsize=20)
+    ax.set_xlabel("Number of plane waves, N", fontsize=20)
 
-    p.grid.visible = False
+    # First plot: two legend keys for a single entry
+    p1 = ax.scatter([0], [0], c='blue', marker='h', alpha=0.5)
+    p2 = ax.scatter([0], [0], c='green', marker='s', alpha=0.5)
+    p3 = ax.scatter([0], [0], c='orange', marker='*', alpha=0.5)
+    p4 = ax.scatter([0], [0], c='red', marker='d', alpha=0.5)
 
-    p.yaxis.axis_label = r"\[Toffoli\ gate\ cost\]"
-    p.yaxis.axis_label_text_font_size = "20pt"
+    # Assign two of the handles to the same legend entry by putting them in a tuple
+    # and using a generic handler map (which would be used for any additional
+    # tuples of handles like (p1, p3)).
+    l = ax.legend([p1, p2, p3, p4], [r'$\epsilon_{PEA}=0.014eV$', r'$\epsilon_{PEA}=0.043eV$', r'$\epsilon_{PEA}=0.129eV$', r'$\epsilon_{PEA}=0.387eV$'], scatterpoints=1,
+                numpoints=1, handler_map={tuple: HandlerTuple(ndivide=None)}, loc='upper left', borderpad=1, prop={'size': 12})
 
-    p.yaxis.major_label_orientation = "vertical"
-    p.xaxis.axis_label = r"\[Number\ of\ plane\ waves,\ N\]"
-    p.xaxis.axis_label_text_font_size = "20pt"
+    ax.tick_params(axis='x')
 
-    p.legend.location = "top_left"
-    
-    # change appearance of legend text
-    p.legend.label_text_font = "times"
-    p.legend.label_text_font_style = "italic"
-    p.legend.label_text_font_size = "15pt"
+    plt.yticks(fontsize=14)
+    plt.xticks(fontsize=14)
 
-    # change border and background of legend
-    p.legend.border_line_width = 2
-    p.legend.border_line_color = "black"
-    p.legend.border_line_alpha = 0.8
-    p.legend.background_fill_color = "black"
-    p.legend.background_fill_alpha = 0.05
-
-
-    show(p)
+    plt.savefig('plot.svg')  
 
     print('The cost to calculate the energy of', args.molecule_info,'with method', args.method, 'is', "{:0.2e}".format(median), 'T gates')
     print('With the specified parameters, synthesising that many T gates should take approximately', "{:0.2e}".format(c_calculator.calculate_time(median)), 'seconds')
