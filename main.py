@@ -144,27 +144,27 @@ else:
                 # add a line renderer
                 ax.scatter(x_value, median, marker="d", c="red", alpha=0.5, s=200, label=r'$\epsilon_{PEA}=0.387eV$')
 
-    ax.set_ylabel("Toffoli gate cost", fontsize=20)
-    ax.set_xlabel("Number of plane waves, N", fontsize=20)
+    ax.set_ylabel(r'Toffoli gate cost', fontsize=20)
+    ax.set_xlabel(r'Number of plane waves, $N$', fontsize=20)
 
     # First plot: two legend keys for a single entry
-    p1 = ax.scatter([0], [0], c='blue', marker='h', alpha=0.5)
-    p2 = ax.scatter([0], [0], c='green', marker='s', alpha=0.5)
-    p3 = ax.scatter([0], [0], c='orange', marker='*', alpha=0.5)
-    p4 = ax.scatter([0], [0], c='red', marker='d', alpha=0.5)
+    p1 = ax.scatter([0], [0], c='blue', marker='h', alpha=0.5, s=100)
+    p2 = ax.scatter([0], [0], c='green', marker='s', alpha=0.5, s=100)
+    p3 = ax.scatter([0], [0], c='orange', marker='*', alpha=0.5, s=100)
+    p4 = ax.scatter([0], [0], c='red', marker='d', alpha=0.5, s=100)
 
     # Assign two of the handles to the same legend entry by putting them in a tuple
     # and using a generic handler map (which would be used for any additional
     # tuples of handles like (p1, p3)).
-    l = ax.legend([p1, p2, p3, p4], [r'$\epsilon_{PEA}=0.014eV$', r'$\epsilon_{PEA}=0.043eV$', r'$\epsilon_{PEA}=0.129eV$', r'$\epsilon_{PEA}=0.387eV$'], scatterpoints=1,
-                numpoints=1, handler_map={tuple: HandlerTuple(ndivide=None)}, loc='upper left', borderpad=1, prop={'size': 12})
+    l = ax.legend([p1, p2, p3, p4], [r'$\epsilon_{QPE}=0.014eV$', r'$\epsilon_{QPE}=0.043eV$', r'$\epsilon_{QPE}=0.129eV$', r'$\epsilon_{QPE}=0.387eV$'], scatterpoints=1,
+                numpoints=1, handler_map={tuple: HandlerTuple(ndivide=None)}, loc='upper left', borderpad=1, prop={'size': 12}, labelspacing=1)
 
     ax.tick_params(axis='x')
 
     plt.yticks(fontsize=14)
     plt.xticks(fontsize=14)
 
-    plt.savefig('plot.svg')  
+    plt.savefig('plot.pdf')  
 
     print('The cost to calculate the energy of', args.molecule_info,'with method', args.method, 'is', "{:0.2e}".format(median), 'T gates')
     print('With the specified parameters, synthesising that many T gates should take approximately', "{:0.2e}".format(c_calculator.calculate_time(median)), 'seconds')
