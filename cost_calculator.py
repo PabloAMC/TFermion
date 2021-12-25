@@ -389,6 +389,7 @@ class Cost_calculator:
 
                 # grid_length = int(round((self.molecule.N * self.tools.config_variables['gauss2plane_overhead']) ** (1/3)))
                 if not hasattr(self.molecule, 'eta') or not hasattr(self.molecule, 'Omega') or not hasattr(self.molecule, 'N_grid'):
+                    grid_length = int(round((self.molecule.N * self.tools.config_variables['gauss2plane_overhead']) ** (1/3)))
                     grid = self.molecule.build_grid(grid_length)
 
                 N_grid = self.molecule.N_grid
