@@ -137,7 +137,7 @@ class Interaction_picture:
 
         # HF initial rotations
 
-        N_small = 112896
+        N_small = 1e5#112896
         r = np.ceil(4.7*lambda_value/(2*epsilon_PEA))
 
         epsilon_S = 1e-2 #todo: parameter to be optimized for T gates
@@ -151,7 +151,7 @@ class Interaction_picture:
 
 
         # Initial state antisymmetrization
-        comparison_eta = self.tools.compare_cost(np.ceil(np.log2(eta**2)))/4#todo: compare cost
+        comparison_eta = self.tools.compare_cost(np.ceil(np.log2(eta**2)))/4
         comparison_N = self.tools.compare_cost(np.ceil(np.log2(N)))/4
         swaps_eta = np.ceil(np.log2(eta**2))
         swaps_N = np.ceil(np.log2(N))
@@ -253,10 +253,10 @@ class Interaction_picture:
         Rot = n_eta_zeta + 2*n_eta + 6*n_p + n_M + 16
 
         # Final cost
-        cost = r*(Prep + Sel + Rot)
+        QPE = r*(Prep + Sel + Rot)
 
         # Remember: the multiplier by 4 is Toffoli -> T gate
-        return cost + antisymmetrization +  HF
+        return QPE + antisymmetrization +  HF
 
 
     ## Sublinear scaling and interaction picture babbush2019quantum
