@@ -91,6 +91,8 @@ else:
     c_calculator = cost_calculator.Cost_calculator(molecule, tools)
     c_calculator.calculate_cost(args.method)
 
+    cost_module = 'total'
+
     '''
     p = figure(
         #title='Evolution of tts with different steps', # Usually graphs do not have title
@@ -105,7 +107,7 @@ else:
     fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(8,6))
 
     ax.set_xlim([10**2, 10**9])
-    ax.set_ylim([10**11, 10**16])
+    ax.set_ylim([10**15, 10**18])
     ax.set_yscale("log")
     ax.set_xscale("log")
 
@@ -120,7 +122,9 @@ else:
         
             x_value = cost_object[0]
 
-            median = np.nanmedian(cost_object[1])
+            if cost_module == 'HF': median = np.nanmedian([element[0] for element in cost_object[1]])
+            elif cost_module == 'QPE': median = np.nanmedian([element[2] for element in cost_object[1]])
+            elif cost_module == 'total': median = np.nanmedian([sum(element) for element in cost_object[1]])
         
             if counter == 0:
 
@@ -132,12 +136,10 @@ else:
                 # add a line renderer
                 ax.scatter(x_value, median, marker="s", c="green", alpha=0.5, s=200, label=r'$\epsilon_{PEA}=0.043eV$')
 
-
             if counter == 2:
 
                 # add a line renderer
                 ax.scatter(x_value, median, marker="*", c="orange", alpha=0.5, s=200, label=r'$\epsilon_{PEA}=0.129eV$')
-
 
             if counter == 3:
 

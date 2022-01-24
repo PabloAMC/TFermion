@@ -102,7 +102,7 @@ class Interaction_picture:
         cost = r*(exp_U_V + TDS)
         return cost
 
-    def first_quantization_qubitization(self, optimized_parameters, N, eta, lambda_zeta, Omega, amplitude_amplification = True, vec_a: np.array = None):
+    def first_quantization_qubitization(self, optimized_parameters, N, eta, lambda_zeta, Omega, cost_unity, cost_module, amplitude_amplification = True, vec_a: np.array = None):
         '''
         Based on the qubitization method from Fault-Tolerant Quantum Simulations of Chemistry in First Quantization
 
@@ -129,13 +129,6 @@ class Interaction_picture:
         a = 3 if amplitude_amplification else 1
 
         n_p, n_eta, n_eta_zeta, n_M, n_R, n_T, lambda_value = self.calculate_number_bits_parameters(optimized_parameters, N, eta, lambda_zeta, Omega, amplitude_amplification)
-        
-        '''cost = (2*(n_T + 4*n_eta_zeta + 2*br-12) + 14*n_eta +8*br -36+a*(3*n_p**2+15*n_p-7+4*n_M*(n_p+1))
-        +lambda_zeta+self.Er(lambda_zeta) + 2*(2*n_p + 2*br-7) + 12*eta*n_p+5*(n_p-1) + 2 + 24*n_p+6*n_p*n_R +18
-        +n_eta_zeta +2*n_eta + 6*n_p + n_M+16)*np.ceil(np.pi*lambda_value/(2*epsilon_PEA))
-        return cost'''
-
-        # HF initial rotations
 
         N_small = 1e5#112896
         r = np.ceil(4.7*lambda_value/(2*epsilon_PEA))
@@ -143,121 +136,142 @@ class Interaction_picture:
         epsilon_S = 1e-2 #todo: parameter to be optimized for T gates
         epsilon_SS = epsilon_S / (2*eta*(N_small-eta)+r*(2*2+2*(n_p+n_R)))# the +2*2 comes from w preparation and unprepartion, the 2*(n_p + n_R) from c-paulis in U-Phase
 
-        Givens = 2*2* (2*(np.ceil(np.log2(N_small))-2-1)) # Using Barenco lemma 7.2: 2 MCX + uncomputations
-        T_givens = 2*self.tools.pauli_rotation_synthesis(epsilon_SS)*eta*(N_small-eta)
-        #todo: T gates
-        #print('Required number of T gates in Givens rotations for HF:', T_givens)
-        HF = eta*(N_small-eta)*Givens
-
-
-        # Initial state antisymmetrization
-        comparison_eta = self.tools.compare_cost(np.ceil(np.log2(eta**2)))/4
-        comparison_N = self.tools.compare_cost(np.ceil(np.log2(N)))/4
-        swaps_eta = np.ceil(np.log2(eta**2))
-        swaps_N = np.ceil(np.log2(N))
-        Step_2 = eta*np.ceil(np.log2(eta))*(np.ceil(np.log2(eta))-1)/4* (comparison_eta + swaps_eta)
-        Step_4 = eta*np.ceil(np.log2(eta))*(np.ceil(np.log2(eta))-1)/4* (comparison_N + swaps_N)
-        antisymmetrization = Step_2*2 + Step_4 #the *2 is due to expected success rate
-
-        # Section A
-        ## weigthings between T and U+V, and U and V.
-        weight_T_UV = n_T-3
-
-        eq_superp_T_UV = 3*n_eta_zeta + 2*br - 9
-        ineq_test = n_eta_zeta - 1
-        weight_U_V = eq_superp_T_UV +  ineq_test + 1
-
-        prep_qubit_TUV = weight_T_UV + weight_U_V
-
-        ## superposition between i and j
-        bin_super = 3*n_eta + 2*br - 9
-        equality_test = n_eta
-        inv_equality_test = n_eta
-        inv_bin_super = 3*n_eta + 2*br - 9
-
-        prep_i_j = 2*bin_super + equality_test + inv_equality_test + 2*inv_bin_super
-
-        ## success check
-        success_check = 3
-
-        # Section B: Qubitization of T 
         
-        ## Superposition w,r,s
-        #sup_w = 3*2 + 2*br - 9 # = 3*n + 2*br - 9 with n = 2. br is suggested to be 8 
-        T_sup_w = self.tools.pauli_rotation_synthesis(epsilon_SS) + self.tools.c_pauli_rotation_synthesis(epsilon_SS) 
-        #todo: this cost is in T gates, not Toffoli 
-        sup_r = n_p - 2
-        prep_wrs_T = 2*sup_r # 2 for r and s
+        '''cost = (2*(n_T + 4*n_eta_zeta + 2*br-12) + 14*n_eta +8*br -36+a*(3*n_p**2+15*n_p-7+4*n_M*(n_p+1))
+        +lambda_zeta+self.Er(lambda_zeta) + 2*(2*n_p + 2*br-7) + 12*eta*n_p+5*(n_p-1) + 2 + 24*n_p+6*n_p*n_R +18
+        +n_eta_zeta +2*n_eta + 6*n_p + n_M+16)*np.ceil(np.pi*lambda_value/(2*epsilon_PEA))
+        return cost'''
 
-        ## Sel T
-        control_swap_i_j_ancilla = 2*2*(eta-2) #unary iteration for i and j, and for in and out
-        swap_i_j_ancilla = 2*2*3*eta*n_p # 3 components, 2 for i and j, 2 for in and out. Also used in Sel_U_V
-        cswap_p_q = control_swap_i_j_ancilla + swap_i_j_ancilla
+        def calculate_HF_cost():
 
-        control_copy_w = 3*(n_p-1)
-        copy_r = n_p - 1
-        copy_s = n_p - 1
-        control_phase = 1
-        erasure = 0
-        control_qubit_T = 1
-        Sel_T = control_copy_w + copy_r + copy_s + control_phase + erasure + control_qubit_T
+            if cost_unity == 'T':
+                T_givens = 2*self.tools.pauli_rotation_synthesis(epsilon_SS)*eta*(N_small-eta)
+                HF_cost = eta*(N_small-eta)*T_givens
 
-        # Section C: Preparation U and V
-        nested_boxes = n_p-1
-        coord_prep = 3*(n_p-1)
-        minus_zero_flag = 3*n_p +2
-        inside_box_test = 3*n_p
+            elif cost_unity == 'toffoli':
 
-        n_sums = sum([str(bin(vec_b[i]**2))[:2*n_p+2].count('1') for i in range(len(vec_b))])-1   # rescales the nu components according to vec_b items
-        sums = n_sums*self.tools.sum_cost(2*n_p+2)/4
-        squares = 3*n_p**2-n_p-1
-        multiplication = 2*n_M*(2*n_p+2)-n_M
-        comparison = 2*n_p + n_M + 2
-        success_flag = 3
+                Givens = 2*2* (2*(np.ceil(np.log2(N_small))-2-1)) # Using Barenco lemma 7.2: 2 MCX + uncomputations
+                HF_cost = eta*(N_small-eta)*Givens
 
-        inversion_c_hadamards = nested_boxes + coord_prep
+            return HF_cost
 
-        Prep_1_nu_and_inv = nested_boxes + coord_prep + minus_zero_flag + inside_box_test + 2*sums + squares + multiplication + comparison + success_flag + inversion_c_hadamards
+        def calculate_antisymmetrization_cost():
 
-        QROM_Rl = lambda_zeta + self.Er(lambda_zeta)
+            # Initial state antisymmetrization
+            comparison_eta = self.tools.compare_cost(np.ceil(np.log2(eta**2)))/4
+            comparison_N = self.tools.compare_cost(np.ceil(np.log2(N)))/4
+            swaps_eta = np.ceil(np.log2(eta**2))
+            swaps_N = np.ceil(np.log2(N))
+            Step_2 = eta*np.ceil(np.log2(eta))*(np.ceil(np.log2(eta))-1)/4* (comparison_eta + swaps_eta)
+            Step_4 = eta*np.ceil(np.log2(eta))*(np.ceil(np.log2(eta))-1)/4* (comparison_N + swaps_N)
+            antisymmetrization_cost = Step_2*2 + Step_4 #the *2 is due to expected success rate
 
-        # Section D: Sel U and V
+            return antisymmetrization_cost
 
-        swap_i_j_ancilla = 2*2*3*eta*n_p # 3 components, 2 for i and j, 2 for in and out  (Duplicated from Sel T)
+        def calculate_QPE_cost():
 
-        ## Controlled sum and substraction with change from signed integer to 2's complement
-        signed2twos = 2*3*(n_p-2) # the 2 is for p and q, the 3 for their components
-        addition = n_p+1
-        controlled = n_p+1
-        controlled_addition = 2*3*(addition + controlled)
-        twos2signed = 2*3*(n_p) #Same as above, now with two extra qubits
-        controlled_sum_substraction_nu = signed2twos + controlled_addition + twos2signed
+            # Section A
+            ## weigthings between T and U+V, and U and V.
+            weight_T_UV = n_T-3
 
-        # No control-Z on |+> on Sel
+            eq_superp_T_UV = 3*n_eta_zeta + 2*br - 9
+            ineq_test = n_eta_zeta - 1
+            weight_U_V = eq_superp_T_UV +  ineq_test + 1
 
-        if n_R > n_p: # eq 97 # the product R_l \cdot k_\nu cancels the terms a_i
-            U_phase = 3*(2*n_p*n_R-n_p*(n_p+1)-1)
-        else:
-            U_phase = 3*n_R*(n_R-1)
+            prep_qubit_TUV = weight_T_UV + weight_U_V
 
-        #todo: pauli rotation synthesis
-        U_phase_T_gates = (n_p+n_R)*self.tools.c_pauli_rotation_synthesis(epsilon_SS) # arbitrary single rotations
+            ## superposition between i and j
+            bin_super = 3*n_eta + 2*br - 9
+            equality_test = n_eta
+            inv_equality_test = n_eta
+            inv_bin_super = 3*n_eta + 2*br - 9
 
-        # Total cost of Prepare and unprepare
-        Prep = 2*prep_qubit_TUV + prep_i_j + success_check + 2*prep_wrs_T + a*Prep_1_nu_and_inv + QROM_Rl
+            prep_i_j = 2*bin_super + equality_test + inv_equality_test + 2*inv_bin_super
 
-        # Total cost of Select
-        Sel = cswap_p_q + Sel_T + controlled_sum_substraction_nu + U_phase
+            ## success check
+            success_check = 3
 
-        # Rotation in definition of Q
-        Rot = n_eta_zeta + 2*n_eta + 6*n_p + n_M + 16
+            # Section B: Qubitization of T
 
-        # Final cost
-        QPE = r*(Prep + Sel + Rot)
+            ## Superposition w,r,s
+            #sup_w = 3*2 + 2*br - 9 # = 3*n + 2*br - 9 with n = 2. br is suggested to be 8
+            T_sup_w = self.tools.pauli_rotation_synthesis(epsilon_SS) + self.tools.c_pauli_rotation_synthesis(epsilon_SS)
+            #todo: this cost is in T gates, not Toffoli
+            sup_r = n_p - 2
+            prep_wrs_T = 2*sup_r # 2 for r and s
 
-        # Remember: the multiplier by 4 is Toffoli -> T gate
-        return QPE + antisymmetrization +  HF
+            ## Sel T
+            control_swap_i_j_ancilla = 2*2*(eta-2) #unary iteration for i and j, and for in and out
+            swap_i_j_ancilla = 2*2*3*eta*n_p # 3 components, 2 for i and j, 2 for in and out. Also used in Sel_U_V
+            cswap_p_q = control_swap_i_j_ancilla + swap_i_j_ancilla
 
+            control_copy_w = 3*(n_p-1)
+            copy_r = n_p - 1
+            copy_s = n_p - 1
+            control_phase = 1
+            erasure = 0
+            control_qubit_T = 1
+            Sel_T = control_copy_w + copy_r + copy_s + control_phase + erasure + control_qubit_T
+
+            # Section C: Preparation U and V
+            nested_boxes = n_p-1
+            coord_prep = 3*(n_p-1)
+            minus_zero_flag = 3*n_p +2
+            inside_box_test = 3*n_p
+
+            n_sums = sum([str(bin(vec_b[i]**2))[:2*n_p+2].count('1') for i in range(len(vec_b))])-1   # rescales the nu components according to vec_b items
+            sums = n_sums*self.tools.sum_cost(2*n_p+2)/4
+            squares = 3*n_p**2-n_p-1
+            multiplication = 2*n_M*(2*n_p+2)-n_M
+            comparison = 2*n_p + n_M + 2
+            success_flag = 3
+
+            inversion_c_hadamards = nested_boxes + coord_prep
+
+            Prep_1_nu_and_inv = nested_boxes + coord_prep + minus_zero_flag + inside_box_test + 2*sums + squares + multiplication + comparison + success_flag + inversion_c_hadamards
+
+            QROM_Rl = lambda_zeta + self.Er(lambda_zeta)
+
+            # Section D: Sel U and V
+
+            swap_i_j_ancilla = 2*2*3*eta*n_p # 3 components, 2 for i and j, 2 for in and out  (Duplicated from Sel T)
+
+            ## Controlled sum and substraction with change from signed integer to 2's complement
+            signed2twos = 2*3*(n_p-2) # the 2 is for p and q, the 3 for their components
+            addition = n_p+1
+            controlled = n_p+1
+            controlled_addition = 2*3*(addition + controlled)
+            twos2signed = 2*3*(n_p) #Same as above, now with two extra qubits
+            controlled_sum_substraction_nu = signed2twos + controlled_addition + twos2signed
+
+            # No control-Z on |+> on Sel
+
+            if n_R > n_p: # eq 97 # the product R_l \cdot k_\nu cancels the terms a_i
+                U_phase = 3*(2*n_p*n_R-n_p*(n_p+1)-1)
+            else:
+                U_phase = 3*n_R*(n_R-1)
+
+            #todo: pauli rotation synthesis
+            U_phase_T_gates = (n_p+n_R)*self.tools.c_pauli_rotation_synthesis(epsilon_SS) # arbitrary single rotations
+
+            # Total cost of Prepare and unprepare
+            Prep = 2*prep_qubit_TUV + prep_i_j + success_check + 2*prep_wrs_T + a*Prep_1_nu_and_inv + QROM_Rl
+
+            # Total cost of Select
+            Sel = cswap_p_q + Sel_T + controlled_sum_substraction_nu + U_phase
+
+            # Rotation in definition of Q
+            Rot = n_eta_zeta + 2*n_eta + 6*n_p + n_M + 16
+
+            # Final cost
+            QPE_cost = r*(Prep + Sel + Rot)
+
+            return QPE_cost
+
+        if cost_module == 'detail':
+            return calculate_HF_cost(), calculate_antisymmetrization_cost(), calculate_QPE_cost()
+        elif cost_module == 'total':
+            return calculate_HF_cost()+calculate_antisymmetrization_cost()+calculate_QPE_cost()
 
     ## Sublinear scaling and interaction picture babbush2019quantum
     def sublinear_scaling_interaction(self, epsilons, N, eta, Gamma, lambd_T, lambd_U_V, J):

@@ -404,17 +404,23 @@ class Cost_calculator:
                 MAX_N_GRID = 1e9
                 n_grid_values = self.calculate_n_grid_values(MIN_N_GRID, MAX_N_GRID)
 
+                # it indicates if the cost returned is in T gates or Toffoli
+                cost_unity = 'T'
+                # it indicates if the cost returned is the sum of HF, antisymmetrization and QPE or each value separetly
+                cost_module = 'total'
+
                 number_samples = len(n_grid_values)*4
                 with alive_bar(number_samples) as bar:
 
                     all_costs = []
+                    # execute the cost calculation for different chemical accuracy
                     for chemical_acc in [1/3, 1, 3, 9]:
 
                         costs_for_chem_acc = []
 
                         for n_grid_val in n_grid_values:
 
-                            arguments = (n_grid_val, eta, lambda_zeta, Omega, amplitude_amplification)
+                            arguments = (n_grid_val, eta, lambda_zeta, Omega, cost_unity, cost_module, amplitude_amplification)
 
                             # generate value for errors epsilon_PEA, epsilon_M, epsilon_R, epsilon_T, br
                             parameters_to_optimize = ['epsilon_PEA', 'epsilon_M', 'epsilon_R', 'epsilon_T', 'br']
@@ -423,12 +429,15 @@ class Cost_calculator:
                             for _ in range(self.runs):
                                 optimized_parameters = self.calculate_optimized_parameters(parameters_to_optimize, chemical_acc, methods_interaction_picture.first_quantization_qubitization, arguments)
 
+                                cost_module = 'detail'
                                 cost_values += [methods_interaction_picture.first_quantization_qubitization(
                                     optimized_parameters.x,
                                     n_grid_val,
                                     eta, 
                                     lambda_zeta, 
                                     Omega,
+                                    cost_unity,
+                                    cost_module,
                                     amplitude_amplification)]
 
                             bar()
