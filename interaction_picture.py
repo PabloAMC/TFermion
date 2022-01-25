@@ -147,7 +147,7 @@ class Interaction_picture:
         def calculate_HF_cost():
 
             # T gate cost for HF
-            T_givens = 2*self.tools.pauli_rotation_synthesis(epsilon_SS)*eta*(N_small-eta)
+            T_givens = 2*self.tools.pauli_rotation_synthesis(epsilon_SS)
             HF_T_cost = eta*(N_small-eta)*T_givens
             
             # toffoli gate cost for HF

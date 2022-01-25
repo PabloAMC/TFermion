@@ -418,6 +418,8 @@ class Cost_calculator:
 
                         costs_for_chem_acc = []
 
+                        # since cost module is modified to calculate the errors detailed, it is necessary to set again to optimization mode
+                        cost_module = 'optimization'
                         for n_grid_val in n_grid_values:
 
                             arguments = (n_grid_val, eta, lambda_zeta, Omega, cost_unity, cost_module, amplitude_amplification)
