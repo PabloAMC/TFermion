@@ -405,9 +405,9 @@ class Cost_calculator:
                 n_grid_values = self.calculate_n_grid_values(MIN_N_GRID, MAX_N_GRID)
 
                 # it indicates if the cost returned is in T gates or Toffoli
-                cost_unity = 'T'
+                cost_unity = 'toffoli'
                 # it indicates if the cost returned is the sum of HF, antisymmetrization and QPE or each value separetly
-                cost_module = 'total'
+                cost_module = 'optimization'
 
                 number_samples = len(n_grid_values)*4
                 with alive_bar(number_samples) as bar:

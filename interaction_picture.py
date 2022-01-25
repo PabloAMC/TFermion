@@ -6,6 +6,8 @@ class Interaction_picture:
 
     def __init__(self, tools):
         self.tools = tools
+        self.weight_T_cost = self.tools.config_variables['weight_T_cost']
+        self.weight_toffoli_cost = self.tools.config_variables['weight_toffoli_cost']
 
     def interaction_picture(self, epsilons, N, Gamma, lambd_T, lambd_U_V):
 
@@ -144,14 +146,17 @@ class Interaction_picture:
 
         def calculate_HF_cost():
 
-            if cost_unity == 'T':
-                T_givens = 2*self.tools.pauli_rotation_synthesis(epsilon_SS)*eta*(N_small-eta)
-                HF_cost = eta*(N_small-eta)*T_givens
+            # T gate cost for HF
+            T_givens = 2*self.tools.pauli_rotation_synthesis(epsilon_SS)*eta*(N_small-eta)
+            HF_T_cost = eta*(N_small-eta)*T_givens
+            
+            # toffoli gate cost for HF
+            Givens = 2*2* (2*(np.ceil(np.log2(N_small))-2-1)) # Using Barenco lemma 7.2: 2 MCX + uncomputations
+            HF_toffoli_cost = eta*(N_small-eta)*Givens
 
-            elif cost_unity == 'toffoli':
-
-                Givens = 2*2* (2*(np.ceil(np.log2(N_small))-2-1)) # Using Barenco lemma 7.2: 2 MCX + uncomputations
-                HF_cost = eta*(N_small-eta)*Givens
+            if cost_unity == 'T': HF_cost = HF_T_cost
+            elif cost_unity == 'toffoli': HF_cost = HF_toffoli_cost
+            elif cost_unity == 'optimization': HF_cost = HF_T_cost*self.weight_T_cost + HF_toffoli_cost*self.weight_toffoli_cost
 
             return HF_cost
 
@@ -263,14 +268,22 @@ class Interaction_picture:
             # Rotation in definition of Q
             Rot = n_eta_zeta + 2*n_eta + 6*n_p + n_M + 16
 
-            # Final cost
-            QPE_cost = r*(Prep + Sel + Rot)
+
+            # Final toffoli cost
+            QPE_toffoli_cost = r*(Prep + Sel + Rot)
+
+            # Final T cost
+            QPE_T_cost = r*(2*T_sup_w + U_phase_T_gates)
+
+            if cost_unity == 'T': QPE_cost = QPE_T_cost
+            elif cost_unity == 'toffoli': QPE_cost = QPE_toffoli_cost
+            elif cost_unity == 'optimization': QPE_cost = QPE_T_cost*self.weight_T_cost + QPE_toffoli_cost*self.weight_toffoli_cost
 
             return QPE_cost
 
         if cost_module == 'detail':
             return calculate_HF_cost(), calculate_antisymmetrization_cost(), calculate_QPE_cost()
-        elif cost_module == 'total':
+        elif cost_module == 'optimization':
             return calculate_HF_cost()+calculate_antisymmetrization_cost()+calculate_QPE_cost()
 
     ## Sublinear scaling and interaction picture babbush2019quantum
