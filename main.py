@@ -91,14 +91,9 @@ else:
     c_calculator = cost_calculator.Cost_calculator(molecule, tools)
     c_calculator.calculate_cost(args.method)
 
-    cost_module = 'total'
-
-    fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(8,6))
-
-    ax.set_xlim([10**2, 10**9])
-    ax.set_ylim([10**11, 10**16])
-    ax.set_yscale("log")
-    ax.set_xscale("log")
+    fig, ax_HF = plt.subplots(nrows=1, ncols=1, figsize=(8,6))
+    fig, ax_QPE = plt.subplots(nrows=1, ncols=1, figsize=(8,6))
+    fig, ax_total = plt.subplots(nrows=1, ncols=1, figsize=(8,6))
 
     points = c_calculator.costs[args.method]
 
@@ -111,54 +106,102 @@ else:
         
             x_value = cost_object[0]
 
-            if cost_module == 'HF': median = np.nanmedian([element[0] for element in cost_object[1]])
-            elif cost_module == 'QPE': median = np.nanmedian([element[2] for element in cost_object[1]])
-            elif cost_module == 'total': median = np.nanmedian([sum(element) for element in cost_object[1]])
+            median_HF = np.nanmedian([element[0] for element in cost_object[1]])
+            median_QPE = np.nanmedian([element[2] for element in cost_object[1]])
+            median_total = np.nanmedian([sum(element) for element in cost_object[1]])
         
             if counter == 0:
 
                 # add a line renderer
-                ax.scatter(x_value, median, marker="h", c="blue", alpha=0.5, s=200, label=r'$\epsilon_{PEA}=0.014eV$')
+                ax_HF.scatter(x_value, median_HF, marker="h", c="blue", alpha=0.5, s=200, label=r'$\epsilon_{PEA}=0.014eV$')
+                ax_QPE.scatter(x_value, median_QPE, marker="h", c="blue", alpha=0.5, s=200, label=r'$\epsilon_{PEA}=0.014eV$')
+                ax_total.scatter(x_value, median_total, marker="h", c="blue", alpha=0.5, s=200, label=r'$\epsilon_{PEA}=0.014eV$')
 
             elif counter == 1:
 
                 # add a line renderer
-                ax.scatter(x_value, median, marker="s", c="green", alpha=0.5, s=200, label=r'$\epsilon_{PEA}=0.043eV$')
+                ax_HF.scatter(x_value, median_HF, marker="s", c="green", alpha=0.5, s=200, label=r'$\epsilon_{PEA}=0.043eV$')
+                ax_QPE.scatter(x_value, median_QPE, marker="s", c="green", alpha=0.5, s=200, label=r'$\epsilon_{PEA}=0.043eV$')
+                ax_total.scatter(x_value, median_total, marker="s", c="green", alpha=0.5, s=200, label=r'$\epsilon_{PEA}=0.043eV$')
 
             elif counter == 2:
 
                 # add a line renderer
-                ax.scatter(x_value, median, marker="*", c="orange", alpha=0.5, s=200, label=r'$\epsilon_{PEA}=0.129eV$')
+                ax_HF.scatter(x_value, median_HF, marker="*", c="orange", alpha=0.5, s=200, label=r'$\epsilon_{PEA}=0.129eV$')
+                ax_QPE.scatter(x_value, median_QPE, marker="*", c="orange", alpha=0.5, s=200, label=r'$\epsilon_{PEA}=0.129eV$')
+                ax_total.scatter(x_value, median_total, marker="*", c="orange", alpha=0.5, s=200, label=r'$\epsilon_{PEA}=0.129eV$')
 
             elif counter == 3:
 
                 # add a line renderer
-                ax.scatter(x_value, median, marker="d", c="red", alpha=0.5, s=200, label=r'$\epsilon_{PEA}=0.387eV$')
+                ax_HF.scatter(x_value, median_HF, marker="d", c="red", alpha=0.5, s=200, label=r'$\epsilon_{PEA}=0.387eV$')
+                ax_QPE.scatter(x_value, median_QPE, marker="d", c="red", alpha=0.5, s=200, label=r'$\epsilon_{PEA}=0.387eV$')
+                ax_total.scatter(x_value, median_total, marker="d", c="red", alpha=0.5, s=200, label=r'$\epsilon_{PEA}=0.387eV$')
 
-    ax.set_ylabel(r'Toffoli gate cost', fontsize=20)
-    ax.set_xlabel(r'Number of plane waves, $N$', fontsize=20)
+    ax_HF.set_xlim([10**2, 10**9])
+    ax_QPE.set_xlim([10**2, 10**9])
+    ax_total.set_xlim([10**2, 10**9])
+
+    ax_HF.set_ylim([10**11, 10**16])
+    ax_QPE.set_ylim([10**11, 10**16])
+    ax_total.set_ylim([10**11, 10**16])
+
+    ax_HF.set_xscale("log")
+    ax_QPE.set_xscale("log")
+    ax_total.set_xscale("log")
+
+    ax_HF.set_yscale("log")
+    ax_QPE.set_yscale("log")
+    ax_total.set_yscale("log")
+    
+    ax_HF.set_xlabel(r'Number of plane waves, $N$', fontsize=20)
+    ax_QPE.set_xlabel(r'Number of plane waves, $N$', fontsize=20)
+    ax_total.set_xlabel(r'Number of plane waves, $N$', fontsize=20)
+    
+    ax_HF.set_ylabel(r'Toffoli gate cost', fontsize=20)
+    ax_QPE.set_ylabel(r'Toffoli gate cost', fontsize=20)
+    ax_total.set_ylabel(r'Toffoli gate cost', fontsize=20)
+
 
     # First plot: two legend keys for a single entry
-    p1 = ax.scatter([0], [0], c='blue', marker='h', alpha=0.5, s=100)
-    p2 = ax.scatter([0], [0], c='green', marker='s', alpha=0.5, s=100)
-    p3 = ax.scatter([0], [0], c='orange', marker='*', alpha=0.5, s=100)
-    p4 = ax.scatter([0], [0], c='red', marker='d', alpha=0.5, s=100)
+    p1 = ax_HF.scatter([0], [0], c='blue', marker='h', alpha=0.5, s=100)
+    p1 = ax_QPE.scatter([0], [0], c='blue', marker='h', alpha=0.5, s=100)
+    p1 = ax_total.scatter([0], [0], c='blue', marker='h', alpha=0.5, s=100)
+
+    p2 = ax_HF.scatter([0], [0], c='green', marker='s', alpha=0.5, s=100)
+    p2 = ax_QPE.scatter([0], [0], c='green', marker='s', alpha=0.5, s=100)
+    p2 = ax_total.scatter([0], [0], c='green', marker='s', alpha=0.5, s=100)
+    
+    p3 = ax_HF.scatter([0], [0], c='orange', marker='*', alpha=0.5, s=100)
+    p3 = ax_QPE.scatter([0], [0], c='orange', marker='*', alpha=0.5, s=100)
+    p3 = ax_total.scatter([0], [0], c='orange', marker='*', alpha=0.5, s=100)
+    
+    p4 = ax_HF.scatter([0], [0], c='red', marker='d', alpha=0.5, s=100)
+    p4 = ax_QPE.scatter([0], [0], c='red', marker='d', alpha=0.5, s=100)
+    p4 = ax_total.scatter([0], [0], c='red', marker='d', alpha=0.5, s=100)
 
     # Assign two of the handles to the same legend entry by putting them in a tuple
     # and using a generic handler map (which would be used for any additional
     # tuples of handles like (p1, p3)).
-    l = ax.legend([p1, p2, p3, p4], [r'$\epsilon_{QPE}=0.014eV$', r'$\epsilon_{QPE}=0.043eV$', r'$\epsilon_{QPE}=0.129eV$', r'$\epsilon_{QPE}=0.387eV$'], scatterpoints=1,
+    l = ax_HF.legend([p1, p2, p3, p4], [r'$\epsilon_{QPE}=0.014eV$', r'$\epsilon_{QPE}=0.043eV$', r'$\epsilon_{QPE}=0.129eV$', r'$\epsilon_{QPE}=0.387eV$'], scatterpoints=1,
+                numpoints=1, handler_map={tuple: HandlerTuple(ndivide=None)}, loc='upper left', borderpad=1, prop={'size': 12}, labelspacing=1)
+    l = ax_QPE.legend([p1, p2, p3, p4], [r'$\epsilon_{QPE}=0.014eV$', r'$\epsilon_{QPE}=0.043eV$', r'$\epsilon_{QPE}=0.129eV$', r'$\epsilon_{QPE}=0.387eV$'], scatterpoints=1,
                 numpoints=1, handler_map={tuple: HandlerTuple(ndivide=None)}, loc='upper left', borderpad=1, prop={'size': 12}, labelspacing=1)
 
-    ax.tick_params(axis='x')
+    l = ax_total.legend([p1, p2, p3, p4], [r'$\epsilon_{QPE}=0.014eV$', r'$\epsilon_{QPE}=0.043eV$', r'$\epsilon_{QPE}=0.129eV$', r'$\epsilon_{QPE}=0.387eV$'], scatterpoints=1,
+                numpoints=1, handler_map={tuple: HandlerTuple(ndivide=None)}, loc='upper left', borderpad=1, prop={'size': 12}, labelspacing=1)
+
+    ax_HF.tick_params(axis='x')
+    ax_QPE.tick_params(axis='x')
+    ax_total.tick_params(axis='x')
 
     plt.yticks(fontsize=14)
     plt.xticks(fontsize=14)
 
     plt.savefig('plot.pdf')  
 
-    print('The cost to calculate the energy of', args.molecule_info,'with method', args.method, 'is', "{:0.2e}".format(median), 'T gates')
-    print('With the specified parameters, synthesising that many T gates should take approximately', "{:0.2e}".format(c_calculator.calculate_time(median)), 'seconds')
+    print('The cost to calculate the energy of', args.molecule_info,'with method', args.method, 'is', "{:0.2e}".format(median_total), 'T gates')
+    print('With the specified parameters, synthesising that many T gates should take approximately', "{:0.2e}".format(c_calculator.calculate_time(median_total)), 'seconds')
 
 execution_time = time.time() - start_time
 
