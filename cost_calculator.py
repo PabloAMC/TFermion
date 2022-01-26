@@ -400,7 +400,7 @@ class Cost_calculator:
 
                 # calculate cost of the function for different N values
                 # these N values should be selected in a way that n_p is an integer
-                MIN_N_GRID = 1e2
+                MIN_N_GRID = 1e8
                 MAX_N_GRID = 1e9
                 n_grid_values = self.calculate_n_grid_values(MIN_N_GRID, MAX_N_GRID)
 
