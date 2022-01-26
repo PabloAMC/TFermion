@@ -400,16 +400,16 @@ class Cost_calculator:
 
                 # calculate cost of the function for different N values
                 # these N values should be selected in a way that n_p is an integer
-                MIN_N_GRID = 1e8
+                MIN_N_GRID = 1e2
                 MAX_N_GRID = 1e9
-                n_grid_values = self.calculate_n_grid_values(MIN_N_GRID, MAX_N_GRID)
+                values = self.calculate_range_values(MIN_N_GRID, MAX_N_GRID)
 
                 # it indicates if the cost returned is in T gates or Toffoli
-                cost_unity = 'toffoli'
+                cost_unity = 'T'
                 # it indicates if the cost returned is the sum of HF, antisymmetrization and QPE or each value separetly
                 cost_module = 'optimization'
 
-                number_samples = len(n_grid_values)*4
+                number_samples = len(values)*4
                 with alive_bar(number_samples) as bar:
 
                     all_costs = []
@@ -420,12 +420,12 @@ class Cost_calculator:
 
                         # since cost module is modified to calculate the errors detailed, it is necessary to set again to optimization mode
                         cost_module = 'optimization'
-                        for n_grid_val in n_grid_values:
+                        for val in values:
 
-                            arguments = (n_grid_val, eta, lambda_zeta, Omega, cost_unity, cost_module, amplitude_amplification)
+                            arguments = (val, 1.5e4, eta, lambda_zeta, Omega, cost_unity, cost_module, amplitude_amplification)
 
-                            # generate value for errors epsilon_PEA, epsilon_M, epsilon_R, epsilon_T, br
-                            parameters_to_optimize = ['epsilon_PEA', 'epsilon_M', 'epsilon_R', 'epsilon_T', 'br']
+                            # generate value for errors epsilon_PEA, epsilon_M, epsilon_R, epsilon_S, epsilon_T, br
+                            parameters_to_optimize = ['epsilon_PEA', 'epsilon_M', 'epsilon_R', 'epsilon_S', 'epsilon_T', 'br']
 
                             cost_values = []
                             for _ in range(self.runs):
@@ -434,7 +434,8 @@ class Cost_calculator:
                                 cost_module = 'detail'
                                 cost_values += [methods_interaction_picture.first_quantization_qubitization(
                                     optimized_parameters.x,
-                                    n_grid_val,
+                                    val,
+                                    1.5e4,
                                     eta, 
                                     lambda_zeta, 
                                     Omega,
@@ -444,7 +445,7 @@ class Cost_calculator:
 
                             bar()
 
-                            costs_for_chem_acc.append([n_grid_val, cost_values])
+                            costs_for_chem_acc.append([val, cost_values])
 
                         all_costs.append(costs_for_chem_acc)
 
@@ -471,21 +472,21 @@ class Cost_calculator:
 
         return optimized_parameters
 
-    def calculate_n_grid_values(self, min_n_grid, max_n_grid):
+    def calculate_range_values(self, min_value, max_value):
 
-        n_grid_values = []
+        values = []
 
         n_p = 0
-        n_grid_val = (2**n_p-1)**3
-        while n_grid_val < max_n_grid:
+        val = (2**n_p-1)**3
+        while val < max_value:
 
-            if n_grid_val > min_n_grid:
-                n_grid_values.append(n_grid_val)
+            if val > min_value:
+                values.append(val)
 
             n_p+=1
-            n_grid_val = (2**n_p-1)**3
+            val = (2**n_p-1)**3
 
-        return n_grid_values
+        return values
 
     def calculate_time(self, T_gates, p_fail = 1e-1, p_surface_step = 1e-3, P_inject = 5e-3, P_threshold = 5.7e-3, t_cycle = 2e-7, AAA_factories = 1e3):
         '''

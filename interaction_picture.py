@@ -104,7 +104,7 @@ class Interaction_picture:
         cost = r*(exp_U_V + TDS)
         return cost
 
-    def first_quantization_qubitization(self, optimized_parameters, N, eta, lambda_zeta, Omega, cost_unity, cost_module, amplitude_amplification = True, vec_a: np.array = None):
+    def first_quantization_qubitization(self, optimized_parameters, N, N_small, eta, lambda_zeta, Omega, cost_unity, cost_module, amplitude_amplification = True, vec_a: np.array = None):
         '''
         Based on the qubitization method from Fault-Tolerant Quantum Simulations of Chemistry in First Quantization
 
@@ -123,20 +123,19 @@ class Interaction_picture:
         else:
             vec_b = np.array([1,1,1])
 
-
         epsilon_PEA = optimized_parameters[0]
-        br = int(np.round(optimized_parameters[4]))
+        epsilon_S = optimized_parameters[3]
+        br = int(np.round(optimized_parameters[5]))
 
         # calculate parameters
         a = 3 if amplitude_amplification else 1
 
         n_p, n_eta, n_eta_zeta, n_M, n_R, n_T, lambda_value = self.calculate_number_bits_parameters(optimized_parameters, N, eta, lambda_zeta, Omega, amplitude_amplification)
 
-        N_small = 1e5#112896
         r = np.ceil(4.7*lambda_value/(2*epsilon_PEA))
 
-        epsilon_S = 1e-2 #todo: parameter to be optimized for T gates
-        epsilon_SS = epsilon_S / (2*eta*(N_small-eta)+r*(2*2+2*(n_p+n_R)))# the +2*2 comes from w preparation and unprepartion, the 2*(n_p + n_R) from c-paulis in U-Phase
+        epsilon_S_HF = 1e-2 #todo: parameter to be optimized for T gates
+        epsilon_SS_HF = epsilon_S_HF / (2*eta*(N_small-eta)+r*(2*2+2*(n_p+n_R)))# the +2*2 comes from w preparation and unprepartion, the 2*(n_p + n_R) from c-paulis in U-Phase
 
         
         '''cost = (2*(n_T + 4*n_eta_zeta + 2*br-12) + 14*n_eta +8*br -36+a*(3*n_p**2+15*n_p-7+4*n_M*(n_p+1))
@@ -147,7 +146,7 @@ class Interaction_picture:
         def calculate_HF_cost():
 
             # T gate cost for HF
-            T_givens = 2*self.tools.pauli_rotation_synthesis(epsilon_SS)
+            T_givens = 2*self.tools.pauli_rotation_synthesis(epsilon_SS_HF)
             HF_T_cost = eta*(N_small-eta)*T_givens
             
             # toffoli gate cost for HF
@@ -179,6 +178,8 @@ class Interaction_picture:
             ## weigthings between T and U+V, and U and V.
             weight_T_UV = n_T-3
 
+            epsilon_SS_QPE = epsilon_S / (r*(2*2+2*(n_p+n_R)))
+
             eq_superp_T_UV = 3*n_eta_zeta + 2*br - 9
             ineq_test = n_eta_zeta - 1
             weight_U_V = eq_superp_T_UV +  ineq_test + 1
@@ -200,7 +201,7 @@ class Interaction_picture:
 
             ## Superposition w,r,s
             #sup_w = 3*2 + 2*br - 9 # = 3*n + 2*br - 9 with n = 2. br is suggested to be 8
-            T_sup_w = self.tools.pauli_rotation_synthesis(epsilon_SS) + self.tools.c_pauli_rotation_synthesis(epsilon_SS)
+            T_sup_w = self.tools.pauli_rotation_synthesis(epsilon_SS_QPE) + self.tools.c_pauli_rotation_synthesis(epsilon_SS_QPE)
             #todo: this cost is in T gates, not Toffoli
             sup_r = n_p - 2
             prep_wrs_T = 2*sup_r # 2 for r and s
@@ -257,7 +258,7 @@ class Interaction_picture:
                 U_phase = 3*n_R*(n_R-1)
 
             #todo: pauli rotation synthesis
-            U_phase_T_gates = (n_p+n_R)*self.tools.c_pauli_rotation_synthesis(epsilon_SS) # arbitrary single rotations
+            U_phase_T_gates = (n_p+n_R)*self.tools.c_pauli_rotation_synthesis(epsilon_SS_QPE) # arbitrary single rotations
 
             # Total cost of Prepare and unprepare
             Prep = 2*prep_qubit_TUV + prep_i_j + success_check + 2*prep_wrs_T + a*Prep_1_nu_and_inv + QROM_Rl
@@ -450,7 +451,7 @@ class Interaction_picture:
 
     def calculate_number_bits_parameters(self, optimized_parameters, N, eta, lambda_zeta, Omega, amplitude_amplification):
 
-        _, epsilon_M, epsilon_R, epsilon_T, br = optimized_parameters
+        _, epsilon_M, epsilon_R, _, epsilon_T, br = optimized_parameters
 
         # n_p
         n_p = int(np.ceil(np.log2(N**(1/3) + 1)))

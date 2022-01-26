@@ -295,7 +295,7 @@ class Utils():
                 else:
                     print('<*> ERROR: extension in molecule information not recognized. It should be .chem (geometry) or .h5/.hdf5 (hamiltonian). The molecule name can not contain dots')
 
-    def generate_plot(self, points, plot_module, min_y_lim, max_y_lim):
+    def generate_plot(self, points, plot_module, min_x_lim, max_x_lim, min_y_lim, max_y_lim):
 
         fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(8,6))
 
@@ -332,14 +332,14 @@ class Utils():
                     # add a line renderer
                     ax.scatter(x_value, median, marker="d", c="red", alpha=0.5, s=200, label=r'$\epsilon_{PEA}=0.387eV$')
 
-        ax.set_xlim([10**2, 10**9])
+        ax.set_xlim([min_x_lim, max_x_lim])
         ax.set_ylim([min_y_lim, max_y_lim])
 
         ax.set_xscale("log")
         ax.set_yscale("log")
         
         ax.set_xlabel(r'Number of plane waves, $N$', fontsize=20)
-        ax.set_ylabel(r'Toffoli gate cost', fontsize=20)
+        ax.set_ylabel(r'toffoli gate cost', fontsize=20)
 
 
         # First plot: two legend keys for a single entry
@@ -351,8 +351,12 @@ class Utils():
         # Assign two of the handles to the same legend entry by putting them in a tuple
         # and using a generic handler map (which would be used for any additional
         # tuples of handles like (p1, p3)).
-        l = ax.legend([p1, p2, p3, p4], [r'$\epsilon_{QPE}=0.014eV$', r'$\epsilon_{QPE}=0.043eV$', r'$\epsilon_{QPE}=0.129eV$', r'$\epsilon_{QPE}=0.387eV$'], scatterpoints=1,
+
+
+        l = ax.legend([p1, p2, p3, p4], [r'$\epsilon_{'+plot_module+'}=0.014eV$', r'$\epsilon_{'+plot_module+'}=0.043eV$', r'$\epsilon_{'+plot_module+'}=0.129eV$', r'$\epsilon_{'+plot_module+'}=0.387eV$'], scatterpoints=1,
                     numpoints=1, handler_map={tuple: HandlerTuple(ndivide=None)}, loc='upper left', borderpad=1, prop={'size': 12}, labelspacing=1)
+        #l = ax.legend([p1], [r'$\epsilon_{'+plot_module+'}=0.014eV$'], scatterpoints=1,
+        #            numpoints=1, handler_map={tuple: HandlerTuple(ndivide=None)}, loc='upper left', borderpad=1, prop={'size': 12}, labelspacing=1)
 
         ax.tick_params(axis='x')
 

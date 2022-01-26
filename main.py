@@ -88,15 +88,15 @@ else:
     c_calculator = cost_calculator.Cost_calculator(molecule, tools)
     c_calculator.calculate_cost(args.method)
 
-    median = tools.generate_plot(c_calculator.costs[args.method], 'HF', 1e9, 1e10)
+    median = tools.generate_plot(c_calculator.costs[args.method], 'HF', 1e3, 1e6, 1e8, 1e11)
 
     print('The cost to calculate the energy of', args.molecule_info,'with method', args.method, 'is', "{:0.2e}".format(median), 'T gates')
 
-    median = tools.generate_plot(c_calculator.costs[args.method], 'QPE', 1e11, 1e16)
+    median = tools.generate_plot(c_calculator.costs[args.method], 'QPE', 1e2, 1e9, 1e11, 1e16)
 
     print('The cost to calculate the energy of', args.molecule_info,'with method', args.method, 'is', "{:0.2e}".format(median), 'T gates')
 
-    median = tools.generate_plot(c_calculator.costs[args.method], 'total', 1e11, 1e16)
+    median = tools.generate_plot(c_calculator.costs[args.method], 'total', 1e2, 1e9, 1e11, 1e16)
 
     print('The cost to calculate the energy of', args.molecule_info,'with method', args.method, 'is', "{:0.2e}".format(median), 'T gates')
     print('With the specified parameters, synthesising that many T gates should take approximately', "{:0.2e}".format(c_calculator.calculate_time(median)), 'seconds')
