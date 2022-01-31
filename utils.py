@@ -295,7 +295,7 @@ class Utils():
                 else:
                     print('<*> ERROR: extension in molecule information not recognized. It should be .chem (geometry) or .h5/.hdf5 (hamiltonian). The molecule name can not contain dots')
 
-    def generate_plot(self, points, plot_module, min_x_lim, max_x_lim, min_y_lim, max_y_lim):
+    def generate_plot(self, points, plot_module, cost_unity, min_x_lim, max_x_lim, min_y_lim, max_y_lim):
 
         fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(8,6))
 
@@ -339,7 +339,7 @@ class Utils():
         ax.set_yscale("log")
         
         ax.set_xlabel(r'Number of plane waves, $N$', fontsize=20)
-        ax.set_ylabel(r'toffoli gate cost', fontsize=20)
+        ax.set_ylabel(r''+cost_unity +' gate cost', fontsize=20)
 
 
         # First plot: two legend keys for a single entry

@@ -104,7 +104,7 @@ class Interaction_picture:
         cost = r*(exp_U_V + TDS)
         return cost
 
-    def first_quantization_qubitization(self, optimized_parameters, N, N_small, eta, lambda_zeta, Omega, cost_unity, cost_module, amplitude_amplification = True, vec_a: np.array = None):
+    def first_quantization_qubitization(self, optimized_parameters, N, N_small, eta, lambda_zeta, Omega, cost_unity, cost_module, vec_a, amplitude_amplification = True):
         '''
         Based on the qubitization method from Fault-Tolerant Quantum Simulations of Chemistry in First Quantization
 
@@ -117,7 +117,7 @@ class Interaction_picture:
 
         return Toffoli gate cost.
         '''
-        if vec_a:
+        if vec_a.size != 0:
             vec_b = 1/np.array(vec_a)
             vec_b /= np.min(vec_b)
         else:

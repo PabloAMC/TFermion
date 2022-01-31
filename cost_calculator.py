@@ -32,7 +32,7 @@ class Cost_calculator:
         self.basis = self.tools.config_variables['basis']
         self.runs = self.tools.config_variables['runs']
 
-    def calculate_cost(self, method): 
+    def calculate_cost(self, method, args_method):
 
         if self.molecule.molecule_info_type == 'name':
             
@@ -321,6 +321,9 @@ class Cost_calculator:
 
             methods_interaction_picture = interaction_picture.Interaction_picture(self.tools)
 
+            # it indicates if the cost returned is in T gates or Toffoli
+            cost_unity = args_method[0]
+
             if method == 'interaction_picture':
 
                 grid_length = int(round((self.molecule.N * self.tools.config_variables['gauss2plane_overhead']) ** (1/3)))
@@ -404,8 +407,8 @@ class Cost_calculator:
                 MAX_N_GRID = 1e9
                 values = self.calculate_range_values(MIN_N_GRID, MAX_N_GRID)
 
-                # it indicates if the cost returned is in T gates or Toffoli
-                cost_unity = 'T'
+                vec_a = np.array([5.009, 5.408,  6.339])
+
                 # it indicates if the cost returned is the sum of HF, antisymmetrization and QPE or each value separetly
                 cost_module = 'optimization'
 
@@ -422,7 +425,7 @@ class Cost_calculator:
                         cost_module = 'optimization'
                         for val in values:
 
-                            arguments = (val, 1.5e4, eta, lambda_zeta, Omega, cost_unity, cost_module, amplitude_amplification)
+                            arguments = (val, 1.5e4, eta, lambda_zeta, Omega, cost_unity, cost_module, vec_a, amplitude_amplification)
 
                             # generate value for errors epsilon_PEA, epsilon_M, epsilon_R, epsilon_S, epsilon_T, br
                             parameters_to_optimize = ['epsilon_PEA', 'epsilon_M', 'epsilon_R', 'epsilon_S', 'epsilon_T', 'br']
@@ -441,6 +444,7 @@ class Cost_calculator:
                                     Omega,
                                     cost_unity,
                                     cost_module,
+                                    vec_a,
                                     amplitude_amplification)]
 
                             bar()

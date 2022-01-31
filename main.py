@@ -85,18 +85,21 @@ else:
     #molecule.low_rank_approximation(occupied_indices = [0,1,2], active_indices = [3,4], virtual_indices = [5,6], sparsify = True)
     #ne_act_cas, n_mocore, n_mocas, n_movir = molecule.active_space(ao_labels=['O 2pz'])
 
+    cost_unity = 'toffoli'
+    args_method = [cost_unity]
+
     c_calculator = cost_calculator.Cost_calculator(molecule, tools)
-    c_calculator.calculate_cost(args.method)
+    c_calculator.calculate_cost(args.method, args_method)
 
-    median = tools.generate_plot(c_calculator.costs[args.method], 'HF', 1e3, 1e6, 1e8, 1e11)
-
-    print('The cost to calculate the energy of', args.molecule_info,'with method', args.method, 'is', "{:0.2e}".format(median), 'T gates')
-
-    median = tools.generate_plot(c_calculator.costs[args.method], 'QPE', 1e2, 1e9, 1e11, 1e16)
+    median = tools.generate_plot(c_calculator.costs[args.method], 'HF', cost_unity, 1e3, 1e6, 1e8, 1e11)
 
     print('The cost to calculate the energy of', args.molecule_info,'with method', args.method, 'is', "{:0.2e}".format(median), 'T gates')
 
-    median = tools.generate_plot(c_calculator.costs[args.method], 'total', 1e2, 1e9, 1e11, 1e16)
+    median = tools.generate_plot(c_calculator.costs[args.method], 'QPE', cost_unity, 1e2, 1e9, 1e11, 1e16)
+
+    print('The cost to calculate the energy of', args.molecule_info,'with method', args.method, 'is', "{:0.2e}".format(median), 'T gates')
+
+    median = tools.generate_plot(c_calculator.costs[args.method], 'total', cost_unity, 1e2, 1e9, 1e11, 1e16)
 
     print('The cost to calculate the energy of', args.molecule_info,'with method', args.method, 'is', "{:0.2e}".format(median), 'T gates')
     print('With the specified parameters, synthesising that many T gates should take approximately', "{:0.2e}".format(c_calculator.calculate_time(median)), 'seconds')
