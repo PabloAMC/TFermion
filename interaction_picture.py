@@ -225,13 +225,9 @@ class Interaction_picture:
             minus_zero_flag = 3*n_p +2
             inside_box_test = 3*n_p
 
-            n_sums = -1 # if we are summing n terms we have to do n-1 sums
-            for i in range(len(vec_b)):
-                s = str(vec_b[i])
-                s1, s2 = s.split('.')
-                s1, s2 = bin(int(s1))[2:], bin(int(s2))[2:]
-                s = (s1 + '.' + s2)[:n_p+1] # '.' is the additional
-                n_sums += s.count('1')
+            # if we are summing n terms we have to do n-1 sums; we keep the first n_p bits of the binary representation
+            # we also assume that all the vec_b components are 1.something
+            n_sums = sum([np.binary_repr(int(vec_b[i]*2**n_p))[:n_p+1].count('1') for i in range(len(vec_b))]) - 1
 
             sums = n_sums*self.tools.sum_cost(2*n_p+2)/4
             squares = 3*n_p**2-n_p-1
