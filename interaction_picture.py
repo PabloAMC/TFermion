@@ -225,7 +225,14 @@ class Interaction_picture:
             minus_zero_flag = 3*n_p +2
             inside_box_test = 3*n_p
 
-            n_sums = sum([str(bin(vec_b[i]**2))[:2*n_p+2].count('1') for i in range(len(vec_b))])-1   # rescales the nu components according to vec_b items
+            n_sums = -1 # if we are summing n terms we have to do n-1 sums
+            for i in range(len(vec_b)):
+                s = str(vec_b[i])
+                s1, s2 = s.split('.')
+                s1, s2 = bin(int(s1))[2:], bin(int(s2))[2:]
+                s = (s1 + '.' + s2)[:n_p+1] # '.' is the additional
+                n_sums += s.count('1')
+
             sums = n_sums*self.tools.sum_cost(2*n_p+2)/4
             squares = 3*n_p**2-n_p-1
             multiplication = 2*n_M*(2*n_p+2)-n_M
