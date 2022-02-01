@@ -421,10 +421,10 @@ class Cost_calculator:
 
                         costs_for_chem_acc = []
 
-                        # since cost module is modified to calculate the errors detailed, it is necessary to set again to optimization mode
-                        cost_module = 'optimization'
                         for val in values:
 
+                            # since cost module is modified to calculate the errors detailed, it is necessary to set again to optimization mode
+                            cost_module = 'optimization'
                             arguments = (val, 1.5e4, eta, lambda_zeta, Omega, cost_unity, cost_module, vec_a, amplitude_amplification)
 
                             # generate value for errors epsilon_PEA, epsilon_M, epsilon_R, epsilon_S, epsilon_T, br
