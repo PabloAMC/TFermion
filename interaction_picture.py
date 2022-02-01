@@ -36,7 +36,7 @@ class Interaction_picture:
             > N Multiplications
         '''
 
-        t = 4.7/epsilon_PEA
+        t = np.pi/epsilon_PEA
         r = np.ceil(lambd_T*t/(2*np.log(2))) # lambd_T is necessary to take tau = 1
         
         K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1)) 
@@ -132,7 +132,7 @@ class Interaction_picture:
 
         n_p, n_eta, n_eta_zeta, n_M, n_R, n_T, lambda_value = self.calculate_number_bits_parameters(optimized_parameters, N, eta, lambda_zeta, Omega, amplitude_amplification)
 
-        r = np.ceil(4.7*lambda_value/(2*epsilon_PEA))
+        r = np.ceil(np.pi*lambda_value/(2*epsilon_PEA))
 
         epsilon_S_HF = 1e-2 #todo: parameter to be optimized for T gates
         epsilon_SS_HF = epsilon_S_HF / (2*eta*(N_small-eta)+r*(2*2+2*(n_p+n_R)))# the +2*2 comes from w preparation and unprepartion, the 2*(n_p + n_R) from c-paulis in U-Phase
@@ -261,7 +261,7 @@ class Interaction_picture:
                 U_phase = 3*n_R*(n_R-1)
 
             #todo: pauli rotation synthesis
-            U_phase_T_gates = (n_p+n_R)*self.tools.c_pauli_rotation_synthesis(epsilon_SS_QPE) # arbitrary single rotations
+            U_phase_T_gates = (n_p+n_R+2)*self.tools.c_pauli_rotation_synthesis(epsilon_SS_QPE) # arbitrary single rotations. The 2 comes from summing the three components
 
             # Total cost of Prepare and unprepare
             Prep = 2*prep_qubit_TUV + prep_i_j + success_check + 2*prep_wrs_T + a*Prep_1_nu_and_inv + QROM_Rl
@@ -321,7 +321,7 @@ class Interaction_picture:
 
         ### Main algorithm
 
-        t = 4.7/epsilon_PEA
+        t = np.pi/epsilon_PEA
         r = np.ceil(np.e*lambd_U_V*t/2) #Alternatively 2*lambd_U_V*t/np.log(2); lambd_T is necessary to take tau = 1
         
         # Notice that K is a bit different than in other articles 

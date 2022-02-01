@@ -12,7 +12,7 @@ class Taylor_based_methods:
 
     # Taylorization (babbush2016exponential)
     # Let us know calcula the cost of performing Phase Estimation. 
-    # 1.  We have already mentioned that in this case, controlling the direction of the time evolution adds negligible cost. We will also take the unitary $U$ in Phase estimation to be $U_r$. The number of segments we will have to Hamiltonian simulate in the phase estimation protocol is $r \\approx \\frac{4.7}{\\epsilon_{\\text{PEA}}}$.
+    # 1.  We have already mentioned that in this case, controlling the direction of the time evolution adds negligible cost. We will also take the unitary $U$ in Phase estimation to be $U_r$. The number of segments we will have to Hamiltonian simulate in the phase estimation protocol is $r \\approx \\frac{np.pi}{\\epsilon_{\\text{PEA}}}$.
     # 2. Using oblivious amplitude amplification operator $G$ requires to use $\\mathcal{W}$ three times.
     # 3. Each operator $G$ requires to use Prepare$(\\beta)$ twice and Select$(V)$ once.
     # 4. The cost of Select$(V)$ is bounded in $8N\\lceil \\log_2\\Gamma + 1\\rceil\\frac{K(K+1)(2K+1)}{3}+ 16N K(K+1)$.
@@ -21,7 +21,7 @@ class Taylor_based_methods:
     # $$ K =  O\\left( \\frac{\\log(r/\\epsilon_{HS})}{\\log \\log(r/\\epsilon_{HS})} \\right)$$
     # Notice that the $\\lambda$ parameters comes in the algorithm only implicitly, 
     # since we take the evolution time of a single segment to be $t_1 = \\ln 2/\\lambda$ such that the first segment in Phase estimation has $r = \\frac{\\lambda t_1}{\\ln 2} = 1$ as it should be. 
-    # In general, we will need to implement $r \\approx \\frac{4.7}{\\epsilon_{PEA}}$. However, since $\\epsilon_{PEA}$ makes reference to $H$ and we are instead simulating $H \\ln 2/ \\lambda$, 
+    # In general, we will need to implement $r \\approx \\frac{np.pi}{\\epsilon_{PEA}}$. However, since $\\epsilon_{PEA}$ makes reference to $H$ and we are instead simulating $H \\ln 2/ \\lambda$, 
     # we will have to calculate the eigenvalue to precision $\\epsilon \\ln 2/ \\lambda$; so it is equivalently to fixing an initial time $t_1$ and running multiple segments in each of the $U$ operators in Phase Estimation.
     def taylor_naive(self, epsilons, lambda_value, Gamma, N):
 
@@ -29,7 +29,7 @@ class Taylor_based_methods:
         epsilon_HS = epsilons[1]
         epsilon_S = epsilons[2]
         
-        t = 4.7/epsilon_PEA
+        t = np.pi/epsilon_PEA
         r = np.ceil(t*lambda_value / (2*np.log(2))) # Number of time segments
     
         K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1)) 
@@ -76,7 +76,7 @@ class Taylor_based_methods:
         '''
         d = 6 # Number of Gaussians per basis function
 
-        t = 4.7/epsilon_PEA
+        t = np.pi/epsilon_PEA
         x_max = np.log(N * t/ epsilon_H)* self.tools.config_variables['xmax_mult_factor_taylor'] # eq 68 in the original paper
         
         Vol_max_w_gamma = (2**6*phi_max**4 * x_max**5) # eq 66 in the original article
@@ -158,7 +158,7 @@ class Taylor_based_methods:
         K1 = 8*np.pi**2/alpha**3*(alpha + 2) + 1121*(8*gamma1 + np.sqrt(2))             # eq 41 in original article
         K2 = 128*np.pi/alpha**6*(alpha + 2) + 2161*np.pi**2*(20*gamma1 + np.sqrt(2))    # eq 45 in original article
         
-        t = 4.7/epsilon_PEA
+        t = np.pi/epsilon_PEA
         x_max = 1 # Default units are Angstroms. See https://en.wikipedia.org/wiki/Atomic_radius and https://en.wikipedia.org/wiki/Atomic_radii_of_the_elements_(data_page)
         
         Gamma = binom(eta, 2)*binom(N-eta, 2) + binom(eta,1)*binom(N-eta,1) + 1 # = d
