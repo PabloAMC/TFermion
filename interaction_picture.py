@@ -261,7 +261,7 @@ class Interaction_picture:
                 U_phase = 3*n_R*(n_R-1)
 
             #todo: pauli rotation synthesis
-            U_phase_T_gates = (n_p+n_R+2)*self.tools.c_pauli_rotation_synthesis(epsilon_SS_QPE) # arbitrary single rotations. The 2 comes from summing the three components
+            U_phase_T_gates = (n_p+n_R+2)*self.tools.pauli_rotation_synthesis(epsilon_SS_QPE) # arbitrary single rotations. The 2 comes from summing the three components
 
             # Total cost of Prepare and unprepare
             Prep = 2*prep_qubit_TUV + prep_i_j + success_check + 2*prep_wrs_T + a*Prep_1_nu_and_inv + QROM_Rl
