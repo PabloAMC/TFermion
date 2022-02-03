@@ -177,7 +177,7 @@ class Interaction_picture:
             ## weigthings between T and U+V, and U and V.
             weight_T_UV = n_T-3
 
-            epsilon_SS_QPE = epsilon_S / (r*np.max(n_R+1, n_T)) # Denominator is r times size of gradient phase state: point 3 after eq C1 in https://journals.aps.org/prxquantum/pdf/10.1103/PRXQuantum.2.040332
+            epsilon_SS_QPE = epsilon_S / (r*np.max([n_R+1, n_T])) # Denominator is r times size of gradient phase state: point 3 after eq C1 in https://journals.aps.org/prxquantum/pdf/10.1103/PRXQuantum.2.040332
 
             eq_superp_T_UV = 3*n_eta_zeta + 2*br - 9
             ineq_test = n_eta_zeta - 1
@@ -274,7 +274,7 @@ class Interaction_picture:
             QPE_toffoli_cost = r*(Prep + Sel + Rot)
 
             # Final T cost
-            QPE_T_cost = np.max(n_R+1,n_T)*self.tools.pauli_rotation_synthesis(epsilon_SS_QPE)
+            QPE_T_cost = np.max([n_R+1,n_T])*self.tools.pauli_rotation_synthesis(epsilon_SS_QPE)
 
             if cost_unity == 'T': QPE_cost = QPE_T_cost
             elif cost_unity == 'toffoli': QPE_cost = QPE_toffoli_cost
