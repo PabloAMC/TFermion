@@ -134,10 +134,9 @@ class Interaction_picture:
 
         r = np.ceil(np.pi*lambda_value/(2*epsilon_PEA))
 
-        epsilon_S_HF = 1e-2 #todo: parameter to be optimized for T gates
-        epsilon_SS_HF = epsilon_S_HF / (2*eta*(N_small-eta)+r*(2*2+2*(n_p+n_R)))# the +2*2 comes from w preparation and unprepartion, the 2*(n_p + n_R) from c-paulis in U-Phase
+        epsilon_S_HF = 1e-2 # This parameter indicates the decrease in overlap with ground state due to imperfect rotations.
+        epsilon_SS_HF = epsilon_S_HF / (2*eta*(N_small-eta))
 
-        
         '''cost = (2*(n_T + 4*n_eta_zeta + 2*br-12) + 14*n_eta +8*br -36+a*(3*n_p**2+15*n_p-7+4*n_M*(n_p+1))
         +lambda_zeta+self.Er(lambda_zeta) + 2*(2*n_p + 2*br-7) + 12*eta*n_p+5*(n_p-1) + 2 + 24*n_p+6*n_p*n_R +18
         +n_eta_zeta +2*n_eta + 6*n_p + n_M+16)*np.ceil(np.pi*lambda_value/(2*epsilon_PEA))
@@ -178,7 +177,7 @@ class Interaction_picture:
             ## weigthings between T and U+V, and U and V.
             weight_T_UV = n_T-3
 
-            epsilon_SS_QPE = epsilon_S / (r*(2*2+2*(n_p+n_R)))
+            epsilon_SS_QPE = epsilon_S / (np.max(n_R+1, n_T)) # Denominator is size of gradient phase state: point 3 after eq C1 in https://journals.aps.org/prxquantum/pdf/10.1103/PRXQuantum.2.040332
 
             eq_superp_T_UV = 3*n_eta_zeta + 2*br - 9
             ineq_test = n_eta_zeta - 1
@@ -200,11 +199,10 @@ class Interaction_picture:
             # Section B: Qubitization of T
 
             ## Superposition w,r,s
-            #sup_w = 3*2 + 2*br - 9 # = 3*n + 2*br - 9 with n = 2. br is suggested to be 8
-            T_sup_w = self.tools.pauli_rotation_synthesis(epsilon_SS_QPE) + self.tools.c_pauli_rotation_synthesis(epsilon_SS_QPE)
-            #todo: this cost is in T gates, not Toffoli
+            sup_w = 3*2 + 2*br - 9 # = 3*n + 2*br - 9 with n = 2. br is suggested to be 8
+            #T_sup_w = self.tools.pauli_rotation_synthesis(epsilon_SS_QPE) + self.tools.c_pauli_rotation_synthesis(epsilon_SS_QPE)
             sup_r = n_p - 2
-            prep_wrs_T = 2*sup_r # 2 for r and s
+            prep_wrs_T = 2*sup_r +sup_w # 2 for r and s
 
             ## Sel T
             control_swap_i_j_ancilla = 2*2*(eta-2) #unary iteration for i and j, and for in and out
@@ -260,8 +258,8 @@ class Interaction_picture:
             else:
                 U_phase = 3*n_R*(n_R-1)
 
-            #todo: pauli rotation synthesis
-            U_phase_T_gates = (n_p+n_R+2)*self.tools.pauli_rotation_synthesis(epsilon_SS_QPE) # arbitrary single rotations. The 2 comes from summing the three components
+            #We could phase the T gates for each case, but instead it is faster to add the value into a phase gradient state: see https://quantum-journal.org/papers/q-2018-06-18-74/pdf/
+            #U_phase_T_gates = (n_p+n_R+2)*self.tools.pauli_rotation_synthesis(epsilon_SS_QPE) # arbitrary single rotations. The 2 comes from summing the three components
 
             # Total cost of Prepare and unprepare
             Prep = 2*prep_qubit_TUV + prep_i_j + success_check + 2*prep_wrs_T + a*Prep_1_nu_and_inv + QROM_Rl
@@ -272,12 +270,11 @@ class Interaction_picture:
             # Rotation in definition of Q
             Rot = n_eta_zeta + 2*n_eta + 6*n_p + n_M + 16
 
-
             # Final toffoli cost
             QPE_toffoli_cost = r*(Prep + Sel + Rot)
 
             # Final T cost
-            QPE_T_cost = r*(2*T_sup_w + U_phase_T_gates)
+            QPE_T_cost = np.max(n_R+1,n_T)*self.tools.pauli_rotation_synthesis(epsilon_SS_QPE)
 
             if cost_unity == 'T': QPE_cost = QPE_T_cost
             elif cost_unity == 'toffoli': QPE_cost = QPE_toffoli_cost
