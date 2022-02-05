@@ -409,7 +409,10 @@ class Cost_calculator:
         Returns:
         time: float; the time (seconds) required to synthesise the T_gates
         '''
-
+        
+        raise Warning('The function calculate_time that we use to compute the time needed to synthesise the number of T gates is not reliable, and needs to be revised and updated. Use instead the excel sheet in the supplementary material of https://quantum-journal.org/papers/q-2019-04-30-135/')
+        # This function must be updated using https://quantum-journal.org/papers/q-2019-04-30-135/ 
+        
         P_A = p_fail/T_gates
 
         p_list = [P_inject]
