@@ -104,7 +104,7 @@ class Interaction_picture:
         cost = r*(exp_U_V + TDS)
         return cost
 
-    def first_quantization_qubitization(self, optimized_parameters, N, N_small, eta, lambda_zeta, Omega, cost_unity, cost_module, vec_a, amplitude_amplification = True):
+    def first_quantization_qubitization(self, optimized_parameters, N, N_small, eta, lambda_zeta, Omega, cost_unit, cost_module, vec_a, amplitude_amplification = True):
         '''
         Based on the qubitization method from Fault-Tolerant Quantum Simulations of Chemistry in First Quantization
 
@@ -145,16 +145,17 @@ class Interaction_picture:
         def calculate_HF_cost():
 
             # T gate cost for HF
-            T_givens = 2*self.tools.pauli_rotation_synthesis(epsilon_SS_HF)
+            T_givens = self.tools.c_pauli_rotation_synthesis(epsilon_SS_HF)# For C-Ry, lemma 5.4 Barenco
             HF_T_cost = eta*(N_small-eta)*T_givens
             
             # toffoli gate cost for HF
-            Givens = 2*2* (2*(np.ceil(np.log2(N_small))-2-1)) # Using Barenco lemma 7.2: 2 MCX + uncomputations
-            HF_toffoli_cost = eta*(N_small-eta)*Givens
+            Givens = 2* (4*(np.ceil(np.log2(N_small))-2)) # Our figure 4 on Givens rotations: Using Barenco lemma 7.2: MCX + uncomputation
+            HF_toffoli_cost = eta*(N_small-eta)*Givens + calculate_antisymmetrization_cost()
 
-            if cost_unity == 'T': HF_cost = HF_T_cost
-            elif cost_unity == 'toffoli': HF_cost = HF_toffoli_cost
-            elif cost_unity == 'optimization': HF_cost = HF_T_cost*self.weight_T_cost + HF_toffoli_cost*self.weight_toffoli_cost
+            if cost_unit == 'T': HF_cost = HF_T_cost
+            elif cost_unit == 'toffoli': HF_cost = HF_toffoli_cost
+            elif cost_unit == 'optimization': HF_cost = HF_T_cost*self.weight_T_cost + HF_toffoli_cost*self.weight_toffoli_cost
+            elif cost_unit == 'detail': HF_cost = {'T':HF_T_cost, 'toffoli':HF_toffoli_cost}
 
             return HF_cost
 
@@ -276,16 +277,17 @@ class Interaction_picture:
             # Final T cost
             QPE_T_cost = np.max([n_R+1,n_T])*self.tools.pauli_rotation_synthesis(epsilon_SS_QPE)
 
-            if cost_unity == 'T': QPE_cost = QPE_T_cost
-            elif cost_unity == 'toffoli': QPE_cost = QPE_toffoli_cost
-            elif cost_unity == 'optimization': QPE_cost = QPE_T_cost*self.weight_T_cost + QPE_toffoli_cost*self.weight_toffoli_cost
+            if cost_unit == 'T': QPE_cost = QPE_T_cost
+            elif cost_unit == 'toffoli': QPE_cost = QPE_toffoli_cost
+            elif cost_unit == 'optimization': QPE_cost = QPE_T_cost*self.weight_T_cost + QPE_toffoli_cost*self.weight_toffoli_cost
+            elif cost_unit == 'detail': QPE_cost = {'T': QPE_T_cost, 'toffoli': QPE_toffoli_cost}
 
             return QPE_cost
 
         if cost_module == 'detail':
-            return calculate_HF_cost(), calculate_antisymmetrization_cost(), calculate_QPE_cost()
+            return calculate_HF_cost(), calculate_QPE_cost()
         elif cost_module == 'optimization':
-            return calculate_HF_cost()+calculate_antisymmetrization_cost()+calculate_QPE_cost()
+            return calculate_HF_cost()+calculate_QPE_cost()
 
     ## Sublinear scaling and interaction picture babbush2019quantum
     def sublinear_scaling_interaction(self, epsilons, N, eta, Gamma, lambd_T, lambd_U_V, J):

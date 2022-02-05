@@ -295,7 +295,7 @@ class Utils():
                 else:
                     print('<*> ERROR: extension in molecule information not recognized. It should be .chem (geometry) or .h5/.hdf5 (hamiltonian). The molecule name can not contain dots')
 
-    def generate_plot(self, points, plot_module, cost_unity, min_x_lim, max_x_lim, min_y_lim, max_y_lim):
+    def generate_plot(self, points, plot_module, cost_unit, min_x_lim, max_x_lim, min_y_lim, max_y_lim):
 
         fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(8,6))
 
@@ -308,61 +308,97 @@ class Utils():
             
                 x_value = cost_object[0]
 
-                if plot_module == 'HF': median = np.nanmedian([element[0] for element in cost_object[1]])
-                if plot_module == 'QPE': median = np.nanmedian([element[2] for element in cost_object[1]])
-                if plot_module == 'total': median = np.nanmedian([sum(element) for element in cost_object[1]])
-            
-                if counter == 0:
+                if cost_unit == 'T' or cost_unit == 'toffoli':
 
-                    # add a line renderer
-                    ax.scatter(x_value, median, marker="h", c="blue", alpha=0.5, s=200, label=r'$\epsilon_{PEA}=0.014eV$')
+                    if plot_module == 'HF': median = np.nanmedian([element[0] for element in cost_object[1]])
+                    if plot_module == 'QPE': median = np.nanmedian([element[1] for element in cost_object[1]])
+                    if plot_module == 'total': median = np.nanmedian([sum(element) for element in cost_object[1]])
 
-                elif counter == 1:
+                    if counter == 0:
 
-                    # add a line renderer
-                    ax.scatter(x_value, median, marker="s", c="green", alpha=0.5, s=200, label=r'$\epsilon_{PEA}=0.043eV$')
+                        # add a line renderer
+                        ax.scatter(x_value, median, marker="h", c="blue", alpha=0.5, s=200, label=r'$\epsilon=0.014eV$')
 
-                elif counter == 2:
+                    elif counter == 1:
 
-                    # add a line renderer
-                    ax.scatter(x_value, median, marker="*", c="orange", alpha=0.5, s=200, label=r'$\epsilon_{PEA}=0.129eV$')
+                        # add a line renderer
+                        ax.scatter(x_value, median, marker="s", c="green", alpha=0.5, s=200, label=r'$\epsilon=0.043eV$')
 
-                elif counter == 3:
+                    elif counter == 2:
 
-                    # add a line renderer
-                    ax.scatter(x_value, median, marker="d", c="red", alpha=0.5, s=200, label=r'$\epsilon_{PEA}=0.387eV$')
+                        # add a line renderer
+                        ax.scatter(x_value, median, marker="*", c="orange", alpha=0.5, s=200, label=r'$\epsilon=0.129eV$')
+
+                    elif counter == 3:
+
+                        # add a line renderer
+                        ax.scatter(x_value, median, marker="d", c="red", alpha=0.5, s=200, label=r'$\epsilon=0.387eV$')
+
+
+
+                if cost_unit == 'detail':
+                    if counter > 0:
+                        break
+                    if plot_module == 'HF': 
+                        median_T = np.nanmedian([element[0]['T'] for element in cost_object[1]])
+                        median_toffoli = np.nanmedian([element[0]['toffoli'] for element in cost_object[1]])
+                    if plot_module == 'QPE': 
+                        median_T = np.nanmedian([element[1]['T'] for element in cost_object[1]])
+                        median_toffoli = np.nanmedian([element[1]['toffoli'] for element in cost_object[1]])
+                    if plot_module == 'total': 
+                        median_T = np.nanmedian([element[0]['T'] for element in cost_object[1]]) + np.nanmedian([element[1]['T'] for element in cost_object[1]])
+                        median_toffoli = np.nanmedian([element[0]['toffoli'] for element in cost_object[1]]) + np.nanmedian([element[1]['toffoli'] for element in cost_object[1]])
+
+                    ax.scatter(x_value, median_T, marker="h", c="blue", alpha=0.5, s=100, label=r'T gates')
+                    ax.scatter(x_value, median_toffoli, marker="s", c="green", alpha=0.5, s=100, label=r'toffoli gates')
+
 
         ax.set_xlim([min_x_lim, max_x_lim])
         ax.set_ylim([min_y_lim, max_y_lim])
 
         ax.set_xscale("log")
         ax.set_yscale("log")
-        
-        ax.set_xlabel(r'Number of plane waves, $N$', fontsize=20)
-        ax.set_ylabel(r''+cost_unity +' gate cost', fontsize=20)
-
-
-        # First plot: two legend keys for a single entry
-        p1 = ax.scatter([0], [0], c='blue', marker='h', alpha=0.5, s=100)
-        p2 = ax.scatter([0], [0], c='green', marker='s', alpha=0.5, s=100)
-        p3 = ax.scatter([0], [0], c='orange', marker='*', alpha=0.5, s=100)
-        p4 = ax.scatter([0], [0], c='red', marker='d', alpha=0.5, s=100)
-
-        # Assign two of the handles to the same legend entry by putting them in a tuple
-        # and using a generic handler map (which would be used for any additional
-        # tuples of handles like (p1, p3)).
-
-
-        l = ax.legend([p1, p2, p3, p4], [r'$\epsilon_{'+plot_module+'}=0.014eV$', r'$\epsilon_{'+plot_module+'}=0.043eV$', r'$\epsilon_{'+plot_module+'}=0.129eV$', r'$\epsilon_{'+plot_module+'}=0.387eV$'], scatterpoints=1,
-                    numpoints=1, handler_map={tuple: HandlerTuple(ndivide=None)}, loc='upper left', borderpad=1, prop={'size': 12}, labelspacing=1)
-        #l = ax.legend([p1], [r'$\epsilon_{'+plot_module+'}=0.014eV$'], scatterpoints=1,
-        #            numpoints=1, handler_map={tuple: HandlerTuple(ndivide=None)}, loc='upper left', borderpad=1, prop={'size': 12}, labelspacing=1)
 
         ax.tick_params(axis='x')
 
         plt.yticks(fontsize=14)
         plt.xticks(fontsize=14)
+        
+        ax.set_xlabel(r'Number of plane waves, $N$', fontsize=20)
+        if cost_unit == 'T' or cost_unit == 'toffoli':
+            ax.set_ylabel(r''+cost_unit +' gate cost', fontsize=20)
+        else:
+            ax.set_ylabel(r'Gate cost', fontsize=20)
 
-        plt.savefig(plot_module+'.pdf')
+        if cost_unit == 'T' or cost_unit == 'toffoli':
+            # First plot: two legend keys for a single entry
+            p1 = ax.scatter([0], [0], c='blue', marker='h', alpha=0.5, s=100)
+            p2 = ax.scatter([0], [0], c='green', marker='s', alpha=0.5, s=100)
+            p3 = ax.scatter([0], [0], c='orange', marker='*', alpha=0.5, s=100)
+            p4 = ax.scatter([0], [0], c='red', marker='d', alpha=0.5, s=100)
 
-        return median
+            # Assign two of the handles to the same legend entry by putting them in a tuple
+            # and using a generic handler map (which would be used for any additional
+            # tuples of handles like (p1, p3)).
+
+
+            l = ax.legend([p1, p2, p3, p4], [r'$\epsilon_{'+plot_module+'}=0.014eV$', r'$\epsilon_{'+plot_module+'}=0.043eV$', r'$\epsilon_{'+plot_module+'}=0.129eV$', r'$\epsilon_{'+plot_module+'}=0.387eV$'], scatterpoints=1,
+                        numpoints=1, handler_map={tuple: HandlerTuple(ndivide=None)}, loc='upper left', borderpad=1, prop={'size': 12}, labelspacing=1)
+            #l = ax.legend([p1], [r'$\epsilon_{'+plot_module+'}=0.014eV$'], scatterpoints=1,
+            #            numpoints=1, handler_map={tuple: HandlerTuple(ndivide=None)}, loc='upper left', borderpad=1, prop={'size': 12}, labelspacing=1)
+
+            plt.savefig(plot_module+'.pdf')
+
+            return median
+
+        elif cost_unit == 'detail':
+            p1 = ax.scatter([0], [0], c='blue', marker='h', alpha=0.5, s=100)
+            p2 = ax.scatter([0], [0], c='green', marker='s', alpha=0.5, s=100)
+
+            l = ax.legend([p1, p2], [r'T gates', r'toffoli gates'], scatterpoints=1,
+                        numpoints=1, handler_map={tuple: HandlerTuple(ndivide=None)}, loc='upper left', borderpad=1, prop={'size': 12}, labelspacing=1)
+
+
+            plt.savefig(plot_module+'.pdf')
+
+            return median_T+median_toffoli

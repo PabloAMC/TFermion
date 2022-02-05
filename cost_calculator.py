@@ -322,7 +322,7 @@ class Cost_calculator:
             methods_interaction_picture = interaction_picture.Interaction_picture(self.tools)
 
             # it indicates if the cost returned is in T gates or Toffoli
-            cost_unity = args_method[0]
+            cost_unit = args_method[0]
 
             if method == 'interaction_picture':
 
@@ -419,13 +419,18 @@ class Cost_calculator:
                     # execute the cost calculation for different chemical accuracy
                     for chemical_acc in [1/3, 1, 3, 9]:
 
+                        print('chemical_acc', chemical_acc)
+
                         costs_for_chem_acc = []
 
                         for val in values:
+                            n_p = np.log2(val**(1/3)+1)
+                            print('n_p',n_p)
 
                             # since cost module is modified to calculate the errors detailed, it is necessary to set again to optimization mode
                             cost_module = 'optimization'
-                            arguments = (val, 1.5e4, eta, lambda_zeta, Omega, cost_unity, cost_module, vec_a, amplitude_amplification)
+                            cost_unit_optimization = 'optimization'
+                            arguments = (val, 1.5e4, eta, lambda_zeta, Omega, cost_unit_optimization, cost_module, vec_a, amplitude_amplification)
 
                             # generate value for errors epsilon_PEA, epsilon_M, epsilon_R, epsilon_S, epsilon_T, br
                             parameters_to_optimize = ['epsilon_PEA', 'epsilon_M', 'epsilon_R', 'epsilon_S', 'epsilon_T', 'br']
@@ -434,15 +439,17 @@ class Cost_calculator:
                             for _ in range(self.runs):
                                 optimized_parameters = self.calculate_optimized_parameters(parameters_to_optimize, chemical_acc, methods_interaction_picture.first_quantization_qubitization, arguments)
 
+                                print('Optimized_parameters', optimized_parameters.x)
+
                                 cost_module = 'detail'
                                 cost_values += [methods_interaction_picture.first_quantization_qubitization(
                                     optimized_parameters.x,
                                     val,
-                                    1.5e4,
+                                    val,
                                     eta, 
                                     lambda_zeta, 
                                     Omega,
-                                    cost_unity,
+                                    cost_unit,
                                     cost_module,
                                     vec_a,
                                     amplitude_amplification)]
