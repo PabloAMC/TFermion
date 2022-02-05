@@ -317,22 +317,22 @@ class Utils():
                     if counter == 0:
 
                         # add a line renderer
-                        ax.scatter(x_value, median, marker="h", c="blue", alpha=0.5, s=200, label=r'$\epsilon=0.014eV$')
+                        ax.scatter(x_value, median, marker="h", c="blue", alpha=0.5, s=100, label=r'$\epsilon=0.014eV$')
 
                     elif counter == 1:
 
                         # add a line renderer
-                        ax.scatter(x_value, median, marker="s", c="green", alpha=0.5, s=200, label=r'$\epsilon=0.043eV$')
+                        ax.scatter(x_value, median, marker="s", c="green", alpha=0.5, s=100, label=r'$\epsilon=0.043eV$')
 
                     elif counter == 2:
 
                         # add a line renderer
-                        ax.scatter(x_value, median, marker="*", c="orange", alpha=0.5, s=200, label=r'$\epsilon=0.129eV$')
+                        ax.scatter(x_value, median, marker="*", c="orange", alpha=0.5, s=100, label=r'$\epsilon=0.129eV$')
 
                     elif counter == 3:
 
                         # add a line renderer
-                        ax.scatter(x_value, median, marker="d", c="red", alpha=0.5, s=200, label=r'$\epsilon=0.387eV$')
+                        ax.scatter(x_value, median, marker="d", c="red", alpha=0.5, s=100, label=r'$\epsilon=0.387eV$')
 
 
 
