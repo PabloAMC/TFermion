@@ -90,7 +90,9 @@ else:
     median = np.nanmedian(c_calculator.costs[args.method])
 
     print('The cost to calculate the energy of', args.molecule_info,'with method', args.method, 'is', "{:0.2e}".format(median), 'T gates')
-    print('With the specified parameters, synthesising that many T gates should take approximately', "{:0.2e}".format(c_calculator.calculate_time(median)), 'seconds')
+
+    # The time calculation is deprecated and https://github.com/quantumlib/OpenFermion/blob/master/src/openfermion/resource_estimates/surface_code_compilation/physical_costing.py should be used instead
+    #print('With the specified parameters, synthesising that many T gates should take approximately', "{:0.2e}".format(c_calculator.calculate_time(median)), 'seconds')
 
 execution_time = time.time() - start_time
 

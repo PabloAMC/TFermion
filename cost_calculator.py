@@ -395,6 +395,8 @@ class Cost_calculator:
 
     def calculate_time(self, T_gates, p_fail = 1e-1, p_surface_step = 1e-3, P_inject = 5e-3, P_threshold = 5.7e-3, t_cycle = 2e-7, AAA_factories = 1e3):
         '''
+        DEPRECATED: use https://github.com/quantumlib/OpenFermion/blob/master/src/openfermion/resource_estimates/surface_code_compilation/physical_costing.py 
+
         Calculates the time required to synthesise the T_gates.
         Based on Appendix M from PHYSICAL REVIEW A 86, 032324 (2012); "Surface codes: Towards practical large-scale quantum computation" by Austin G. Fowler
 
@@ -410,8 +412,7 @@ class Cost_calculator:
         time: float; the time (seconds) required to synthesise the T_gates
         '''
         
-        raise Warning('The function calculate_time that we use to compute the time needed to synthesise the number of T gates is not reliable, and needs to be revised and updated. Use instead the excel sheet in the supplementary material of https://quantum-journal.org/papers/q-2019-04-30-135/')
-        # This function must be updated using https://quantum-journal.org/papers/q-2019-04-30-135/ 
+        raise Warning('This function is deprecated: check https://quantum-journal.org/papers/q-2019-04-30-135/ and OpenFermion costing module https://github.com/quantumlib/OpenFermion/blob/master/src/openfermion/resource_estimates/surface_code_compilation/physical_costing.py')
         
         P_A = p_fail/T_gates
 
