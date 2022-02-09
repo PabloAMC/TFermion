@@ -1,4 +1,3 @@
-from logging import raiseExceptions
 import numpy as np
 import sympy
 import itertools
@@ -281,20 +280,13 @@ class Interaction_picture:
             if cost_unit == 'T': QPE_cost = QPE_T_cost
             elif cost_unit == 'toffoli': QPE_cost = QPE_toffoli_cost
             elif cost_unit == 'optimization': QPE_cost = QPE_T_cost*self.weight_T_cost + QPE_toffoli_cost*self.weight_toffoli_cost
-            elif cost_unit == 'detail': QPE_cost = {'T': QPE_T_cost, 'toffoli': QPE_toffoli_cost, 'qubit': qubit_cost()}
+            elif cost_unit == 'detail': QPE_cost = {'T': QPE_T_cost, 'toffoli': QPE_toffoli_cost}
 
             return QPE_cost
-
-        def qubit_cost():
-            cost  = 3*eta*n_p + 12*n_p + 33 + 2*np.ceil(np.log2(eta))+ \
-                    5*n_M + 3*n_p**2+ 4*n_M*n_p + np.ceil(np.log2(eta+2*lambda_zeta))+ \
-                    np.max([n_R+1,n_T]) + np.max([5*n_R-4,5*n_p+1])
-            return cost
 
         if cost_module == 'detail':
             return calculate_HF_cost(), calculate_QPE_cost()
         elif cost_module == 'optimization':
-            if cost_unit == 'detail': raiseExceptions('You cannot use the detail cost module with the optimization cost module')
             return calculate_HF_cost()+calculate_QPE_cost()
 
     ## Sublinear scaling and interaction picture babbush2019quantum

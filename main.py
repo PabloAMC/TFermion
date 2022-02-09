@@ -86,18 +86,18 @@ else:
     #ne_act_cas, n_mocore, n_mocas, n_movir = molecule.active_space(ao_labels=['O 2pz'])
 
     cost_unit = 'toffoli'
-    args_method = ['detail']
+    args_method = [cost_unit]
 
     c_calculator = cost_calculator.Cost_calculator(molecule, tools)
     c_calculator.calculate_cost(args.method, args_method)
 
-    #median = tools.generate_plot(c_calculator.costs[args.method], 'HF', cost_unit, 1e2, 1e9, 1e5, 1e14)
+    median = tools.generate_plot(c_calculator.costs[args.method], 'HF', cost_unit, 1e2, 1e9, 1e5, 1e14)
 
-    #print('The cost to calculate the energy of', args.molecule_info,'with method', args.method, 'is', "{:0.2e}".format(median), 'T gates')
+    print('The cost to calculate the energy of', args.molecule_info,'with method', args.method, 'is', "{:0.2e}".format(median), 'T gates')
 
-    #median = tools.generate_plot(c_calculator.costs[args.method], 'QPE', cost_unit, 1e2, 1e9, 1e10, 1e16)
+    median = tools.generate_plot(c_calculator.costs[args.method], 'QPE', cost_unit, 1e2, 1e9, 1e10, 1e16)
 
-    #print('The cost to calculate the energy of', args.molecule_info,'with method', args.method, 'is', "{:0.2e}".format(median), 'T gates')
+    print('The cost to calculate the energy of', args.molecule_info,'with method', args.method, 'is', "{:0.2e}".format(median), 'T gates')
 
     median = tools.generate_plot(c_calculator.costs[args.method], 'total', cost_unit, 1e2, 1e9, 1e10, 1e16)
 

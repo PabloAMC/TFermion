@@ -1,7 +1,5 @@
 import argparse
 import json
-
-import matplotlib as mpl
 from molecule import CHEMICAL_ACCURACY
 import numpy as np
 import random as rnd
@@ -13,7 +11,6 @@ from itertools import groupby
 import os
 import matplotlib.pyplot as plt
 from matplotlib.legend_handler import HandlerTuple
-from openfermion.resource_estimates.surface_code_compilation import CostEstimate, cost_estimator
 
 BR_INITIAL_VALUE = 7
 
@@ -301,7 +298,6 @@ class Utils():
     def generate_plot(self, points, plot_module, cost_unit, min_x_lim, max_x_lim, min_y_lim, max_y_lim):
 
         fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(8,6))
-        fig2, ax2 = plt.subplots(nrows=1, ncols=1, figsize=(8,6))
 
         counter = -1
         for chemical_acc in points:
@@ -314,47 +310,29 @@ class Utils():
 
                 if cost_unit == 'T' or cost_unit == 'toffoli':
 
-                    if plot_module == 'HF': 
-                        median = np.nanmedian([element[0][cost_unit] for element in cost_object[1]])
-                        qubit_median = 0
-                    if plot_module == 'QPE': 
-                        median = np.nanmedian([element[1][cost_unit] for element in cost_object[1]])
-                        qubit_median = np.nanmedian([element[1]['qubit'] for element in cost_object[1]])
-                    if plot_module == 'total': 
-                        median = np.nanmedian([element[0][cost_unit] + element[1][cost_unit] for element in cost_object[1]])
-                        qubit_median = np.nanmedian([element[1]['qubit'] for element in cost_object[1]])
+                    if plot_module == 'HF': median = np.nanmedian([element[0] for element in cost_object[1]])
+                    if plot_module == 'QPE': median = np.nanmedian([element[1] for element in cost_object[1]])
+                    if plot_module == 'total': median = np.nanmedian([sum(element) for element in cost_object[1]])
 
                     if counter == 0:
 
                         # add a line renderer
                         ax.scatter(x_value, median, marker="h", c="blue", alpha=0.5, s=100, label=r'$\epsilon=0.014eV$')
 
-                        cost = cost_estimator(num_logical_qubits = qubit_median, num_toffoli = median)
-                        ax2.scatter(x_value, cost.duration, marker="h", c="blue", alpha=0.5, s=100, label=r'$\epsilon=0.014eV$')
-
                     elif counter == 1:
 
                         # add a line renderer
                         ax.scatter(x_value, median, marker="s", c="green", alpha=0.5, s=100, label=r'$\epsilon=0.043eV$')
-                        
-                        cost = cost_estimator(num_logical_qubits = qubit_median, num_toffoli = median)
-                        ax2.scatter(x_value, cost.duration, marker="s", c="green", alpha=0.5, s=100, label=r'$\epsilon=0.043eV$')
 
                     elif counter == 2:
 
                         # add a line renderer
                         ax.scatter(x_value, median, marker="*", c="orange", alpha=0.5, s=100, label=r'$\epsilon=0.129eV$')
 
-                        cost = cost_estimator(num_logical_qubits = qubit_median, num_toffoli = median)
-                        ax2.scatter(x_value, cost.duration, marker="*", c="orange", alpha=0.5, s=100, label=r'$\epsilon=0.129eV$')
-
                     elif counter == 3:
 
                         # add a line renderer
                         ax.scatter(x_value, median, marker="d", c="red", alpha=0.5, s=100, label=r'$\epsilon=0.387eV$')
-
-                        cost = cost_estimator(num_logical_qubits = qubit_median, num_toffoli = median)
-                        ax2.scatter(x_value, cost.duration, marker="d", c="red", alpha=0.5, s=100, label=r'$\epsilon=0.387eV$')
 
 
 
@@ -367,17 +345,15 @@ class Utils():
                     if plot_module == 'QPE': 
                         median_T = np.nanmedian([element[1]['T'] for element in cost_object[1]])
                         median_toffoli = np.nanmedian([element[1]['toffoli'] for element in cost_object[1]])
-                    if plot_module == 'total':
+                    if plot_module == 'total': 
                         median_T = np.nanmedian([element[0]['T'] for element in cost_object[1]]) + np.nanmedian([element[1]['T'] for element in cost_object[1]])
                         median_toffoli = np.nanmedian([element[0]['toffoli'] for element in cost_object[1]]) + np.nanmedian([element[1]['toffoli'] for element in cost_object[1]])
-                        #median_qubit = np.nanmedian([element[1]['qubit'] for element in cost_object[1]])
 
                     ax.scatter(x_value, median_T, marker="h", c="blue", alpha=0.5, s=100, label=r'T gates')
                     ax.scatter(x_value, median_toffoli, marker="s", c="green", alpha=0.5, s=100, label=r'toffoli gates')
 
 
         ax.set_xlim([min_x_lim, max_x_lim])
-        ax2.set_xlim([min_x_lim, max_x_lim])
         ax.set_ylim([min_y_lim, max_y_lim])
 
         ax.set_xscale("log")
@@ -391,7 +367,6 @@ class Utils():
         ax.set_xlabel(r'Number of plane waves, $N$', fontsize=20)
         if cost_unit == 'T' or cost_unit == 'toffoli':
             ax.set_ylabel(r''+cost_unit +' gate cost', fontsize=20)
-            ax2.set_ylabel(r''+cost_unit +'Time', fontsize=20)
         else:
             ax.set_ylabel(r'Gate cost', fontsize=20)
 
@@ -402,11 +377,6 @@ class Utils():
             p3 = ax.scatter([0], [0], c='orange', marker='*', alpha=0.5, s=100)
             p4 = ax.scatter([0], [0], c='red', marker='d', alpha=0.5, s=100)
 
-            p1 = ax2.scatter([0], [0], c='blue', marker='h', alpha=0.5, s=100)
-            p2 = ax2.scatter([0], [0], c='green', marker='s', alpha=0.5, s=100)
-            p3 = ax2.scatter([0], [0], c='orange', marker='*', alpha=0.5, s=100)
-            p4 = ax2.scatter([0], [0], c='red', marker='d', alpha=0.5, s=100)
-
             # Assign two of the handles to the same legend entry by putting them in a tuple
             # and using a generic handler map (which would be used for any additional
             # tuples of handles like (p1, p3)).
@@ -414,17 +384,10 @@ class Utils():
 
             l = ax.legend([p1, p2, p3, p4], [r'$\epsilon_{'+plot_module+'}=0.014eV$', r'$\epsilon_{'+plot_module+'}=0.043eV$', r'$\epsilon_{'+plot_module+'}=0.129eV$', r'$\epsilon_{'+plot_module+'}=0.387eV$'], scatterpoints=1,
                         numpoints=1, handler_map={tuple: HandlerTuple(ndivide=None)}, loc='upper left', borderpad=1, prop={'size': 12}, labelspacing=1)
-
-            l = ax2.legend([p1, p2, p3, p4], [r'$\epsilon_{'+plot_module+'}=0.014eV$', r'$\epsilon_{'+plot_module+'}=0.043eV$', r'$\epsilon_{'+plot_module+'}=0.129eV$', r'$\epsilon_{'+plot_module+'}=0.387eV$'], scatterpoints=1,
-                        numpoints=1, handler_map={tuple: HandlerTuple(ndivide=None)}, loc='upper left', borderpad=1, prop={'size': 12}, labelspacing=1)
             #l = ax.legend([p1], [r'$\epsilon_{'+plot_module+'}=0.014eV$'], scatterpoints=1,
             #            numpoints=1, handler_map={tuple: HandlerTuple(ndivide=None)}, loc='upper left', borderpad=1, prop={'size': 12}, labelspacing=1)
 
-            mpl.pyplot.figure(fig)
             plt.savefig(plot_module+'.pdf')
-
-            mpl.pyplot.figure(fig2)
-            plt.savefig('synthesis_time.pdf')
 
             return median
 
