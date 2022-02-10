@@ -153,9 +153,9 @@ class Interaction_picture:
             HF_toffoli_cost = eta*(N_small-eta)*Givens + calculate_antisymmetrization_cost()
 
             if cost_unit == 'T': HF_cost = HF_T_cost
-            elif cost_unit == 'toffoli': HF_cost = HF_toffoli_cost
+            elif cost_unit == 'Toffoli': HF_cost = HF_toffoli_cost
             elif cost_unit == 'optimization': HF_cost = HF_T_cost*self.weight_T_cost + HF_toffoli_cost*self.weight_toffoli_cost
-            elif cost_unit == 'detail': HF_cost = {'T':HF_T_cost, 'toffoli':HF_toffoli_cost}
+            elif cost_unit == 'detail': HF_cost = {'T':HF_T_cost, 'Toffoli':HF_toffoli_cost}
 
             return HF_cost
 
@@ -278,9 +278,9 @@ class Interaction_picture:
             QPE_T_cost = np.max([n_R+1,n_T])*self.tools.pauli_rotation_synthesis(epsilon_SS_QPE)
 
             if cost_unit == 'T': QPE_cost = QPE_T_cost
-            elif cost_unit == 'toffoli': QPE_cost = QPE_toffoli_cost
+            elif cost_unit == 'Toffoli': QPE_cost = QPE_toffoli_cost
             elif cost_unit == 'optimization': QPE_cost = QPE_T_cost*self.weight_T_cost + QPE_toffoli_cost*self.weight_toffoli_cost
-            elif cost_unit == 'detail': QPE_cost = {'T': QPE_T_cost, 'toffoli': QPE_toffoli_cost}
+            elif cost_unit == 'detail': QPE_cost = {'T': QPE_T_cost, 'Toffoli': QPE_toffoli_cost}
 
             return QPE_cost
 

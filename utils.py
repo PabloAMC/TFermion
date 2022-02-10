@@ -12,6 +12,13 @@ import os
 import matplotlib.pyplot as plt
 from matplotlib.legend_handler import HandlerTuple
 
+
+'''plt.rcParams.update({
+    "text.usetex": True,
+    "font.family": "serif",
+    "font.serif": ['Computer Modern Roman']
+})'''
+
 BR_INITIAL_VALUE = 7
 
 class Utils():
@@ -308,7 +315,7 @@ class Utils():
             
                 x_value = cost_object[0]
 
-                if cost_unit == 'T' or cost_unit == 'toffoli':
+                if cost_unit == 'T' or cost_unit == 'Toffoli':
 
                     if plot_module == 'HF': median = np.nanmedian([element[0] for element in cost_object[1]])
                     if plot_module == 'QPE': median = np.nanmedian([element[1] for element in cost_object[1]])
@@ -317,22 +324,22 @@ class Utils():
                     if counter == 0:
 
                         # add a line renderer
-                        ax.scatter(x_value, median, marker="h", c="blue", alpha=0.5, s=100, label=r'$\epsilon=0.014eV$')
+                        ax.scatter(x_value, median, marker="h", c="blue", alpha=0.5, s=100, label=r'$\varepsilon=0.014eV$')
 
                     elif counter == 1:
 
                         # add a line renderer
-                        ax.scatter(x_value, median, marker="s", c="green", alpha=0.5, s=100, label=r'$\epsilon=0.043eV$')
+                        ax.scatter(x_value, median, marker="s", c="green", alpha=0.5, s=100, label=r'$\varepsilon=0.043eV$')
 
                     elif counter == 2:
 
                         # add a line renderer
-                        ax.scatter(x_value, median, marker="*", c="orange", alpha=0.5, s=100, label=r'$\epsilon=0.129eV$')
+                        ax.scatter(x_value, median, marker="*", c="orange", alpha=0.5, s=100, label=r'$\varepsilon=0.129eV$')
 
                     elif counter == 3:
 
                         # add a line renderer
-                        ax.scatter(x_value, median, marker="d", c="red", alpha=0.5, s=100, label=r'$\epsilon=0.387eV$')
+                        ax.scatter(x_value, median, marker="d", c="red", alpha=0.5, s=100, label=r'$\varepsilon=0.387eV$')
 
 
 
@@ -341,16 +348,16 @@ class Utils():
                         break
                     if plot_module == 'HF': 
                         median_T = np.nanmedian([element[0]['T'] for element in cost_object[1]])
-                        median_toffoli = np.nanmedian([element[0]['toffoli'] for element in cost_object[1]])
+                        median_toffoli = np.nanmedian([element[0]['Toffoli'] for element in cost_object[1]])
                     if plot_module == 'QPE': 
                         median_T = np.nanmedian([element[1]['T'] for element in cost_object[1]])
-                        median_toffoli = np.nanmedian([element[1]['toffoli'] for element in cost_object[1]])
+                        median_toffoli = np.nanmedian([element[1]['Toffoli'] for element in cost_object[1]])
                     if plot_module == 'total': 
                         median_T = np.nanmedian([element[0]['T'] for element in cost_object[1]]) + np.nanmedian([element[1]['T'] for element in cost_object[1]])
-                        median_toffoli = np.nanmedian([element[0]['toffoli'] for element in cost_object[1]]) + np.nanmedian([element[1]['toffoli'] for element in cost_object[1]])
+                        median_toffoli = np.nanmedian([element[0]['Toffoli'] for element in cost_object[1]]) + np.nanmedian([element[1]['Toffoli'] for element in cost_object[1]])
 
                     ax.scatter(x_value, median_T, marker="h", c="blue", alpha=0.5, s=100, label=r'T gates')
-                    ax.scatter(x_value, median_toffoli, marker="s", c="green", alpha=0.5, s=100, label=r'toffoli gates')
+                    ax.scatter(x_value, median_toffoli, marker="s", c="green", alpha=0.5, s=100, label=r'Toffoli gates')
 
 
         ax.set_xlim([min_x_lim, max_x_lim])
@@ -363,14 +370,16 @@ class Utils():
 
         plt.yticks(fontsize=14)
         plt.xticks(fontsize=14)
+
+        plt.grid(True, which = 'major', axis = 'both', alpha = 0.2)
         
         ax.set_xlabel(r'Number of plane waves, $N$', fontsize=20)
-        if cost_unit == 'T' or cost_unit == 'toffoli':
+        if cost_unit == 'T' or cost_unit == 'Toffoli':
             ax.set_ylabel(r''+cost_unit +' gate cost', fontsize=20)
         else:
             ax.set_ylabel(r'Gate cost', fontsize=20)
 
-        if cost_unit == 'T' or cost_unit == 'toffoli':
+        if cost_unit == 'T' or cost_unit == 'Toffoli':
             # First plot: two legend keys for a single entry
             p1 = ax.scatter([0], [0], c='blue', marker='h', alpha=0.5, s=100)
             p2 = ax.scatter([0], [0], c='green', marker='s', alpha=0.5, s=100)
@@ -382,9 +391,9 @@ class Utils():
             # tuples of handles like (p1, p3)).
 
 
-            l = ax.legend([p1, p2, p3, p4], [r'$\epsilon_{'+plot_module+'}=0.014eV$', r'$\epsilon_{'+plot_module+'}=0.043eV$', r'$\epsilon_{'+plot_module+'}=0.129eV$', r'$\epsilon_{'+plot_module+'}=0.387eV$'], scatterpoints=1,
+            l = ax.legend([p1, p2, p3, p4], [r'$\varepsilon=0.014eV$', r'$\varepsilon=0.043eV$', r'$\varepsilon=0.129eV$', r'$\varepsilon=0.387eV$'], scatterpoints=1,
                         numpoints=1, handler_map={tuple: HandlerTuple(ndivide=None)}, loc='upper left', borderpad=1, prop={'size': 12}, labelspacing=1)
-            #l = ax.legend([p1], [r'$\epsilon_{'+plot_module+'}=0.014eV$'], scatterpoints=1,
+            #l = ax.legend([p1], [r'$\varepsilon_{'+plot_module+'}=0.014eV$'], scatterpoints=1,
             #            numpoints=1, handler_map={tuple: HandlerTuple(ndivide=None)}, loc='upper left', borderpad=1, prop={'size': 12}, labelspacing=1)
 
             plt.savefig(plot_module+'.pdf')
@@ -395,10 +404,91 @@ class Utils():
             p1 = ax.scatter([0], [0], c='blue', marker='h', alpha=0.5, s=100)
             p2 = ax.scatter([0], [0], c='green', marker='s', alpha=0.5, s=100)
 
-            l = ax.legend([p1, p2], [r'T gates', r'toffoli gates'], scatterpoints=1,
+            ax.set_xscale("log")
+            ax.set_yscale("log")
+
+            plt.grid(True, which = 'major', axis = 'both', alpha = 0.2)
+            ax.tick_params(axis='x')
+            ax.tick_params(axis='y')
+
+            plt.yticks(fontsize=14)
+            plt.xticks(fontsize=14)
+
+            l = ax.legend([p1, p2], [r'T gates', r'Toffoli gates'], scatterpoints=1,
                         numpoints=1, handler_map={tuple: HandlerTuple(ndivide=None)}, loc='upper left', borderpad=1, prop={'size': 12}, labelspacing=1)
 
 
             plt.savefig(plot_module+'.pdf')
 
             return median_T+median_toffoli
+
+
+    def generate_time_plot(self, points, plot_module, cost_unit, min_x_lim, max_x_lim, min_y_lim, max_y_lim):
+
+        fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(8,6))
+
+        plt.axhline(y = 8766, color = 'gray', linestyle = 'dashed') 
+        plt.axhline(y = 720, color = 'gray', linestyle = 'dashed')
+        plt.axhline(y = 24, color = 'gray', linestyle = 'dashed')
+
+        counter = -1
+        for chemical_acc in points:
+
+            counter+=1
+
+            for cost_object in chemical_acc:
+            
+                x_value = cost_object[0]
+                n_p = int(np.ceil(np.log2(x_value**(1/3) + 1)))
+
+                if plot_module == 'HF': median = np.nanmedian([element[0] for element in cost_object[1]])
+                if plot_module == 'QPE': median = np.nanmedian([element[1] for element in cost_object[1]])
+                if plot_module == 'total': median = np.nanmedian([sum(element) for element in cost_object[1]])
+
+                if counter == 1:
+
+                    A, B = 0.5 , 1.6
+
+                    nL = 3104
+                    etotal = 0.01
+                    egate = etotal/(x_value*nL)
+
+                    d = np.ceil( 1/B * np.log(A/egate) )
+
+                    tl = median * d * 1e-8 / (3600*n_p)
+                    tm = median * d * 1e-6 / (3600*n_p)
+                    th = median * d * 1e-4 / (3600*n_p)
+
+                    # add a line renderer
+                    ax.scatter(x_value, tl, marker="s", c="green", alpha=0.5, s=100, label=r'$100 MHz$')
+                    ax.scatter(x_value, tm, marker="h", c="blue", alpha=0.5, s=100, label=r'$1 MHz$')
+                    ax.scatter(x_value, th, marker="d", c="red", alpha=0.5, s=100, label=r'$10 kHz$')
+
+
+                else:
+                    continue
+        
+        ax.set_xlim([min_x_lim, max_x_lim])
+        ax.set_ylim([1, 1e8])
+
+        ax.set_xscale("log")
+        ax.set_yscale("log")
+
+        ax.tick_params(axis='x')
+
+        ticks = [1, 10, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8]
+
+        plt.yticks(ticks=ticks, fontsize=14)
+        plt.xticks(fontsize=14)
+
+        plt.grid(True, which = 'major', axis = 'both', alpha = 0.2)
+        
+        ax.set_xlabel(r'Number of plane waves, $N$', fontsize=20)
+        ax.set_ylabel(r'Hours', fontsize=20)   
+
+        # To eliminate duplicates in the legend
+        handles, labels = plt.gca().get_legend_handles_labels()
+        by_label = dict(zip(labels, handles))
+        plt.legend(by_label.values(), by_label.keys()) 
+
+        plt.savefig('time.pdf')
