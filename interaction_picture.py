@@ -284,8 +284,14 @@ class Interaction_picture:
 
             return QPE_cost
 
+        def qubit_cost():
+            logical_qubits  = 3*eta*n_p + 12*n_p + 33 + 2*np.ceil(np.log2(eta))+ \
+                    5*n_M + 3*n_p**2+ 4*n_M*n_p + np.ceil(np.log2(eta+2*lambda_zeta))+ \
+                    np.max([n_R+1,n_T]) + np.max([5*n_R-4,5*n_p+1])
+            return logical_qubits
+
         if cost_module == 'detail':
-            return calculate_HF_cost(), calculate_QPE_cost()
+            return calculate_HF_cost(), calculate_QPE_cost(), qubit_cost()
         elif cost_module == 'optimization':
             return calculate_HF_cost()+calculate_QPE_cost()
 

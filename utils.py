@@ -319,7 +319,7 @@ class Utils():
 
                     if plot_module == 'HF': median = np.nanmedian([element[0] for element in cost_object[1]])
                     if plot_module == 'QPE': median = np.nanmedian([element[1] for element in cost_object[1]])
-                    if plot_module == 'total': median = np.nanmedian([sum(element) for element in cost_object[1]])
+                    if plot_module == 'total': median = np.nanmedian([element[0]+element[1] for element in cost_object[1]])
 
                     if counter == 0:
 
@@ -443,15 +443,15 @@ class Utils():
 
                 if plot_module == 'HF': median = np.nanmedian([element[0] for element in cost_object[1]])
                 if plot_module == 'QPE': median = np.nanmedian([element[1] for element in cost_object[1]])
-                if plot_module == 'total': median = np.nanmedian([sum(element) for element in cost_object[1]])
+                if plot_module == 'total': median = np.nanmedian([element[0]+element[1] for element in cost_object[1]])
+                median_qubits = np.nanmedian([element[2] for element in cost_object[1]])
 
                 if counter == 1:
 
                     A, B = 0.5 , 1.6
 
-                    nL = 3104
                     etotal = 0.01
-                    egate = etotal/(x_value*nL)
+                    egate = etotal/(x_value*median_qubits)
 
                     d = np.ceil( 1/B * np.log(A/egate) )
 
@@ -469,7 +469,7 @@ class Utils():
                     continue
         
         ax.set_xlim([min_x_lim, max_x_lim])
-        ax.set_ylim([1, 1e8])
+        #ax.set_ylim([1, 1e8])
 
         ax.set_xscale("log")
         ax.set_yscale("log")
@@ -478,7 +478,7 @@ class Utils():
 
         ticks = [1, 10, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8]
 
-        plt.yticks(ticks=ticks, fontsize=14)
+        plt.yticks(fontsize=14) #ticks=ticks,
         plt.xticks(fontsize=14)
 
         plt.grid(True, which = 'major', axis = 'both', alpha = 0.2)
