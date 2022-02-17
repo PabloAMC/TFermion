@@ -407,7 +407,7 @@ class Cost_calculator:
                 MAX_N_GRID = 1e9
                 values = self.calculate_range_values(MIN_N_GRID, MAX_N_GRID)
 
-                vec_a = np.array([5.009, 5.408,  6.339])
+                vec_a = np.array([5.02, 5.40,  6.26])
 
                 # it indicates if the cost returned is the sum of HF, antisymmetrization and QPE or each value separetly
                 cost_module = 'optimization'

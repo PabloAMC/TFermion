@@ -361,7 +361,7 @@ class Utils():
 
 
         ax.set_xlim([min_x_lim, max_x_lim])
-        ax.set_ylim([min_y_lim, max_y_lim])
+        #ax.set_ylim([min_y_lim, max_y_lim])
 
         ax.set_xscale("log")
         ax.set_yscale("log")

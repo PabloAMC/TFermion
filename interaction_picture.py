@@ -149,7 +149,7 @@ class Interaction_picture:
             HF_T_cost = eta*(N_small-eta)*T_givens
             
             # toffoli gate cost for HF
-            Givens = 2* (4*(np.ceil(np.log2(N_small))-2)) # Our figure 4 on Givens rotations: Using Barenco lemma 7.2: MCX + uncomputation
+            Givens = 2*(np.ceil(np.log2(N_small))-1) # We can use m-1 Toffolis to perform a controlled not; and then uncompute them.
             HF_toffoli_cost = eta*(N_small-eta)*Givens + calculate_antisymmetrization_cost()
 
             if cost_unit == 'T': HF_cost = HF_T_cost
