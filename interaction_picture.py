@@ -149,7 +149,9 @@ class Interaction_picture:
             HF_T_cost = eta*(N_small-eta)*T_givens
             
             # toffoli gate cost for HF
-            Givens = 2*(np.ceil(np.log2(N_small))-1) # We can use m-1 Toffolis to perform a controlled not; and then uncompute them.
+            aux = 2*(3*n_p-1)*eta # We can use m-1 Toffolis to perform a controlled not with m controls (and a few ancillas).
+            swaps = (3*n_p)*(eta-1)
+            Givens = (aux+swaps)*2 
             HF_toffoli_cost = eta*(N_small-eta)*Givens + calculate_antisymmetrization_cost()
 
             if cost_unit == 'T': HF_cost = HF_T_cost
@@ -285,9 +287,9 @@ class Interaction_picture:
             return QPE_cost
 
         def qubit_cost():
-            logical_qubits  = 3*eta*n_p + 12*n_p + 33 + 2*np.ceil(np.log2(eta))+ \
+            logical_qubits  = np.max([3*eta*n_p + 12*n_p + 33 + 2*np.ceil(np.log2(eta))+ \
                     5*n_M + 3*n_p**2+ 4*n_M*n_p + np.ceil(np.log2(eta+2*lambda_zeta))+ \
-                    np.max([n_R+1,n_T]) + np.max([5*n_R-4,5*n_p+1])
+                    np.max([n_R+1,n_T]) + np.max([5*n_R-4,5*n_p+1]), 3*eta*n_p + 3*eta*(n_p-1)+1])
             return logical_qubits
 
         if cost_module == 'detail':

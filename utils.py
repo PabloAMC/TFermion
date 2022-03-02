@@ -368,16 +368,16 @@ class Utils():
 
         ax.tick_params(axis='x')
 
-        plt.yticks(fontsize=14)
-        plt.xticks(fontsize=14)
+        plt.yticks(fontsize=16)
+        plt.xticks(fontsize=16)
 
         plt.grid(True, which = 'major', axis = 'both', alpha = 0.2)
         
-        ax.set_xlabel(r'Number of plane waves, $N$', fontsize=20)
+        ax.set_xlabel(r'Number of plane waves, $N$', fontsize=16)
         if cost_unit == 'T' or cost_unit == 'Toffoli':
-            ax.set_ylabel(r''+cost_unit +' gate cost', fontsize=20)
+            ax.set_ylabel(r''+cost_unit +' gate cost', fontsize=16)
         else:
-            ax.set_ylabel(r'Gate cost', fontsize=20)
+            ax.set_ylabel(r'Gate cost', fontsize=16)
 
         if cost_unit == 'T' or cost_unit == 'Toffoli':
             # First plot: two legend keys for a single entry
@@ -411,8 +411,8 @@ class Utils():
             ax.tick_params(axis='x')
             ax.tick_params(axis='y')
 
-            plt.yticks(fontsize=14)
-            plt.xticks(fontsize=14)
+            plt.yticks(fontsize=16)
+            plt.xticks(fontsize=16)
 
             l = ax.legend([p1, p2], [r'T gates', r'Toffoli gates'], scatterpoints=1,
                         numpoints=1, handler_map={tuple: HandlerTuple(ndivide=None)}, loc='upper left', borderpad=1, prop={'size': 12}, labelspacing=1)
@@ -478,13 +478,13 @@ class Utils():
 
         ticks = [1, 10, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8]
 
-        plt.yticks(fontsize=14) #ticks=ticks,
-        plt.xticks(fontsize=14)
+        plt.yticks(fontsize=16) #ticks=ticks,
+        plt.xticks(fontsize=16)
 
         plt.grid(True, which = 'major', axis = 'both', alpha = 0.2)
         
-        ax.set_xlabel(r'Number of plane waves, $N$', fontsize=20)
-        ax.set_ylabel(r'Hours', fontsize=20)   
+        ax.set_xlabel(r'Number of plane waves, $N$', fontsize=16)
+        ax.set_ylabel(r'Hours', fontsize=16)   
 
         # To eliminate duplicates in the legend
         handles, labels = plt.gca().get_legend_handles_labels()
