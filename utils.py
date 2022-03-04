@@ -368,16 +368,17 @@ class Utils():
 
         ax.tick_params(axis='x')
 
-        plt.yticks(fontsize=16)
-        plt.xticks(fontsize=16)
+        plt.yticks(fontsize=18)
+        plt.xticks(fontsize=18)
 
         plt.grid(True, which = 'major', axis = 'both', alpha = 0.2)
         
-        ax.set_xlabel(r'Number of plane waves, $N$', fontsize=16)
         if cost_unit == 'T' or cost_unit == 'Toffoli':
-            ax.set_ylabel(r''+cost_unit +' gate cost', fontsize=16)
+            ax.set_xlabel(r'Number of plane waves, $N$', fontsize=18)
+            ax.set_ylabel(r''+cost_unit +' gate cost', fontsize=18)
         else:
-            ax.set_ylabel(r'Gate cost', fontsize=16)
+            ax.set_xlabel(r'Number of plane waves, $N^{\prime}$', fontsize=18)
+            ax.set_ylabel(r'Gate cost', fontsize=18)
 
         if cost_unit == 'T' or cost_unit == 'Toffoli':
             # First plot: two legend keys for a single entry
@@ -390,9 +391,11 @@ class Utils():
             # and using a generic handler map (which would be used for any additional
             # tuples of handles like (p1, p3)).
 
+            ax.text(3e2, 8e14, 'b)', horizontalalignment = 'left', verticalalignment = 'top', fontsize=18)
+
 
             l = ax.legend([p1, p2, p3, p4], [r'$\varepsilon=0.014eV$', r'$\varepsilon=0.043eV$', r'$\varepsilon=0.129eV$', r'$\varepsilon=0.387eV$'], scatterpoints=1,
-                        numpoints=1, handler_map={tuple: HandlerTuple(ndivide=None)}, loc='upper left', borderpad=1, prop={'size': 12}, labelspacing=1)
+                        numpoints=1, handler_map={tuple: HandlerTuple(ndivide=None)}, loc='lower right', borderpad=1, prop={'size': 12}, labelspacing=1)
             #l = ax.legend([p1], [r'$\varepsilon_{'+plot_module+'}=0.014eV$'], scatterpoints=1,
             #            numpoints=1, handler_map={tuple: HandlerTuple(ndivide=None)}, loc='upper left', borderpad=1, prop={'size': 12}, labelspacing=1)
 
@@ -404,18 +407,24 @@ class Utils():
             p1 = ax.scatter([0], [0], c='blue', marker='h', alpha=0.5, s=100)
             p2 = ax.scatter([0], [0], c='green', marker='s', alpha=0.5, s=100)
 
+            ax.text(3e2, 1e15, 'a)', horizontalalignment = 'left', verticalalignment = 'top', fontsize=18)
+
             ax.set_xscale("log")
             ax.set_yscale("log")
 
             plt.grid(True, which = 'major', axis = 'both', alpha = 0.2)
+            
+            ticks = [1e7, 1e8, 1e9, 1e10, 1e11, 1e12, 1e13, 1e14, 1e15]
             ax.tick_params(axis='x')
             ax.tick_params(axis='y')
+            #ax.yticks(fontsize=18,ticks=ticks)
+            #ax.set_yticks(ticks = ticks)
 
-            plt.yticks(fontsize=16)
-            plt.xticks(fontsize=16)
+            plt.yticks(fontsize=18)
+            plt.xticks(fontsize=18)
 
             l = ax.legend([p1, p2], [r'T gates', r'Toffoli gates'], scatterpoints=1,
-                        numpoints=1, handler_map={tuple: HandlerTuple(ndivide=None)}, loc='upper left', borderpad=1, prop={'size': 12}, labelspacing=1)
+                        numpoints=1, handler_map={tuple: HandlerTuple(ndivide=None)}, loc='lower right', borderpad=1, prop={'size': 12}, labelspacing=1)
 
 
             plt.savefig(plot_module+'.pdf')
@@ -459,7 +468,7 @@ class Utils():
                     tm = median * d * 1e-6 / (3600*n_p)
                     th = median * d * 1e-4 / (3600*n_p)
 
-                    # add a line renderer
+                        # add a line renderer
                     ax.scatter(x_value, tl, marker="s", c="green", alpha=0.5, s=100, label=r'$100 MHz$')
                     ax.scatter(x_value, tm, marker="h", c="blue", alpha=0.5, s=100, label=r'$1 MHz$')
                     ax.scatter(x_value, th, marker="d", c="red", alpha=0.5, s=100, label=r'$10 kHz$')
@@ -476,15 +485,17 @@ class Utils():
 
         ax.tick_params(axis='x')
 
-        ticks = [1, 10, 1e2, 1e3, 1e4, 1e5, 1e6, 1e7, 1e8]
-
-        plt.yticks(fontsize=16) #ticks=ticks,
-        plt.xticks(fontsize=16)
+        plt.yticks(fontsize=18) #ticks=ticks,
+        plt.xticks(fontsize=18)
 
         plt.grid(True, which = 'major', axis = 'both', alpha = 0.2)
         
-        ax.set_xlabel(r'Number of plane waves, $N$', fontsize=16)
-        ax.set_ylabel(r'Hours', fontsize=16)   
+        ax.set_xlabel(r'Number of plane waves, $N$', fontsize=18)
+        ax.set_ylabel(r'Hours', fontsize=18)  
+
+        ax.text(2e2, 25, '1 day', horizontalalignment = 'left', verticalalignment = 'bottom', fontsize=16, color = 'gray')
+        ax.text(7e7, 750, '1 month', horizontalalignment = 'left', verticalalignment = 'bottom', fontsize=16, color = 'gray')
+        ax.text(2e2, 8950, '1 year', horizontalalignment = 'left', verticalalignment = 'bottom', fontsize=16, color = 'gray')
 
         # To eliminate duplicates in the legend
         handles, labels = plt.gca().get_legend_handles_labels()
