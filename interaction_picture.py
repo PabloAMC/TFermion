@@ -151,7 +151,7 @@ class Interaction_picture:
             # toffoli gate cost for HF
             aux = 2*(3*n_p-1)*eta # We can use m-1 Toffolis to perform a controlled not with m controls (and a few ancillas).
             swaps = (3*n_p)*(eta-1)
-            Givens = (aux+swaps)*8 # Compute and uncompute for the (un)computation of the flat qubit, for p and q 
+            Givens = 4*aux + 2*swaps # Compute and uncompute of the flag qubit, for p and q 
             HF_toffoli_cost = eta*(N_small-eta)*Givens + calculate_antisymmetrization_cost()
 
             if cost_unit == 'T': HF_cost = HF_T_cost
@@ -289,12 +289,13 @@ class Interaction_picture:
         def qubit_cost():
             logical_qubits  = np.max([3*eta*n_p + 12*n_p + 33 + 2*np.ceil(np.log2(eta))+ \
                     5*n_M + 3*n_p**2+ 4*n_M*n_p + np.ceil(np.log2(eta+2*lambda_zeta))+ \
-                    np.max([n_R+1,n_T]) + np.max([5*n_R-4,5*n_p+1]), 3*eta*n_p + eta*(3*n_p-1)+1])
+                    np.max([n_R+1,n_T]) + np.max([5*n_R-4,5*n_p+1]), 3*eta*n_p + (3*n_p-1)+1])
             return logical_qubits
 
         if cost_module == 'detail':
             return calculate_HF_cost(), calculate_QPE_cost(), qubit_cost()
         elif cost_module == 'optimization':
+            #parallelization = np.floor(((3*n_p-1)*eta)/(qubit_cost()-3*eta*n_p))
             return calculate_HF_cost()+calculate_QPE_cost()
 
     ## Sublinear scaling and interaction picture babbush2019quantum
@@ -487,16 +488,20 @@ class Interaction_picture:
         #y = sympy.Symbol('y')
         #x = sympy.Symbol('x')
         #Ti = sympy.integrate(sympy.atan(y)/y, (y, 0, x)).evalf(subs={x:3-sympy.sqrt(8)})
-        Ti = 0.171017553023190
+        Ti = 0.171017553023190 #todo: IMPORTANT: this precalculated values are valid for the case of b_i = [1,1.15925926,1.247011952191235]
         if n_p > 7 or np.isnan(n_M):
-            p_nu = 1-float(1-3/8*(Ti - G +np.pi/2*np.log(1+np.sqrt(2))))
+            p_nu = 0.18596951323873634 # 1-float(1-3/8*(Ti - G +np.pi/2*np.log(1+np.sqrt(2))))
         elif n_p == 7 and n_M > 12: # Precalculated to avoid numerical delays
-            p_nu = 0.23779
+            p_nu = 0.18518528539691426 #0.23779
         elif n_p == 6 and n_M > 12: # Precalculated to avoid numerical delays
-            p_nu = 0.23577
+            p_nu = 0.18361780556777269 #0.23577
         elif n_p == 5 and n_M > 12: # Precalculated to avoid numerical delays
-            p_nu = 0.23173
-        else: # eq 40 in https://www.nature.com/articles/s41534-019-0199-y
+            p_nu = 0.18048679966153017 #0.23173
+        elif n_p == 4 and n_M > 12: # Precalculated to avoid numerical delays
+            p_nu = 0.17424103831932863
+        elif n_p == 3 and n_M > 12: # Precalculated to avoid numerical delays
+            p_nu = 0.1618181140426753
+        else:
             B_mus = {}
             p_nu = 0
             for j in range(2, n_p+4):

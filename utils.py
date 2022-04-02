@@ -391,7 +391,7 @@ class Utils():
             # and using a generic handler map (which would be used for any additional
             # tuples of handles like (p1, p3)).
 
-            ax.text(3e2, 8e14, 'b)', horizontalalignment = 'left', verticalalignment = 'top', fontsize=18)
+            ax.text(3e2, 8e14, '(b)', horizontalalignment = 'left', verticalalignment = 'top', fontsize=18)
 
 
             l = ax.legend([p1, p2, p3, p4], [r'$\varepsilon=0.014eV$', r'$\varepsilon=0.043eV$', r'$\varepsilon=0.129eV$', r'$\varepsilon=0.387eV$'], scatterpoints=1,
@@ -407,7 +407,7 @@ class Utils():
             p1 = ax.scatter([0], [0], c='blue', marker='h', alpha=0.5, s=100)
             p2 = ax.scatter([0], [0], c='green', marker='s', alpha=0.5, s=100)
 
-            ax.text(3e2, 1e15, 'a)', horizontalalignment = 'left', verticalalignment = 'top', fontsize=18)
+            ax.text(3e2, 1e15, '(a)', horizontalalignment = 'left', verticalalignment = 'top', fontsize=18)
 
             ax.set_xscale("log")
             ax.set_yscale("log")
