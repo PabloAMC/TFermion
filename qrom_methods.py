@@ -6,7 +6,7 @@ class QROM_methods:
         self.tools = tools
 
     ## Linear T complexity (babbush2018encoding)
-    def linear_t(self, epsilons, N, lambda_value, H_norm_lambda_ratio):
+    def linear_T(self, epsilons, N, lambda_value, H_norm_lambda_ratio):
 
         epsilon_PEA = epsilons[0]
         epsilon_S = epsilons[1]
