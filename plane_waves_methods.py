@@ -16,7 +16,7 @@ class Plane_waves_methods:
         epsilon_HS = epsilons[1]
         epsilon_S = epsilons[2]
         
-        t = 4.7/epsilon_PEA
+        t = np.pi/epsilon_PEA
         sum_1_nu = 4*np.pi*(np.sqrt(3)*N**(1/3)/2 - 1) + 3 - 3/N**(1/3) + 3*self.tools.I(N**(1/3))
         max_V = eta**2/(2*np.pi*Omega**(1/3))*sum_1_nu
         max_U = eta**2/(np.pi*Omega**(1/3))*sum_1_nu
@@ -43,7 +43,7 @@ class Plane_waves_methods:
         epsilon_HS = epsilons[1]
         epsilon_S = epsilons[2]
         
-        t = 4.7/epsilon_PEA
+        t = np.pi/epsilon_PEA
         max_U_V = (Omega**(1/3)*eta)/np.pi 
         nu_max = np.sqrt(3*(N**(1/3))**2)
         norm_T = 2*np.pi**2*eta/(Omega**(2/3))* nu_max**2
@@ -78,7 +78,7 @@ class Plane_waves_methods:
         D = 3 #dimension of the model
         M = (N/2)**(1/D) # Same as in linear-T method. See also beginning of appendix I in https://journals.aps.org/prx/pdf/10.1103/PhysRevX.8.011044.
 
-        t = 4.7/epsilon_PEA
+        t = np.pi/epsilon_PEA
         r = t*lambda_value/np.log(2)
 
         K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1)) 
@@ -131,7 +131,7 @@ class Plane_waves_methods:
         sum_1_nu = 4*np.pi*(np.sqrt(3)*N**(1/3)/2 - 1) + 3 - 3/N**(1/3) + 3*self.tools.I(N**(1/3))
         sum_nu = self.quadratic_sum(int(N**(1/3)))
         lambda_value = ((2*eta+1)/(4*np.pi*Omega**(1/3)) - (np.pi**2)/(N*Omega**(2/3)))*(8*N)**3 
-        t = 4.7/epsilon_PEA
+        t = np.pi/epsilon_PEA
         r = t*lambda_value/np.log(2)
         
         K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1))

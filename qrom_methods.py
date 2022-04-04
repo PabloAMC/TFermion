@@ -12,8 +12,8 @@ class QROM_methods:
         epsilon_S = epsilons[1]
 
         '''To be used in plane wave basis'''
-        t = 4.7/epsilon_PEA
-        r = np.ceil(np.e*lambda_value*t)
+        t = np.pi/epsilon_PEA
+        r = np.ceil(lambda_value*t)
         
         mu = np.ceil(np.log2(2*np.sqrt(2)*lambda_value/epsilon_PEA) + np.log2(1 + epsilon_PEA/(8*lambda_value)) + np.log2(1 - (H_norm_lambda_ratio)**2))
         
@@ -50,8 +50,8 @@ class QROM_methods:
         epsilon_PEA = epsilons[0]
         epsilon_S = epsilons[1]
 
-        t = 4.7/epsilon_PEA
-        r = np.ceil(np.e*lambda_value*t)
+        t = np.pi/epsilon_PEA
+        r = np.ceil(lambda_value*t)
         
         mu = np.ceil(np.log2(2*np.sqrt(2)*lambda_value/epsilon_PEA) + np.log2(1 + epsilon_PEA/(8*lambda_value)) + np.log2(1 - (H_norm_lambda_ratio)**2))
 
