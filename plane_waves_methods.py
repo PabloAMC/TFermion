@@ -26,7 +26,7 @@ class Plane_waves_methods:
         r = np.sqrt(2*t**3/epsilon_HS *(max_T**2*(max_U + max_V) + max_T*(max_U + max_V)**2))
 
         # Arbitrary precision rotations, does not include the Ry gates in F_2
-        single_qubit_rotations = 8*N + 2*8*N*(8*N-1) + 8*N + N*np.ceil(np.log2(N/2)) # U, V, T and FFFT single rotations; the 2 comes from the controlled rotations, see appendix A
+        single_qubit_rotations = r*(8*N + 2*8*N*(8*N-1) + 8*N + N*np.ceil(np.log2(N/2))) # U, V, T and FFFT single rotations; the 2 comes from the controlled rotations, see appendix A
         epsilon_SS = epsilon_S/single_qubit_rotations
         
         exp_UV_cost = 8*N*(8*N-1)*self.tools.c_pauli_rotation_synthesis(epsilon_SS) + 8*N*self.tools.pauli_rotation_synthesis(epsilon_SS)
@@ -34,7 +34,37 @@ class Plane_waves_methods:
         F2 = 2
         FFFT_cost = N/2*np.ceil(np.log2(N))*F2 + N/2*(np.ceil(np.log2(N))-1)*self.tools.pauli_rotation_synthesis(epsilon_SS) 
         
-        return r*(2*exp_UV_cost + exp_T_cost + 2*FFFT_cost )
+        return r*(2*exp_UV_cost + exp_T_cost + 2*FFFT_cost)
+
+    # Similar to low_depth_trotter but with tighter SHC bounds for the commutator obtained from https://journals.aps.org/pra/abstract/10.1103/PhysRevA.105.012403
+    def shc_trotter(self,epsilons, N, eta, Omega):
+
+        epsilon_PEA = epsilons[0]
+        epsilon_HS = epsilons[1]
+        epsilon_S = epsilons[2]
+        
+        t = 4.7/epsilon_PEA
+        max_U_V = (Omega**(1/3)*eta)/np.pi 
+        nu_max = np.sqrt(3*(N**(1/3))**2)
+        norm_T = 2*np.pi**2*eta/(Omega**(2/3))* nu_max**2
+
+        TVT_commutator = 4*norm_T**2*max_U_V*eta*(4*eta+1)
+        TVV_commutator = 12*norm_T*max_U_V**2*eta**2*(2*eta+1)
+        W2= (TVT_commutator + TVV_commutator)/12
+        
+        r = np.sqrt(t**3/epsilon_HS * W2)
+
+        # Arbitrary precision rotations, does not include the Ry gates in F_2
+        single_qubit_rotations = r*(8*N + 2*8*N*(8*N-1) + 8*N + N*np.ceil(np.log2(N/2))) # U, V, T and FFFT single rotations; the 2 comes from the controlled rotations, see appendix A
+        epsilon_SS = epsilon_S/single_qubit_rotations
+        
+        exp_UV_cost = 8*N*(8*N-1)*self.tools.c_pauli_rotation_synthesis(epsilon_SS) + 8*N*self.tools.pauli_rotation_synthesis(epsilon_SS)
+        exp_T_cost = 8*N*self.tools.pauli_rotation_synthesis(epsilon_SS)
+        F2 = 2
+        FFFT_cost = N/2*np.ceil(np.log2(N))*F2 + N/2*(np.ceil(np.log2(N))-1)*self.tools.pauli_rotation_synthesis(epsilon_SS) 
+        
+        return r*(2*exp_UV_cost + exp_T_cost + 2*FFFT_cost)
+
 
     # Low depth quantum simulation of materials (babbush2018low) Taylor
     def low_depth_taylor(self, epsilons, N, lambda_value, H_norm_lambda_ratio):

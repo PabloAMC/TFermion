@@ -18,6 +18,7 @@ The current implemented methods (we list the arxiv papers) are:
 - `low_depth_trotter`, the Trotterization method in plane waves from [https://arxiv.org/abs/1706.00023](https://arxiv.org/abs/1706.00023).
 - `low_depth_taylor`, the Naïve Taylorization method in plane waves from [https://arxiv.org/abs/1706.00023](https://arxiv.org/abs/1706.00023).
 - `low_depth_taylor_on_the_fly`, the on-the-fly Taylorization method in plane waves from [https://arxiv.org/abs/1706.00023](https://arxiv.org/abs/1706.00023).
+- `shc_trotter`, similar to `low_depth_trotter` but using the SHC bound from [https://arxiv.org/abs/2107.07238](https://arxiv.org/abs/2107.07238), developing over the work of [https://arxiv.org/abs/2012.09194](https://arxiv.org/abs/2012.09194).
 - `linear_t`, the method from [https://arxiv.org/abs/1805.03662](https://arxiv.org/abs/1805.03662).
 - `sparsity_low_rank`, the method from [https://arxiv.org/abs/1902.02134](https://arxiv.org/abs/1902.02134).
 - `interaction_picture`, the method from [https://arxiv.org/abs/1805.00675](https://arxiv.org/abs/1805.00675).
@@ -26,6 +27,7 @@ Other methods not yet implemented include:
 - The double rank factorization from [https://arxiv.org/abs/2007.14460](https://arxiv.org/abs/2007.14460).
 - The tensor hypercontraction method from [https://arxiv.org/abs/2011.03494](https://arxiv.org/abs/2011.03494).
 - The qubitization and interaction picture methods from [https://arxiv.org/abs/1807.09802](https://arxiv.org/abs/1807.09802) and [https://arxiv.org/abs/2105.12767](https://arxiv.org/abs/2105.12767).
+- Other Trotter methods with different bounds such as those from [https://arxiv.org/abs/2107.07238](https://arxiv.org/abs/2107.07238).
 
 ## How to install  
 First, install dependencies   
@@ -47,7 +49,7 @@ python main.py [molecule name] [method name]
 ```
 
 ## Contributing
-We would love T-Fermion to become an useful tool for reseachers. If you want to join this mission, drop me a line at pabloamo@ucm.es.
+We would love T-Fermion to become an useful tool for reseachers. If you want to join this mission, drop us a line at pabloamo@ucm.es.
 Things that can be done include implementing new methods, or counting qubits. Also, some adaptation for periodic systems might be useful.
 
 

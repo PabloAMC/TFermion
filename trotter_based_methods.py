@@ -17,7 +17,7 @@ class Trotter_based_methods:
         deltaE = epsilon_PEA
         eps_tot = epsilon_HS
 
-        P_failure = 6*eps_tot
+        P_failure = 6*eps_tot # From P_f = p_f + 2*eps_tot and p_f = (2/3)*P_f
 
         n = ((27*np.pi**2/2)*(lambd/deltaE)**2) / P_failure**3
 
@@ -36,7 +36,7 @@ class Trotter_based_methods:
         deltaE = epsilon_PEA
         eps_tot = epsilon_HS
 
-        P_failure = 8*eps_tot
+        P_failure = 8*eps_tot # From P_f = p_f + 2*eps_tot and p_f = (3/4)*P_f
 
         n = 4.35*np.sqrt(8)*(np.pi*Lambd/deltaE)**(3/2) *(Gamma/ P_failure)**2
 

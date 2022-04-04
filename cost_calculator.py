@@ -20,6 +20,7 @@ class Cost_calculator:
                     'taylor_on_the_fly': [],
                     'configuration_interaction': [],
                     'low_depth_trotter': [],
+                    'shc_trotter': [],
                     'low_depth_taylor': [],
                     'low_depth_taylor_on_the_fly': [],
                     'linear_t': [],
@@ -168,7 +169,7 @@ class Cost_calculator:
                         J)]
 
         
-        elif method == 'low_depth_trotter' or method == 'low_depth_taylor' or method == 'low_depth_taylor_on_the_fly':
+        elif method == 'low_depth_trotter' or method == 'low_depth_taylor' or method == 'low_depth_taylor_on_the_fly' or method == 'shc_trotter':
             methods_plane_waves = plane_waves_methods.Plane_waves_methods(self.tools)
 
             # This methods are plane waves, so instead of calling self.molecule.get_basic_parameters() one should call self.molecule.build_grid()
@@ -191,9 +192,31 @@ class Cost_calculator:
 
                 # generate values for errors epsilon_PEA, epsilon_HS, epsilon_S
                 for _ in range(self.runs):
-                    optimized_errors = self.calculate_optimized_errors(3, methods_plane_waves.low_depth_trotter, arguments)
+                    optimized_errors = self.calculate_optimized_errors(3, methods_plane_waves.shc_trotter, arguments)
 
                     self.costs['low_depth_trotter'] += [methods_plane_waves.low_depth_trotter(
+                        optimized_errors.x,
+                        N_grid, 
+                        eta, 
+                        Omega)]
+
+            elif method == 'shc_trotter':
+
+                grid_length = int(round((self.molecule.N * self.tools.config_variables['gauss2plane_overhead']) ** (1/3)))
+                if not hasattr(self.molecule, 'eta') or not hasattr(self.molecule, 'Omega') or not hasattr(self.molecule, 'N_grid'):
+                    grid = self.molecule.build_grid(grid_length)
+
+                N_grid = self.molecule.N_grid
+                eta = self.molecule.eta
+                Omega = self.molecule.Omega
+
+                arguments = (N_grid, eta, Omega)
+
+                # generate values for errors epsilon_PEA, epsilon_HS, epsilon_S
+                for _ in range(self.runs):
+                    optimized_errors = self.calculate_optimized_errors(3, methods_plane_waves.low_depth_trotter, arguments)
+
+                    self.costs['shc_trotter'] += [methods_plane_waves.shc_trotter(
                         optimized_errors.x,
                         N_grid, 
                         eta, 
