@@ -9,9 +9,10 @@ from molecule import Molecule_Hamiltonian
 import numpy as np
 
 print('\n###################################################################')
-print('##                             QPHASE                            ##')
-print('##                                                               ##')
-print('##      We will see what it is that (Not Google paper copy)      ##')
+print('##                             TFermion                            ##')
+print('##                                                                 ##') 
+print('##  A non-Clifford gate cost assessment library of quantum phase   ##')
+print('##            estimation algorithms for quantum chemistry          ##')
 print('###################################################################\n')
 
 start_time = time.time()
@@ -36,7 +37,7 @@ if not molecule_info_type:
     molecule_info_type = 'name'
     dictionary = {}
     methods = ['qdrift', 'rand_ham', 'taylor_naive', 'taylor_on_the_fly', 'configuration_interaction',
-                'low_depth_trotter', 'low_depth_taylor', 'low_depth_taylor_on_the_fly', 
+                'low_depth_trotter', 'shc_trotter', 'low_depth_taylor', 'low_depth_taylor_on_the_fly', 
                 'linear_t', 'sparsity_low_rank', 'interaction_picture']
 
     for molecule_info in tools.config_variables['molecules']:
