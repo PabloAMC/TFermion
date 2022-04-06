@@ -23,13 +23,13 @@ class Taylor_based_methods:
     # since we take the evolution time of a single segment to be $t_1 = \\ln 2/\\lambda$ such that the first segment in Phase estimation has $r = \\frac{\\lambda t_1}{\\ln 2} = 1$ as it should be. 
     # In general, we will need to implement $r \\approx \\frac{4.7}{\\epsilon_{PEA}}$. However, since $\\epsilon_{PEA}$ makes reference to $H$ and we are instead simulating $H \\ln 2/ \\lambda$, 
     # we will have to calculate the eigenvalue to precision $\\epsilon \\ln 2/ \\lambda$; so it is equivalently to fixing an initial time $t_1$ and running multiple segments in each of the $U$ operators in Phase Estimation.
-    def taylor_naive(self, epsilons, lambda_value, Gamma, N):
+    def taylor_naive(self, epsilons, p_fail,  lambda_value, Gamma, N):
 
         epsilon_PEA = epsilons[0]
         epsilon_HS = epsilons[1]
         epsilon_S = epsilons[2]
         
-        t = np.pi/epsilon_PEA
+        t = np.pi/(np.sqrt(2)*epsilon_PEA)*((1+p_fail)/p_fail)
         r = np.ceil(t*lambda_value / np.log(2)) # Number of time segments
     
         K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1)) 
@@ -54,7 +54,7 @@ class Taylor_based_methods:
         
         return result
 
-    def taylor_on_the_fly(self, epsilons, N, Gamma, phi_max, dphi_max, zeta_max_i, J):
+    def taylor_on_the_fly(self, epsilons, p_fail, N, Gamma, phi_max, dphi_max, zeta_max_i, J):
         
         epsilon_PEA = epsilons[0]
         epsilon_HS = epsilons[1]
@@ -76,7 +76,7 @@ class Taylor_based_methods:
         '''
         d = 6 # Number of Gaussians per basis function
 
-        t = np.pi/epsilon_PEA
+        t = np.pi/(np.sqrt(2)*epsilon_PEA)*((1+p_fail)/p_fail)
         x_max = np.log(N * t/ epsilon_H)* self.tools.config_variables['xmax_mult_factor_taylor'] # eq 68 in the original paper
         
         Vol_max_w_gamma = (2**6*phi_max**4 * x_max**5) # eq 66 in the original article
@@ -141,7 +141,7 @@ class Taylor_based_methods:
 
         return result
 
-    def configuration_interaction(self, epsilons, N, eta, alpha, gamma1, gamma2, zeta_max_i, phi_max, J):
+    def configuration_interaction(self, epsilons, p_fail, N, eta, alpha, gamma1, gamma2, zeta_max_i, phi_max, J):
 
         epsilon_PEA = epsilons[0]
         epsilon_HS = epsilons[1]
@@ -158,7 +158,7 @@ class Taylor_based_methods:
         K1 = 8*np.pi**2/alpha**3*(alpha + 2) + 1121*(8*gamma1 + np.sqrt(2))             # eq 41 in original article
         K2 = 128*np.pi/alpha**6*(alpha + 2) + 2161*np.pi**2*(20*gamma1 + np.sqrt(2))    # eq 45 in original article
         
-        t = np.pi/epsilon_PEA
+        t = np.pi/(np.sqrt(2)*epsilon_PEA)*((1+p_fail)/p_fail)
         x_max = 1 # Default units are Angstroms. See https://en.wikipedia.org/wiki/Atomic_radius and https://en.wikipedia.org/wiki/Atomic_radii_of_the_elements_(data_page)
         
         Gamma = binom(eta, 2)*binom(N-eta, 2) + binom(eta,1)*binom(N-eta,1) + 1 # = d

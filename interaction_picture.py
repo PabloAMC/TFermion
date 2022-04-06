@@ -5,7 +5,7 @@ class Interaction_picture:
     def __init__(self, tools):
         self.tools = tools
 
-    def interaction_picture(self, epsilons, N, Gamma, lambd_T, lambd_U_V):
+    def interaction_picture(self, epsilons, p_fail, N, Gamma, lambd_T, lambd_U_V):
 
         epsilon_S = epsilons[0]
         epsilon_HS = epsilons[1]
@@ -32,7 +32,7 @@ class Interaction_picture:
             > N Multiplications
         '''
 
-        t = np.pi/epsilon_PEA
+        t = np.pi/(np.sqrt(2)*epsilon_PEA)*((1+p_fail)/p_fail)
         r = np.ceil(lambd_T*t/np.log(2)) # lambd_T is necessary to take tau = 1
         
         K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1)) 
@@ -101,7 +101,7 @@ class Interaction_picture:
         return cost
 
     ## Sublinear scaling and interaction picture babbush2019quantum
-    def sublinear_scaling_interaction(self, epsilons, N, eta, Gamma, lambd_T, lambd_U_V, J):
+    def sublinear_scaling_interaction(self, epsilons, p_fail, N, eta, Gamma, lambd_T, lambd_U_V, J):
         
         epsilon_S = epsilons[0]
         epsilon_HS = epsilons[1]
@@ -131,8 +131,8 @@ class Interaction_picture:
 
         ### Main algorithm
 
-        t = np.pi/epsilon_PEA
-        r = np.ceil(lambd_U_V*t) #Alternatively 2*lambd_U_V*t/np.log(2); lambd_T is necessary to take tau = 1
+        t = np.pi/(np.sqrt(2)*epsilon_PEA)*((1+p_fail)/p_fail)
+        r = np.ceil(lambd_U_V*t/np.log(2)) #Alternatively 2*lambd_U_V*t/np.log(2); lambd_T is necessary to take tau = 1
         
         # Notice that K is a bit different than in other articles 
         K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1))  # Same as in the previous function

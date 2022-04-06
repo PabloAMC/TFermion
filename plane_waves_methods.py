@@ -10,13 +10,13 @@ class Plane_waves_methods:
         self.tools = tools
 
     # Low depth quantum simulation of materials (babbush2018low) Trotter
-    def low_depth_trotter(self, epsilons, N, eta, Omega):
+    def low_depth_trotter(self, epsilons, p_fail, N, eta, Omega):
 
         epsilon_PEA = epsilons[0]
         epsilon_HS = epsilons[1]
         epsilon_S = epsilons[2]
         
-        t = np.pi/epsilon_PEA
+        t = np.pi/(np.sqrt(2)*epsilon_PEA)*((1+p_fail)/p_fail)
         sum_1_nu = 4*np.pi*(np.sqrt(3)*N**(1/3)/2 - 1) + 3 - 3/N**(1/3) + 3*self.tools.I(N**(1/3))
         max_V = eta**2/(2*np.pi*Omega**(1/3))*sum_1_nu
         max_U = eta**2/(np.pi*Omega**(1/3))*sum_1_nu
@@ -37,13 +37,13 @@ class Plane_waves_methods:
         return r*(2*exp_UV_cost + exp_T_cost + 2*FFFT_cost)
 
     # Similar to low_depth_trotter but with tighter SHC bounds for the commutator obtained from https://journals.aps.org/pra/abstract/10.1103/PhysRevA.105.012403
-    def shc_trotter(self,epsilons, N, eta, Omega):
+    def shc_trotter(self,epsilons, p_fail, N, eta, Omega):
 
         epsilon_PEA = epsilons[0]
         epsilon_HS = epsilons[1]
         epsilon_S = epsilons[2]
         
-        t = np.pi/epsilon_PEA
+        t = np.pi/(np.sqrt(2)*epsilon_PEA)*((1+p_fail)/p_fail)
         max_U_V = (Omega**(1/3)*eta)/np.pi 
         nu_max = np.sqrt(3*(N**(1/3))**2)
         norm_T = 2*np.pi**2*eta/(Omega**(2/3))* nu_max**2
@@ -67,7 +67,7 @@ class Plane_waves_methods:
 
 
     # Low depth quantum simulation of materials (babbush2018low) Taylor
-    def low_depth_taylor(self, epsilons, N, lambda_value, H_norm_lambda_ratio):
+    def low_depth_taylor(self, epsilons, p_fail, N, lambda_value, H_norm_lambda_ratio):
 
         epsilon_PEA = epsilons[0]
         epsilon_HS = epsilons[1]
@@ -78,7 +78,7 @@ class Plane_waves_methods:
         D = 3 #dimension of the model
         M = (N/2)**(1/D) # Same as in linear-T method. See also beginning of appendix I in https://journals.aps.org/prx/pdf/10.1103/PhysRevX.8.011044.
 
-        t = np.pi/epsilon_PEA
+        t = np.pi/(epsilon_PEA*np.sqrt(2))*((1+p_fail)/p_fail)
         r = t*lambda_value/np.log(2)
 
         K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1)) 
@@ -117,7 +117,7 @@ class Plane_waves_methods:
         return result
 
     # Low depth quantum simulation of materials (babbush2018low) On-the fly
-    def low_depth_taylor_on_the_fly(self, epsilons, N, eta, Gamma, lambda_value, Omega, J, x_max):
+    def low_depth_taylor_on_the_fly(self, epsilons, p_fail, N, eta, Gamma, lambda_value, Omega, J, x_max):
         
         epsilon_PEA = epsilons[0]
         epsilon_HS = epsilons[1]
@@ -131,7 +131,7 @@ class Plane_waves_methods:
         sum_1_nu = 4*np.pi*(np.sqrt(3)*N**(1/3)/2 - 1) + 3 - 3/N**(1/3) + 3*self.tools.I(N**(1/3))
         sum_nu = self.quadratic_sum(int(N**(1/3)))
         lambda_value = ((2*eta+1)/(4*np.pi*Omega**(1/3)) - (np.pi**2)/(N*Omega**(2/3)))*(8*N)**3 
-        t = np.pi/epsilon_PEA
+        t = np.pi/(epsilon_PEA*np.sqrt(2))*((1+p_fail)/p_fail)
         r = t*lambda_value/np.log(2)
         
         K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1))

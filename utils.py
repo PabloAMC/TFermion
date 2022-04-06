@@ -1,6 +1,5 @@
 import argparse
 import json
-from molecule import CHEMICAL_ACCURACY
 import numpy as np
 import random as rnd
 import math
@@ -198,16 +197,16 @@ class Utils():
             shape_linear_constraint.append(row_linear_constraint)
 
         min_values_linear_constraint = [1e-10 for _ in range(number_errors)]
-        max_values_linear_constraint = [CHEMICAL_ACCURACY for _ in range(number_errors)]
+        max_values_linear_constraint = [self.config_variables['accuracy'] for _ in range(number_errors)]
 
         linear_constraint = LinearConstraint(A=shape_linear_constraint, lb=min_values_linear_constraint, ub=max_values_linear_constraint)
-        nonlinear_constraint = NonlinearConstraint(fun=self.sum_constraint, lb=0, ub=CHEMICAL_ACCURACY)
+        nonlinear_constraint = NonlinearConstraint(fun=self.sum_constraint, lb=0, ub=self.config_variables['accuracy'])
 
         return linear_constraint, nonlinear_constraint
 
     def generate_initial_error_values(self, number_errors):
 
-        maximum_value = CHEMICAL_ACCURACY/number_errors
+        maximum_value = self.config_variables['accuracy']/number_errors
         minimum_value = maximum_value/2
 
         return [rnd.uniform(minimum_value, maximum_value) for _ in range(number_errors)]
@@ -221,13 +220,13 @@ class Utils():
         if molecule_info == "":
             return None
 
-        # the hamiltonian is given by a path containing files eri_li.h5 and eri_li_cholesky.h5
-        if os.path.isdir(molecule_info):
+        # the hamiltonian is given by a path containing files eri_reiher.h5 and eri_reiher_cholesky.h5 or similarly for eri_li
+        if os.path.isdir(molecule_info.split('/')[0] + '/'):
 
-            if os.path.isfile(molecule_info + 'eri_li.h5') and os.path.isfile(molecule_info + 'eri_li_cholesky.h5'):
+            if os.path.isfile(molecule_info + '.h5') and os.path.isfile(molecule_info + '_cholesky.h5'):
                 return "hamiltonian"
             else:
-                print("<*> ERROR: The given path does not contain the files eri_li.h5 and eri_li_cholesky.h5 needed for hamiltonian input")
+                print("<*> ERROR: The given path does not contain the files {molecule_info}.h5 and {molecule_info}_cholesky.h5 needed for hamiltonian input".format(molecule_info = molecule_info))
                 return "error"
 
         else:

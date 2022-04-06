@@ -8,12 +8,12 @@ from molecule import Molecule
 from molecule import Molecule_Hamiltonian
 import numpy as np
 
-print('\n###################################################################')
+print('\n#####################################################################')
 print('##                             TFermion                            ##')
 print('##                                                                 ##') 
 print('##  A non-Clifford gate cost assessment library of quantum phase   ##')
 print('##            estimation algorithms for quantum chemistry          ##')
-print('###################################################################\n')
+print('#####################################################################\n')
 
 start_time = time.time()
 

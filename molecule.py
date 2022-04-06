@@ -1,3 +1,4 @@
+#from msilib.schema import Error
 import openfermion
 import copy
 import json
@@ -47,7 +48,7 @@ Nevertheless, some important links for the periodic boundary condition (not used
 3. Hartree Fock algorithm for that Hamiltonian: https://github.com/pyscf/pyscf/blob/master/pyscf/pbc/scf/khf.py
 '''
 
-CHEMICAL_ACCURACY = 0.0015 #in Hartrees, according to http://greif.geo.berkeley.edu/~driver/conversions.html
+#CHEMICAL_ACCURACY = 0.0016 #in Hartrees, according to http://greif.geo.berkeley.edu/~driver/conversions.html
 tol = 1e-8
 #wigner_seitz_radius = 5. # Chosen as in https://quantumai.google/openfermion/tutorials/circuits_2_diagonal_coulomb_trotter, but may not make sense
 
@@ -58,6 +59,8 @@ class Molecule:
         self.molecule_info = molecule_info
         self.tools = tools
         self.program = program
+
+        self.accuracy = self.tools.config_variables['accuracy']
 
         # molecule info could be a name, geometry information or hamiltonian description
         self.molecule_info_type = molecule_info_type
@@ -74,7 +77,8 @@ class Molecule:
         [self.molecule_geometry, self.molecule_data] = self.calculate_geometry_params(molecule_geometry, charge)
 
         #Add possibility of boundary conditions https://sunqm.github.io/pyscf/tutorial.html#initializing-a-crystal -> Seems quite complicated and not straightforward
-        if program == 'psi4': 
+        if program == 'psi4':
+            raise Warning('Psi4 is not supported, try pyscf')
             self.molecule_psi4 = run_psi4(self.molecule_data,run_scf=True, run_mp2=True, run_fci=False)
 
         elif program == 'pyscf':
@@ -271,9 +275,9 @@ class Molecule:
         # Until here------------------------------------ Iterate to see how high can we put the threshold without damaging the energy estimates (error up to chemical precision)
         exact_E = sparsification_mp2_energy(threshold = 0)
 
-        nconstraint = scipy.optimize.NonlinearConstraint(fun = lambda threshold: sparsification_mp2_energy(threshold) - exact_E, lb = -CHEMICAL_ACCURACY, ub = +CHEMICAL_ACCURACY)
+        nconstraint = scipy.optimize.NonlinearConstraint(fun = lambda threshold: sparsification_mp2_energy(threshold) - exact_E, lb = -self.accuracy, ub = +self.accuracy)
         lconstraint = scipy.optimize.LinearConstraint(A = np.array([1]), lb = 1e-10, ub = 1)
-        result = scipy.optimize.minimize(fun = lambda threshold: 1e-2/(threshold+1e-4), x0 = 1e-4, constraints = [nconstraint, lconstraint], tol = .01*CHEMICAL_ACCURACY, options = {'maxiter': 50}, method='COBYLA') # Works with COBYLA, but not with SLSQP (misses the boundaries) or trust-constr (oscillates)
+        result = scipy.optimize.minimize(fun = lambda threshold: 1e-2/(threshold+1e-4), x0 = 1e-4, constraints = [nconstraint, lconstraint], tol = .01*self.accuracy, options = {'maxiter': 50}, method='COBYLA') # Works with COBYLA, but not with SLSQP (misses the boundaries) or trust-constr (oscillates)
         threshold = float(result['x'])
         approximate_E = sparsification_mp2_energy(threshold = threshold)
 
@@ -437,15 +441,15 @@ class Molecule:
         exact_E = low_rank_truncation_mp2_energy(rank_threshold = 0, sparsity_threshold = 0)
 
         if sparsify: 
-            nconstraint = scipy.optimize.NonlinearConstraint(fun = lambda threshold: low_rank_truncation_mp2_energy(threshold[0], threshold[1]) - exact_E, lb = -CHEMICAL_ACCURACY, ub = +CHEMICAL_ACCURACY)
+            nconstraint = scipy.optimize.NonlinearConstraint(fun = lambda threshold: low_rank_truncation_mp2_energy(threshold[0], threshold[1]) - exact_E, lb = -self.accuracy, ub = +self.accuracy)
             lconstraint = scipy.optimize.LinearConstraint(A = np.array([[1,0],[0,1]]), lb = [1e-10,1e-10], ub = [1,1])
-            result = scipy.optimize.minimize(fun = compute_lambda, x0 = [1e-8, 1e-10], constraints = [nconstraint, lconstraint], options = {'maxiter': 50, 'catol': .01*CHEMICAL_ACCURACY}, tol = 0.1, method='COBYLA') # Works with COBYLA, but not with SLSQP (misses the boundaries) or trust-constr (oscillates)
+            result = scipy.optimize.minimize(fun = compute_lambda, x0 = [1e-8, 1e-10], constraints = [nconstraint, lconstraint], options = {'maxiter': 50, 'catol': .01*self.accuracy}, tol = 0.1, method='COBYLA') # Works with COBYLA, but not with SLSQP (misses the boundaries) or trust-constr (oscillates)
             rank_threshold = float(result['x'][0])
             sparsity_threshold = float(result['x'][1])
         else:
-            nconstraint = scipy.optimize.NonlinearConstraint(fun = lambda rank_threshold: low_rank_truncation_mp2_energy(rank_threshold, 0) - exact_E, lb = -CHEMICAL_ACCURACY, ub = +CHEMICAL_ACCURACY)
+            nconstraint = scipy.optimize.NonlinearConstraint(fun = lambda rank_threshold: low_rank_truncation_mp2_energy(rank_threshold, 0) - exact_E, lb = -self.accuracy, ub = +self.accuracy)
             lconstraint = scipy.optimize.LinearConstraint(A = np.array([1]), lb = 1e-10, ub = 1)
-            result = scipy.optimize.minimize(fun = lambda rank_threshold: 1e-2/(rank_threshold+1e-4), x0 = 1e-4, constraints = [nconstraint, lconstraint], tol = 0.1, options = {'maxiter': 50, 'catol': .01*CHEMICAL_ACCURACY}, method='COBYLA') # Works with COBYLA, but not with SLSQP (misses the boundaries) or trust-constr (oscillates)
+            result = scipy.optimize.minimize(fun = lambda rank_threshold: 1e-2/(rank_threshold+1e-4), x0 = 1e-4, constraints = [nconstraint, lconstraint], tol = 0.1, options = {'maxiter': 50, 'catol': .01*self.accuracy}, method='COBYLA') # Works with COBYLA, but not with SLSQP (misses the boundaries) or trust-constr (oscillates)
             rank_threshold = float(result['x'])
             sparsity_threshold = 0.
             
@@ -787,7 +791,6 @@ class Molecule_Hamiltonian:
 
         # set r value or final rank
         self.final_rank = 200 # set cholesky dimension
-        self.N = 152 #todo IMPORTANT: 108 FOR REIHER, 152 FOR LI
 
         self.get_basic_parameters()
 
@@ -795,12 +798,12 @@ class Molecule_Hamiltonian:
     # code extracted from https://doi.org/10.5281/zenodo.4248322
     def get_basic_parameters(self, molecular_hamiltonian=None):
 
-        f = h5py.File(self.molecule_info+"eri_li.h5", "r")
+        f = h5py.File(self.molecule_info+".h5", "r")
         eri = f['eri'][()]
         h0 = f['h0'][()]
         f.close()
 
-        f = h5py.File(self.molecule_info+"eri_li_cholesky.h5", "r")
+        f = h5py.File(self.molecule_info+"_cholesky.h5", "r")
         gval = f["gval"][()]
         gvec = f["gvec"][()]
         f.close()
@@ -822,7 +825,7 @@ class Molecule_Hamiltonian:
         lambda_W = 0.25 * numpy.einsum("xij,xkl->",numpy.abs(LR), numpy.abs(LR), optimize=True)
 
         # save parameters to cost_methods
-        self.lambda_value = lambda_T + lambda_W
+        self.lambda_value = 4*(lambda_T + lambda_W) #
         self.lambda_value_low_rank = self.lambda_value
 
         # Lambda_value is the max of all summed coefficients of T and LR
@@ -836,7 +839,7 @@ class Molecule_Hamiltonian:
         self.Gamma = np.count_nonzero( numpy.abs(T).flatten() >= thresh) + np.count_nonzero( numpy.abs(V).flatten() >= thresh)
 
         # number orbitals
-        self.N = norb
+        self.N = 2*norb
 
     def low_rank_approximation(self, sparsify):
 
