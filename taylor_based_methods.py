@@ -29,7 +29,7 @@ class Taylor_based_methods:
         epsilon_HS = epsilons[1]
         epsilon_S = epsilons[2]
         
-        t = np.pi/(np.sqrt(2)*epsilon_PEA)*((1+p_fail)/p_fail)
+        t = np.pi/(np.sqrt(2)*epsilon_PEA)*(1/2+1/(2*p_fail))
         r = np.ceil(t*lambda_value / np.log(2)) # Number of time segments
     
         K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1)) 
@@ -76,7 +76,7 @@ class Taylor_based_methods:
         '''
         d = 6 # Number of Gaussians per basis function
 
-        t = np.pi/(np.sqrt(2)*epsilon_PEA)*((1+p_fail)/p_fail)
+        t = np.pi/(np.sqrt(2)*epsilon_PEA)*(1/2+1/(2*p_fail))
         x_max = np.log(N * t/ epsilon_H)* self.tools.config_variables['xmax_mult_factor_taylor'] # eq 68 in the original paper
         
         Vol_max_w_gamma = (2**6*phi_max**4 * x_max**5) # eq 66 in the original article
@@ -158,7 +158,7 @@ class Taylor_based_methods:
         K1 = 8*np.pi**2/alpha**3*(alpha + 2) + 1121*(8*gamma1 + np.sqrt(2))             # eq 41 in original article
         K2 = 128*np.pi/alpha**6*(alpha + 2) + 2161*np.pi**2*(20*gamma1 + np.sqrt(2))    # eq 45 in original article
         
-        t = np.pi/(np.sqrt(2)*epsilon_PEA)*((1+p_fail)/p_fail)
+        t = np.pi/(np.sqrt(2)*epsilon_PEA)*(1/2+1/(2*p_fail))
         x_max = 1 # Default units are Angstroms. See https://en.wikipedia.org/wiki/Atomic_radius and https://en.wikipedia.org/wiki/Atomic_radii_of_the_elements_(data_page)
         
         Gamma = binom(eta, 2)*binom(N-eta, 2) + binom(eta,1)*binom(N-eta,1) + 1 # = d

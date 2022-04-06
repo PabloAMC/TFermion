@@ -14,7 +14,7 @@ class Trotter_based_methods:
         epsilon_HS = epsilons[1]
         epsilon_S = epsilons[2]
 
-        deltaE = epsilon_PEA
+        deltaE = 2*epsilon_PEA
         eps_tot = epsilon_HS
 
         n = (np.pi*lambda_value/deltaE)**2 *(1/eps_tot) * ((1+p_fail)/p_fail)**2 #eq 42 in the original paper
@@ -31,7 +31,7 @@ class Trotter_based_methods:
         epsilon_HS = epsilons[1]
         epsilon_S = epsilons[2]
 
-        deltaE = epsilon_PEA
+        deltaE = 2*epsilon_PEA
         eps_tot = epsilon_HS
 
         n = 8*Gamma**2 *(np.pi*Lambda_value/(2*deltaE))**(3/2) * (1/eps_tot) * ((1+p_fail)/p_fail)**(3/2) #eq 54 in the original paper
