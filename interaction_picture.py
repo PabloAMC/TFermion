@@ -9,7 +9,7 @@ class Interaction_picture:
 
         epsilon_S = epsilons[0]
         epsilon_HS = epsilons[1]
-        epsilon_PEA = epsilons[2]
+        epsilon_QPE = epsilons[2]
 
         '''
         The number of rotations is very large here:
@@ -32,7 +32,7 @@ class Interaction_picture:
             > N Multiplications
         '''
 
-        t = np.pi/(np.sqrt(2)*epsilon_PEA)*(1/2+1/(2*p_fail))
+        t = np.pi/(2*epsilon_QPE)*(1/2+1/(2*p_fail))
         r = np.ceil(lambd_T*t/np.log(2)) # lambd_T is necessary to take tau = 1
         
         K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1)) 
@@ -105,7 +105,7 @@ class Interaction_picture:
         
         epsilon_S = epsilons[0]
         epsilon_HS = epsilons[1]
-        epsilon_PEA = epsilons[2]
+        epsilon_QPE = epsilons[2]
         epsilon_mu = epsilons[3]
         epsilon_M0 = epsilons[4]
         epsilon_R = epsilons[5]
@@ -131,7 +131,7 @@ class Interaction_picture:
 
         ### Main algorithm
 
-        t = np.pi/(np.sqrt(2)*epsilon_PEA)*(1/2+1/(2*p_fail))
+        t = np.pi/(2*epsilon_QPE)*(1/2+1/(2*p_fail))
         r = np.ceil(lambd_U_V*t/np.log(2)) #Alternatively 2*lambd_U_V*t/np.log(2); lambd_T is necessary to take tau = 1
         
         # Notice that K is a bit different than in other articles 

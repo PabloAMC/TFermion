@@ -8,14 +8,14 @@ class QROM_methods:
     ## Linear T complexity (babbush2018encoding)
     def linear_t(self, epsilons, p_fail, N, lambda_value, H_norm_lambda_ratio):
 
-        epsilon_PEA = epsilons[0]
+        epsilon_QPE = epsilons[0]
         epsilon_S = epsilons[1]
 
         '''To be used in plane wave basis'''
-        t = np.pi/(np.sqrt(2)*epsilon_PEA)*(1/2+1/(2*p_fail))
+        t = np.pi/(2*epsilon_QPE)*(1/2+1/(2*p_fail))
         r = np.ceil(lambda_value*t)
         
-        mu = np.ceil(np.log2(2*np.sqrt(2)*lambda_value/epsilon_PEA) + np.log2(1 + epsilon_PEA/(8*lambda_value)) + np.log2(1 - (H_norm_lambda_ratio)**2))
+        mu = np.ceil(np.log2(2*np.sqrt(2)*lambda_value/epsilon_QPE) + np.log2(1 + epsilon_QPE/(8*lambda_value)) + np.log2(1 - (H_norm_lambda_ratio)**2))
         
         D = 3 #dimension of the model
         M = (N/2)**(1/D) # eq 45 in the original article
@@ -47,13 +47,13 @@ class QROM_methods:
     ## Sparsity and low rank factorization (berry2019qubitization)
     def sparsity_low_rank(self, epsilons, p_fail, N, lambda_value, L, H_norm_lambda_ratio, sparsity_d = None):
 
-        epsilon_PEA = epsilons[0]
+        epsilon_QPE = epsilons[0]
         epsilon_S = epsilons[1]
 
-        t = np.pi/(epsilon_PEA*np.sqrt(2))*(1/2+1/(2*p_fail))
+        t = np.pi/(2*epsilon_QPE)*(1/2+1/(2*p_fail))
         r = np.ceil(lambda_value*t)
         
-        mu = np.ceil(np.log2(2*np.sqrt(2)*lambda_value/epsilon_PEA) + np.log2(1 + epsilon_PEA/(8*lambda_value)) + np.log2(1 - (H_norm_lambda_ratio)**2))
+        mu = np.ceil(np.log2(2*np.sqrt(2)*lambda_value/epsilon_QPE) + np.log2(1 + epsilon_QPE/(8*lambda_value)) + np.log2(1 - (H_norm_lambda_ratio)**2))
 
         # Rotations are used in the Uniform protocol as well as in the ancilla to decrease the Success amplitude
         epsilon_SS = epsilon_S/ (r*2*(2*(12 +1)+6)) #first 2 is Prepare and Prepare^+, second Prepare is for the two rotations in each Uniform. Finally we have Uniform_{N/2}, Uniform_L and the ancilla rotations to decrease success prob.
