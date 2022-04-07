@@ -1,37 +1,29 @@
 #from msilib.schema import Error
-import openfermion
-import copy
 import json
-import ast
-import importlib
-import sys
-from openfermion.transforms.opconversions.term_reordering import normal_ordered
 
 #from openfermionpsi4 import run_psi4
 from openfermionpyscf import run_pyscf
-from openfermionpyscf._run_pyscf import prepare_pyscf_molecule, compute_integrals, compute_scf
+from openfermionpyscf._run_pyscf import compute_integrals
 
 from openfermion.utils import Grid
 import openfermion.ops.representations as reps
 from openfermion.chem import geometry_from_pubchem, MolecularData
 from openfermion.chem.molecular_data import spinorb_from_spatial
-from openfermion.hamiltonians import plane_wave_hamiltonian, jordan_wigner_dual_basis_hamiltonian 
-from openfermion.hamiltonians import dual_basis_external_potential, plane_wave_external_potential
-from openfermion.hamiltonians import dual_basis_potential, plane_wave_potential
-from openfermion.hamiltonians import dual_basis_kinetic, plane_wave_kinetic
-from openfermion.transforms  import  get_fermion_operator, get_majorana_operator, get_interaction_operator, normal_ordered, get_molecular_data, jordan_wigner
+from openfermion.hamiltonians import jordan_wigner_dual_basis_hamiltonian 
+from openfermion.hamiltonians import dual_basis_external_potential
+from openfermion.hamiltonians import dual_basis_potential
+from openfermion.hamiltonians import plane_wave_kinetic
+from openfermion.transforms  import  get_majorana_operator
 from openfermion.circuits import low_rank_two_body_decomposition
-from openfermion.ops.operators import fermion_operator
 
 
-from pyscf import gto, scf, mcscf, fci, ao2mo
+from pyscf import gto, scf, mcscf
 from pyscf.mcscf import avas
 from pyscf.lib.parameters import BOHR
 
 
 import numpy as np
 import copy
-import time
 import scipy 
 
 '''
@@ -189,7 +181,6 @@ class Molecule:
         These indices can be used in self.get_basic_parameters(). 
         Also modifies self.molecule_data and self.molecule_pyscf in place.
         '''
-        ao_labels = ast.literal_eval(ao_labels)
 
         # Selecting the active space
         pyscf_scf = self.molecule_pyscf._pyscf_data['scf'] #similar to https://github.com/quantumlib/OpenFermion-PySCF/blob/8b8de945db41db2b39d588ff0396a93566855247/openfermionpyscf/_pyscf_molecular_data.py#L47
