@@ -8,11 +8,12 @@ from molecule import Molecule
 from molecule import Molecule_Hamiltonian
 import numpy as np
 
-print('\n###################################################################')
-print('##                             QPHASE                            ##')
-print('##                                                               ##')
-print('##      We will see what it is that (Not Google paper copy)      ##')
-print('###################################################################\n')
+print('\n#####################################################################')
+print('##                             TFermion                            ##')
+print('##                                                                 ##') 
+print('##  A non-Clifford gate cost assessment library of quantum phase   ##')
+print('##            estimation algorithms for quantum chemistry          ##')
+print('#####################################################################\n')
 
 start_time = time.time()
 
@@ -35,9 +36,6 @@ molecule_info_type = tools.check_molecule_info(args.molecule_info)
 if not molecule_info_type:
     molecule_info_type = 'name'
     dictionary = {}
-    methods = ['qdrift', 'rand_ham', 'taylor_naive', 'taylor_on_the_fly', 'configuration_interaction',
-                'low_depth_trotter', 'low_depth_taylor', 'low_depth_taylor_on_the_fly', 
-                'linear_t', 'sparsity_low_rank', 'interaction_picture']
 
     for molecule_info in tools.config_variables['molecules']:
         args.molecule_info = molecule_info
@@ -59,7 +57,7 @@ if not molecule_info_type:
         #ne_act_cas, n_mocore, n_mocas, n_movir = molecule.active_space(ao_labels=['O 2pz'])
 
         c_calculator = cost_calculator.Cost_calculator(molecule, tools, molecule_info_type)
-        for method in methods:
+        for method in tools.methods:
             c_calculator.calculate_cost(method)
             c_calculator.costs[method] = [x for x in c_calculator.costs[method] if (not np.isnan(x) and not np.isinf(x))]
             print(method, molecule_info, len(c_calculator.costs[method]))
@@ -85,12 +83,17 @@ else:
     #molecule.low_rank_approximation(occupied_indices = [0,1,2], active_indices = [3,4], virtual_indices = [5,6], sparsify = True)
     #ne_act_cas, n_mocore, n_mocas, n_movir = molecule.active_space(ao_labels=['O 2pz'])
 
-    c_calculator = cost_calculator.Cost_calculator(molecule, tools, molecule_info_type)
-    c_calculator.calculate_cost(args.method)
-    median = np.nanmedian(c_calculator.costs[args.method])
+    methods_to_execute = [args.method] if args.method!='all' else tools.methods
+    for method in methods_to_execute:
 
-    print('The cost to calculate the energy of', args.molecule_info,'with method', args.method, 'is', "{:0.2e}".format(median), 'T gates')
-    print('With the specified parameters, synthesising that many T gates should take approximately', "{:0.2e}".format(c_calculator.calculate_time(median)), 'seconds')
+        c_calculator = cost_calculator.Cost_calculator(molecule, tools, molecule_info_type)
+        c_calculator.calculate_cost(method)
+        median = np.nanmedian(c_calculator.costs[method])
+
+        print('<i> RESULT => The cost to calculate the energy of', args.molecule_info.upper(),'with method', method.upper(), 'is', "{:0.2e}".format(median), 'T gates')
+
+    # The time calculation is deprecated and https://github.com/quantumlib/OpenFermion/blob/master/src/openfermion/resource_estimates/surface_code_compilation/physical_costing.py should be used instead
+    #print('With the specified parameters, synthesising that many T gates should take approximately', "{:0.2e}".format(c_calculator.calculate_time(median)), 'seconds')
 
 execution_time = time.time() - start_time
 

@@ -3,13 +3,17 @@ How to execute
 
 | Type  | Parameters | Description | Output |
 |:-------------: |:-------------: |:-------------: |:-------------: |
-| Execution example  | <table>  <thead>  <tr>  <th>molecule</th>  <th>method</th>  <th>ao_labels</th>  </tr>  </thead>  <tbody>  <tr>  <td>H2</td><td>Sparsity Low Rank</td><td>H 1s</td>  </tr>  <tr>  </tbody>  </table>     | How to execute one molecule (by name) with one method | T gate cost |
+| Execution example  | <table>  <thead>  <tr>  <th>molecule</th>  <th>method</th> </tr>  </thead>  <tbody>  <tr>  <td>FeMoco</td><td>Qdrift</td>  </tr>  <tr>  </tbody>  </table>     | How to execute one molecule (by Hamiltonian) with one method | T gate cost |
+
+`Link to get FeMoco Hamiltonian files`: https://zenodo.org/record/4248322
 
 Command
 -------------
 ```
-python main.py h2 sparsity_low_rank 'H 1s'
+python main.py ./femoco/integrals/ qdrift
 ```
+
+`FeMoco hamiltonian is in files eri_reiher.h5 and eri_reiher_cholesky.h5, which are inside integrals`
 
 Output
 ---------
@@ -22,13 +26,11 @@ Output
 ##            estimation algorithms for quantum chemistry          ##
 #####################################################################
 
-<i> HF energy, MP2 energy, CCSD energy -1.0948079628605116 -1.1152126817738928 -1.126778370572344
-CASSCF energy = -1.12352494971892
-CASCI E = -1.12352494971892  E(CI) = -1.65270216063892  S^2 = 0.0000000
-<i> RESULT => The cost to calculate the energy of H2 with method SPARSITY_LOW_RANK is 8.76e+09 T gates
+<i> RESULT => The cost to calculate the energy of ./FEMOCO/INTEGRALS/ with method QDRIFT is 1.84e+23 T gates
 
 ** -------------------------------------------------- **
 **                                                    **
-** Execution time     => 0:00:02.770030  in hh:mm:ss  **
+** Execution time     => 0:00:04.454174  in hh:mm:ss  **
 ********************************************************
+
 ```

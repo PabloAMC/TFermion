@@ -8,40 +8,36 @@ class Trotter_based_methods:
 
     # qDrift and Trotterization
 
-    def calc_qdrift_resources(self, epsilons, lambd):
+    def calc_qdrift_resources(self, epsilons, p_fail, lambda_value):
 
-        epsilon_PEA = epsilons[0]
+        epsilon_QPE = epsilons[0]
         epsilon_HS = epsilons[1]
         epsilon_S = epsilons[2]
 
-        deltaE = epsilon_PEA
+        deltaE = 2*epsilon_QPE
         eps_tot = epsilon_HS
 
-        P_failure = 6*eps_tot
-
-        n = ((27*np.pi**2/2)*(lambd/deltaE)**2) / P_failure**3
+        n = (np.pi*lambda_value/deltaE)**2 *(1/eps_tot) * ((1+p_fail)/p_fail)**2 #eq 42 in the original paper
 
         epsilon_SS = epsilon_S/(2*n) # The 2 is due to the control
 
-        rost_cost_factor = self.tools.c_pauli_rotation_synthesis(epsilon_SS)
+        rot_cost_factor = self.tools.c_pauli_rotation_synthesis(epsilon_SS)
 
-        return 1/(1-P_failure)*rost_cost_factor*n
+        return rot_cost_factor*n
 
-    def calc_rand_ham_resources(self, epsilons, Lambd, Gamma):
+    def calc_rand_ham_resources(self, epsilons, p_fail, Lambda_value, Gamma):
 
-        epsilon_PEA = epsilons[0]
+        epsilon_QPE = epsilons[0]
         epsilon_HS = epsilons[1]
         epsilon_S = epsilons[2]
 
-        deltaE = epsilon_PEA
+        deltaE = 2*epsilon_QPE
         eps_tot = epsilon_HS
 
-        P_failure = 8*eps_tot
-
-        n = 4.35*np.sqrt(8)*(np.pi*Lambd/deltaE)**(3/2) *(Gamma/ P_failure)**2
+        n = 8*Gamma**2 *(np.pi*Lambda_value/(2*deltaE))**(3/2) * (1/eps_tot) * ((1+p_fail)/p_fail)**(3/2) #eq 54 in the original paper
 
         epsilon_SS = epsilon_S/(2*n) # The 2 is due to the control
 
-        rost_cost_factor = self.tools.c_pauli_rotation_synthesis(epsilon_SS)
+        rot_cost_factor = self.tools.c_pauli_rotation_synthesis(epsilon_SS)
 
-        return 1/(1-P_failure)*rost_cost_factor*n
+        return rot_cost_factor*n

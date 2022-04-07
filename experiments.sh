@@ -1,6 +1,6 @@
 molecules=("hydrofluoric_acid"  "ammonia"  "water" "methane" "o2" "CO2" "NO2" "NaCl")
 
-methods=("qdrift" "rand_ham" "taylor_naive" "taylor_on_the_fly" "configuration_interaction" "low_depth_trotter" "low_depth_taylor" "low_depth_taylor_on_the_fly" "linear_t" "sparsity_low_rank" "interaction_picture")
+methods=("qdrift" "rand_ham" "taylor_naive" "taylor_on_the_fly" "configuration_interaction" "low_depth_trotter" "shc_trotter" "low_depth_taylor" "low_depth_taylor_on_the_fly" "linear_t" "sparsity_low_rank" "interaction_picture")
 
 
 

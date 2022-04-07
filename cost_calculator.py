@@ -20,6 +20,7 @@ class Cost_calculator:
                     'taylor_on_the_fly': [],
                     'configuration_interaction': [],
                     'low_depth_trotter': [],
+                    'shc_trotter': [],
                     'low_depth_taylor': [],
                     'low_depth_taylor_on_the_fly': [],
                     'linear_t': [],
@@ -28,6 +29,7 @@ class Cost_calculator:
                     }
         self.basis = self.tools.config_variables['basis']
         self.runs = self.tools.config_variables['runs']
+        self.p_fail = self.tools.config_variables['p_fail']
 
     def calculate_cost(self, method): 
 
@@ -47,7 +49,7 @@ class Cost_calculator:
             if method == 'qdrift': 
                 
                 lambda_value = self.molecule.lambda_value
-                arguments = (lambda_value)
+                arguments = (self.p_fail, lambda_value)
 
                 # generate values for errors epsilon_PEA, epsilon_HS, epsilon_S
                 for _ in range(self.runs):
@@ -56,6 +58,7 @@ class Cost_calculator:
                     
                     self.costs['qdrift'] += [methods_trotter.calc_qdrift_resources(
                                             optimized_errors.x,
+                                            self.p_fail,
                                             lambda_value)]
 
             elif method == 'rand_ham': 
@@ -63,7 +66,7 @@ class Cost_calculator:
                 Lambda_value = self.molecule.Lambda_value
                 Gamma = self.molecule.Gamma
 
-                arguments = (Lambda_value, Gamma)
+                arguments = (self.p_fail, Lambda_value, Gamma)
 
                 # generate values for errors epsilon_PEA, epsilon_HS, epsilon_S
                 for _ in range(self.runs):
@@ -71,6 +74,7 @@ class Cost_calculator:
                     
                     self.costs['rand_ham'] += [methods_trotter.calc_rand_ham_resources(
                                                 optimized_errors.x,
+                                                self.p_fail,
                                                 Lambda_value,
                                                 Gamma)]
         
@@ -89,7 +93,7 @@ class Cost_calculator:
 
             if method == 'taylor_naive':
 
-                arguments = (lambda_value, Gamma, N)
+                arguments = (self.p_fail, lambda_value, Gamma, N)
 
                 # generate values for errors epsilon_PEA, epsilon_HS, epsilon_S
                 for _ in range(self.runs):
@@ -97,6 +101,7 @@ class Cost_calculator:
 
                     self.costs['taylor_naive'] += [methods_taylor.taylor_naive(
                         optimized_errors.x,
+                        self.p_fail,
                         lambda_value,
                         Gamma,
                         N)]
@@ -114,7 +119,7 @@ class Cost_calculator:
                 dphi_max = self.molecule.dphi_max
                 J = len(self.molecule.molecule_geometry) #is the number of atoms in the molecule
 
-                arguments = (N, Gamma, phi_max, dphi_max, zeta_max_i, J)
+                arguments = (self.p_fail, N, Gamma, phi_max, dphi_max, zeta_max_i, J)
 
                 # generate values for errors epsilon_PEA, epsilon_HS, epsilon_S, eps_H, eps_taylor
                 for _ in range(self.runs):
@@ -122,6 +127,7 @@ class Cost_calculator:
 
                     self.costs['taylor_on_the_fly'] += [methods_taylor.taylor_on_the_fly(
                         optimized_errors.x,
+                        self.p_fail,
                         N,
                         Gamma,
                         phi_max,
@@ -149,7 +155,7 @@ class Cost_calculator:
 
                 J = len(self.molecule.molecule_geometry) #is the number of atoms in the molecule
 
-                arguments = (N, eta, alpha, gamma1, gamma2, zeta_max_i, phi_max, J)
+                arguments = (self.p_fail, N, eta, alpha, gamma1, gamma2, zeta_max_i, phi_max, J)
 
                 # generate values for errors epsilon_PEA, epsilon_HS, epsilon_S, eps_H, eps_taylor
                 for _ in range(self.runs):
@@ -158,6 +164,7 @@ class Cost_calculator:
                     # alpha, gamma1, gamma2 are used to calculate K0, K1, K2 (see eq D14 in overleaf)
                     self.costs['configuration_interaction'] += [methods_taylor.configuration_interaction(
                         optimized_errors.x,
+                        self.p_fail,
                         N,
                         eta,    
                         alpha,
@@ -168,7 +175,7 @@ class Cost_calculator:
                         J)]
 
         
-        elif method == 'low_depth_trotter' or method == 'low_depth_taylor' or method == 'low_depth_taylor_on_the_fly':
+        elif method == 'low_depth_trotter' or method == 'low_depth_taylor' or method == 'low_depth_taylor_on_the_fly' or method == 'shc_trotter':
             methods_plane_waves = plane_waves_methods.Plane_waves_methods(self.tools)
 
             # This methods are plane waves, so instead of calling self.molecule.get_basic_parameters() one should call self.molecule.build_grid()
@@ -187,14 +194,38 @@ class Cost_calculator:
                 eta = self.molecule.eta
                 Omega = self.molecule.Omega
 
-                arguments = (N_grid, eta, Omega)
+                arguments = (self.p_fail, N_grid, eta, Omega)
+
+                # generate values for errors epsilon_PEA, epsilon_HS, epsilon_S
+                for _ in range(self.runs):
+                    optimized_errors = self.calculate_optimized_errors(3, methods_plane_waves.shc_trotter, arguments)
+
+                    self.costs['low_depth_trotter'] += [methods_plane_waves.low_depth_trotter(
+                        optimized_errors.x,
+                        self.p_fail,
+                        N_grid, 
+                        eta, 
+                        Omega)]
+
+            elif method == 'shc_trotter':
+
+                grid_length = int(round((self.molecule.N * self.tools.config_variables['gauss2plane_overhead']) ** (1/3)))
+                if not hasattr(self.molecule, 'eta') or not hasattr(self.molecule, 'Omega') or not hasattr(self.molecule, 'N_grid'):
+                    grid = self.molecule.build_grid(grid_length)
+
+                N_grid = self.molecule.N_grid
+                eta = self.molecule.eta
+                Omega = self.molecule.Omega
+
+                arguments = (self.p_fail, N_grid, eta, Omega)
 
                 # generate values for errors epsilon_PEA, epsilon_HS, epsilon_S
                 for _ in range(self.runs):
                     optimized_errors = self.calculate_optimized_errors(3, methods_plane_waves.low_depth_trotter, arguments)
 
-                    self.costs['low_depth_trotter'] += [methods_plane_waves.low_depth_trotter(
+                    self.costs['shc_trotter'] += [methods_plane_waves.shc_trotter(
                         optimized_errors.x,
+                        self.p_fail,
                         N_grid, 
                         eta, 
                         Omega)]
@@ -209,7 +240,7 @@ class Cost_calculator:
                 lambda_value_grid  = self.molecule.lambda_value_grid 
                 H_norm_lambda_ratio = self.tools.config_variables['h_norm_lambda_ratio']
 
-                arguments = (N_grid, lambda_value_grid, H_norm_lambda_ratio)
+                arguments = (self.p_fail, N_grid, lambda_value_grid, H_norm_lambda_ratio)
 
                 # generate value for errors epsilon_PEA, epsilon_HS, epsilon_S
                 for _ in range(self.runs):
@@ -217,6 +248,7 @@ class Cost_calculator:
 
                     self.costs['low_depth_taylor'] += [methods_plane_waves.low_depth_taylor(
                         optimized_errors.x,
+                        self.p_fail,
                         N_grid, 
                         lambda_value_grid, 
                         H_norm_lambda_ratio)]
@@ -236,7 +268,7 @@ class Cost_calculator:
                 x_max = self.molecule.xmax
                 J = len(self.molecule.molecule_geometry) #is the number of atoms in the molecule
 
-                arguments = (N_grid, eta, Gamma_grid, lambda_value_grid, Omega, J, x_max)
+                arguments = (self.p_fail, N_grid, eta, Gamma_grid, lambda_value_grid, Omega, J, x_max)
 
                 # generate value for errors epsilon_PEA, epsilon_HS, epsilon_S, epsilon_H, epsilon_tay
                 for _ in range(self.runs):
@@ -245,6 +277,7 @@ class Cost_calculator:
                     # find x_max from cell volume assuming a perfect cube centered on 0
                     self.costs['low_depth_taylor_on_the_fly'] += [methods_plane_waves.low_depth_taylor_on_the_fly(
                         optimized_errors.x,
+                        self.p_fail,
                         N_grid, 
                         eta,
                         Gamma_grid,
@@ -267,14 +300,15 @@ class Cost_calculator:
                 lambda_value_grid = self.molecule.lambda_value_grid
                 H_norm_lambda_ratio = self.tools.config_variables['h_norm_lambda_ratio']
 
-                arguments = (N_grid, lambda_value_grid, H_norm_lambda_ratio)
+                arguments = (self.p_fail, N_grid, lambda_value_grid, H_norm_lambda_ratio)
 
                 # generate value for errors epsilon_PEA, epsilon_S
                 for _ in range(self.runs):
-                    optimized_errors = self.calculate_optimized_errors(2, methods_qrom.linear_T, arguments)
+                    optimized_errors = self.calculate_optimized_errors(2, methods_qrom.linear_t, arguments)
                     
-                    self.costs['linear_t'] += [methods_qrom.linear_T(
+                    self.costs['linear_t'] += [methods_qrom.linear_t(
                         optimized_errors.x,
+                        self.p_fail,
                         N_grid, 
                         lambda_value_grid ,
                         H_norm_lambda_ratio)]
@@ -290,7 +324,7 @@ class Cost_calculator:
                 final_rank = self.molecule.final_rank
                 H_norm_lambda_ratio = self.tools.config_variables['h_norm_lambda_ratio']
 
-                arguments = (N, lambda_value, final_rank, H_norm_lambda_ratio, sparsity_d)
+                arguments = (self.p_fail, N, lambda_value, final_rank, H_norm_lambda_ratio, sparsity_d)
                 
                 # generate value for errors epsilon_PEA, epsilon_S
                 for _ in range(self.runs):
@@ -298,6 +332,7 @@ class Cost_calculator:
 
                     self.costs['sparsity_low_rank'] += [methods_qrom.sparsity_low_rank(
                         optimized_errors.x,
+                        self.p_fail,
                         N, 
                         lambda_value,
                         final_rank, 
@@ -322,7 +357,7 @@ class Cost_calculator:
                 N_grid = self.molecule.N_grid
                 Gamma_grid  = self.molecule.Gamma_grid 
 
-                arguments = (N_grid, Gamma_grid, lambda_value_T, lambda_value_U_V)
+                arguments = (self.p_fail, N_grid, Gamma_grid, lambda_value_T, lambda_value_U_V)
 
                 # generate value for errors epsilon_S, epsilon_HS, epsilon_PEA
                 for _ in range(self.runs):
@@ -330,6 +365,7 @@ class Cost_calculator:
 
                     self.costs['interaction_picture'] += [methods_interaction_picture.interaction_picture(
                         optimized_errors.x,
+                        self.p_fail,
                         N_grid, 
                         Gamma_grid, 
                         lambda_value_T, 
@@ -355,7 +391,7 @@ class Cost_calculator:
                 self.molecule.lambda_of_Hamiltonian_terms_1st(eta, Omega, N_grid)
                 lambda_value_T, lambda_value_U_V = self.molecule.lambda_value_T, self.molecule.lambda_value_U_V
 
-                arguments = (N_grid, eta, Gamma_grid , lambda_value_T, lambda_value_U_V, J)
+                arguments = (self.p_fail, N_grid, eta, Gamma_grid , lambda_value_T, lambda_value_U_V, J)
 
                 # generate value for errors epsilon_S, epsilon_HS, epsilon_PEA, epsilon_mu, epsilon_M_0, epsilon_R
                 for _ in range(self.runs):
@@ -363,6 +399,7 @@ class Cost_calculator:
 
                     self.costs['sublinear_scaling'] += [methods_interaction_picture.sublinear_scaling_interaction(
                         optimized_errors.x,
+                        self.p_fail,
                         N_grid, 
                         eta, 
                         Gamma_grid, 
@@ -395,6 +432,8 @@ class Cost_calculator:
 
     def calculate_time(self, T_gates, p_fail = 1e-1, p_surface_step = 1e-3, P_inject = 5e-3, P_threshold = 5.7e-3, t_cycle = 2e-7, AAA_factories = 1e3):
         '''
+        DEPRECATED: use https://github.com/quantumlib/OpenFermion/blob/master/src/openfermion/resource_estimates/surface_code_compilation/physical_costing.py 
+
         Calculates the time required to synthesise the T_gates.
         Based on Appendix M from PHYSICAL REVIEW A 86, 032324 (2012); "Surface codes: Towards practical large-scale quantum computation" by Austin G. Fowler
 
@@ -409,7 +448,9 @@ class Cost_calculator:
         Returns:
         time: float; the time (seconds) required to synthesise the T_gates
         '''
-
+        
+        raise Warning('This function is deprecated: check https://quantum-journal.org/papers/q-2019-04-30-135/ and OpenFermion costing module https://github.com/quantumlib/OpenFermion/blob/master/src/openfermion/resource_estimates/surface_code_compilation/physical_costing.py')
+        
         P_A = p_fail/T_gates
 
         p_list = [P_inject]
