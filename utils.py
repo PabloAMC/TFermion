@@ -238,10 +238,10 @@ class Utils():
         # the hamiltonian is given by a path containing files eri_reiher.h5 and eri_reiher_cholesky.h5 or similarly for eri_li
         if os.path.isdir(molecule_info.split('/')[0] + '/'):
 
-            if os.path.isfile(molecule_info + '.h5') and os.path.isfile(molecule_info + '_cholesky.h5'):
+            if os.path.isfile(molecule_info + 'eri_reiher.h5') and os.path.isfile(molecule_info + 'eri_reiher_cholesky.h5'):
                 return "hamiltonian"
             else:
-                print("<*> ERROR: The given path does not contain the files {molecule_info}.h5 and {molecule_info}_cholesky.h5 needed for hamiltonian input".format(molecule_info = molecule_info))
+                print("<*> ERROR: The given path does not contain the files {molecule_info}eri_reiher.h5 and {molecule_info}eri_reiher_cholesky.h5 needed for hamiltonian input".format(molecule_info = molecule_info))
                 return "error"
 
         else:

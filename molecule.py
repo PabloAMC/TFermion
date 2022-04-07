@@ -789,12 +789,12 @@ class Molecule_Hamiltonian:
     # code extracted from https://doi.org/10.5281/zenodo.4248322
     def get_basic_parameters(self, molecular_hamiltonian=None):
 
-        f = h5py.File(self.molecule_info+".h5", "r")
+        f = h5py.File(self.molecule_info+"eri_reiher.h5", "r")
         eri = f['eri'][()]
         h0 = f['h0'][()]
         f.close()
 
-        f = h5py.File(self.molecule_info+"_cholesky.h5", "r")
+        f = h5py.File(self.molecule_info+"eri_reiher_cholesky.h5", "r")
         gval = f["gval"][()]
         gvec = f["gvec"][()]
         f.close()
