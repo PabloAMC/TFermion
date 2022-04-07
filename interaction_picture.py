@@ -32,7 +32,7 @@ class Interaction_picture:
             > N Multiplications
         '''
 
-        t = np.pi/(2*epsilon_QPE)*(1/2+1/(2*p_fail))
+        t = np.pi/epsilon_QPE*(1/2+1/(2*p_fail))
         r = np.ceil(lambd_T*t/np.log(2)) # lambd_T is necessary to take tau = 1
         
         K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1)) 
@@ -131,7 +131,7 @@ class Interaction_picture:
 
         ### Main algorithm
 
-        t = np.pi/(2*epsilon_QPE)*(1/2+1/(2*p_fail))
+        t = np.pi/epsilon_QPE*(1/2+1/(2*p_fail))
         r = np.ceil(lambd_U_V*t/np.log(2)) #Alternatively 2*lambd_U_V*t/np.log(2); lambd_T is necessary to take tau = 1
         
         # Notice that K is a bit different than in other articles 
