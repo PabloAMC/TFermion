@@ -3,12 +3,12 @@ How to execute
 
 | Type  | Parameters | Description | Output |
 |:-------------: |:-------------: |:-------------: |:-------------: |
-| Execution example  | <table>  <thead>  <tr>  <th>molecule</th>  <th>method</th>  <th>ao_labels</th>  </tr>  </thead>  <tbody>  <tr>  <td>H2</td><td>All available methods</td><td>C 2p</td>  </tr>  <tr>  </tbody>  </table>     | How to execute one molecule (by name) with all available methods | T gate cost |
+| Execution example  | <table>  <thead>  <tr>  <th>molecule</th>  <th>method</th>  <th>ao_labels</th>  </tr>  </thead>  <tbody>  <tr>  <td>H2</td><td>All available methods</td><td>H 1s</td>  </tr>  <tr>  </tbody>  </table>     | How to execute one molecule (by name) with all available methods | T gate cost |
 
 Command
 -------------
 ```
-python main.py h2 all 'C 2p'
+python main.py h2 all 'H 1s'
 ```
 
 Output
