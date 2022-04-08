@@ -198,7 +198,7 @@ class Cost_calculator:
 
                 # generate values for errors epsilon_PEA, epsilon_HS, epsilon_S
                 for _ in range(self.runs):
-                    optimized_errors = self.calculate_optimized_errors(3, methods_plane_waves.shc_trotter, arguments)
+                    optimized_errors = self.calculate_optimized_errors(3, methods_plane_waves.low_depth_trotter, arguments)
 
                     self.costs['low_depth_trotter'] += [methods_plane_waves.low_depth_trotter(
                         optimized_errors.x,
@@ -221,7 +221,7 @@ class Cost_calculator:
 
                 # generate values for errors epsilon_PEA, epsilon_HS, epsilon_S
                 for _ in range(self.runs):
-                    optimized_errors = self.calculate_optimized_errors(3, methods_plane_waves.low_depth_trotter, arguments)
+                    optimized_errors = self.calculate_optimized_errors(3, methods_plane_waves.shc_trotter, arguments)
 
                     self.costs['shc_trotter'] += [methods_plane_waves.shc_trotter(
                         optimized_errors.x,
