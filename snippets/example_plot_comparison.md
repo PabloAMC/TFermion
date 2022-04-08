@@ -33,4 +33,4 @@ plt.show()
 Output
 ---------
 
-![](https://github.com/PabloAMC/TFermion/blob/develop/snippets/cost_plot.pdf)
+![](https://github.com/PabloAMC/TFermion/blob/develop/snippets/cost_plot.png)
