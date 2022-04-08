@@ -792,12 +792,12 @@ class Molecule_Hamiltonian:
     # code extracted from https://doi.org/10.5281/zenodo.4248322
     def get_basic_parameters(self, molecular_hamiltonian=None):
 
-        f = h5py.File(self.molecule_info+"eri_reiher.h5", "r")
+        f = h5py.File(self.molecule_info+".h5", "r")
         eri = f['eri'][()]
         h0 = f['h0'][()]
         f.close()
 
-        f = h5py.File(self.molecule_info+"eri_reiher_cholesky.h5", "r")
+        f = h5py.File(self.molecule_info+"_cholesky.h5", "r")
         gval = f["gval"][()]
         gvec = f["gvec"][()]
         f.close()
@@ -819,7 +819,7 @@ class Molecule_Hamiltonian:
         lambda_W = 0.25 * np.einsum("xij,xkl->",np.abs(LR), np.abs(LR), optimize=True)
 
         # save parameters to cost_methods
-        self.lambda_value = 4*(lambda_T + lambda_W) #
+        self.lambda_value = 4*(lambda_T + lambda_W) # The 4 is to convert to spin orbitals
         self.lambda_value_low_rank = self.lambda_value
 
         # Lambda_value is the max of all summed coefficients of T and LR
