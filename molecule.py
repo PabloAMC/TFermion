@@ -1,5 +1,8 @@
 #from msilib.schema import Error
 import json
+import numpy as np
+import h5py
+import scipy 
 
 #from openfermionpsi4 import run_psi4
 from openfermionpyscf import run_pyscf
@@ -22,9 +25,6 @@ from pyscf.mcscf import avas
 from pyscf.lib.parameters import BOHR
 
 
-import numpy as np
-import copy
-import scipy 
 
 '''
 The active space selection method avas is not supported with periodic boundary conditions.
@@ -766,10 +766,6 @@ class Molecule:
         two_body_integrals = 1/4*two_body_tensor.reshape(n_spatial_orbitals,2,n_spatial_orbitals,2,n_spatial_orbitals,2,n_spatial_orbitals,2).sum(axis = (1,3,5,7))
 
         return one_body_integrals, two_body_integrals
-
-import numpy
-import h5py
-from itertools import combinations
 class Molecule_Hamiltonian:
 
     def __init__(self, molecule_info, tools):
@@ -803,31 +799,31 @@ class Molecule_Hamiltonian:
         nchol_max = gval.shape[0]
         thresh = 3.5e-5 # set threshold
 
-        L = numpy.einsum("ij,j->ij",gvec,numpy.sqrt(gval))
+        L = np.einsum("ij,j->ij",gvec,np.sqrt(gval))
         L = L.T.copy()
         L = L.reshape(nchol_max, norb, norb)
 
-        T = h0 - 0.5 * numpy.einsum("pqqs->ps", eri, optimize=True) + numpy.einsum("pqrr->pq", eri, optimize = True)
+        T = h0 - 0.5 * np.einsum("pqqs->ps", eri, optimize=True) + np.einsum("pqrr->pq", eri, optimize = True)
 
-        lambda_T = numpy.sum(numpy.abs(T))
+        lambda_T = np.sum(np.abs(T))
 
         LR = L[:self.final_rank,:,:].copy()
 
-        lambda_W = 0.25 * numpy.einsum("xij,xkl->",numpy.abs(LR), numpy.abs(LR), optimize=True)
+        lambda_W = 0.25 * np.einsum("xij,xkl->",np.abs(LR), np.abs(LR), optimize=True)
 
         # save parameters to cost_methods
         self.lambda_value = 4*(lambda_T + lambda_W) #
         self.lambda_value_low_rank = self.lambda_value
 
         # Lambda_value is the max of all summed coefficients of T and LR
-        V = 0.25 * numpy.einsum("xij,xkl->ijkl",numpy.abs(LR), numpy.abs(LR), optimize=True) 
-        max_LR = max(numpy.abs(V).flatten())
-        max_T = max(numpy.abs(T).flatten())
+        V = 0.25 * np.einsum("xij,xkl->ijkl",np.abs(LR), np.abs(LR), optimize=True) 
+        max_LR = max(np.abs(V).flatten())
+        max_T = max(np.abs(T).flatten())
 
         self.Lambda_value = max(max_LR, max_T)
 
         # Gamma is the number of values over the threshold
-        self.Gamma = np.count_nonzero( numpy.abs(T).flatten() >= thresh) + np.count_nonzero( numpy.abs(V).flatten() >= thresh)
+        self.Gamma = np.count_nonzero( np.abs(T).flatten() >= thresh) + np.count_nonzero( np.abs(V).flatten() >= thresh)
 
         # number orbitals
         self.N = 2*norb

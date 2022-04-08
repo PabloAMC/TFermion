@@ -35,12 +35,14 @@ First, install dependencies
 # clone project   
 git clone https://github.com/PabloAMC/TFermion
 
-# install project
-conda create -n tfermion python=3.6
-conda activate tfermion
-pip install pyscf
-pip install openfermion
-pip install openfermionpyscf
+# install chemistry libraries
+pip install openfermion pyscf
+
+# install wrappers for chemistry libraries
+pip install openfermionpsi4 openfermionpyscf
+
+# install auxiliary libraries
+pip install pandas numpy h5py scipy sympy matplotlib
  ```   
 
 ## How to run

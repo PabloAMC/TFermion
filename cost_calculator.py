@@ -1,11 +1,11 @@
-from scipy import optimize
+import numpy as np
+from scipy.optimize import minimize, NonlinearConstraint
+
 import trotter_based_methods
 import taylor_based_methods
 import plane_waves_methods
 import qrom_methods
 import interaction_picture
-import numpy as np
-from scipy.optimize import minimize, NonlinearConstraint
 
 class Cost_calculator:
 
