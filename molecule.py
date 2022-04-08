@@ -23,6 +23,7 @@ from openfermion.circuits import low_rank_two_body_decomposition
 from pyscf import gto, scf, mcscf
 from pyscf.mcscf import avas
 from pyscf.lib.parameters import BOHR
+from sympy import false, true
 
 
 
@@ -66,22 +67,28 @@ class Molecule:
             with open(molecule_info) as json_file: 
                 molecule_geometry = json.load(json_file)['atoms']
 
-        [self.molecule_geometry, self.molecule_data] = self.calculate_geometry_params(molecule_geometry, charge)
+        if molecule_geometry == None:
+            print("<!> WARNING: It was not possible to get the geometry of the molecule. The geometry is empty, parameters will be load from file (if it exists)")
+            self.has_data = false
+        else:
+            self.has_data = true
 
-        #Add possibility of boundary conditions https://sunqm.github.io/pyscf/tutorial.html#initializing-a-crystal -> Seems quite complicated and not straightforward
-        if program == 'psi4':
-            raise Warning('Psi4 is not supported, try pyscf')
-            self.molecule_psi4 = run_psi4(self.molecule_data,run_scf=True, run_mp2=True, run_fci=False)
+            [self.molecule_geometry, self.molecule_data] = self.calculate_geometry_params(molecule_geometry, charge)
 
-        elif program == 'pyscf':
-            self.molecule_pyscf = run_pyscf(self.molecule_data,run_scf=True, run_mp2=True, run_ccsd=True)
-            print('<i> HF energy, MP2 energy, CCSD energy', self.molecule_pyscf.hf_energy, self.molecule_pyscf.mp2_energy, self.molecule_pyscf.ccsd_energy)
+            #Add possibility of boundary conditions https://sunqm.github.io/pyscf/tutorial.html#initializing-a-crystal -> Seems quite complicated and not straightforward
+            if program == 'psi4':
+                raise Warning('Psi4 is not supported, try pyscf')
+                self.molecule_psi4 = run_psi4(self.molecule_data,run_scf=True, run_mp2=True, run_fci=False)
 
-        self.occupied_indices = None
-        self.active_indices = None #range(self.molecule_data.n_orbitals) # This is the default
-        self.virtual_indices = []
+            elif program == 'pyscf':
+                self.molecule_pyscf = run_pyscf(self.molecule_data,run_scf=True, run_mp2=True, run_ccsd=True)
+                print('<i> HF energy, MP2 energy, CCSD energy', self.molecule_pyscf.hf_energy, self.molecule_pyscf.mp2_energy, self.molecule_pyscf.ccsd_energy)
 
-        self.N  = self.molecule_data.n_orbitals * 2 # The 2 is due to orbitals -> spin orbitals
+            self.occupied_indices = None
+            self.active_indices = None #range(self.molecule_data.n_orbitals) # This is the default
+            self.virtual_indices = []
+
+            self.N  = self.molecule_data.n_orbitals * 2 # The 2 is due to orbitals -> spin orbitals
 
         #self.build_grid()
         #self.get_basic_parameters()

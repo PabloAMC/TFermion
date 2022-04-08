@@ -77,7 +77,7 @@ else:
         exit()
 
     #Active space
-    if args.ao_labels:
+    if args.ao_labels and molecule.has_data:
         ne_act_cas = molecule.active_space(args.ao_labels[0].replace('\\',''))
 
     #molecule.low_rank_approximation(occupied_indices = [0,1,2], active_indices = [3,4], virtual_indices = [5,6], sparsify = True)
