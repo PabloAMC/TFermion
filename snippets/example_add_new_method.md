@@ -66,7 +66,7 @@ arguments = (self.p_fail, N_grid, eta, Omega)
 `Declare and calculate the optimized errors necessary to execute the new method. It just necessary to indicate the number of errors, the method and the arguments`
 
 ```
-optimized_errors = self.calculate_optimized_errors(3, methods_plane_waves.low_depth_trotter, arguments)
+optimized_errors = self.calculate_optimized_errors(3, methods_plane_waves.shc_trotter, arguments)
 ```
 
 6. Execute the method and save the result
