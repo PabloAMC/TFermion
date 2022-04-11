@@ -64,7 +64,7 @@ if not molecule_info_type:
             median = np.nanmedian(c_calculator.costs[method])
             dictionary[molecule_info][method] = "{:0.2e}".format(median)
 
-    pd.DataFrame(dictionary).to_csv('./results/results.csv')
+    pd.DataFrame(dictionary).to_csv('./results/results_'+ tools.config_variables['gauss2plane_overhead']+'.csv')
 
 
 else: 

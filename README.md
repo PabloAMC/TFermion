@@ -1,13 +1,13 @@
 <div align="center">    
- <img width="500" alt="T-Fermion" src="https://user-images.githubusercontent.com/20182937/139062847-e45efa4c-b45c-4de4-9a0e-73bffbc2ff76.png">   
+ <img width="500" alt="TFermion" src="https://user-images.githubusercontent.com/20182937/139062847-e45efa4c-b45c-4de4-9a0e-73bffbc2ff76.png">   
  
  [![Paper](http://img.shields.io/badge/arxiv-quant.ph:2110.05899-B31B1B.svg)](https://arxiv.org/abs/2110.05899)
 </div>
  
 ## Description   
-T-Fermion is a library that allows to calculate the expected cost T-gate cost of performing Quantum Phase Estimation with different methods for arbitrary molecules and Hamiltonians. It uses methods from [OpenFermion](https://github.com/quantumlib/OpenFermion) and [Pyscf](https://github.com/pyscf/pyscf) and interfaces with [PubChem](https://pubchem.ncbi.nlm.nih.gov/) to download the corresponding molecular data. 
+TFermion is a library that allows to calculate the expected cost T-gate cost of performing Quantum Phase Estimation with different methods for arbitrary molecules and Hamiltonians. It uses methods from [OpenFermion](https://github.com/quantumlib/OpenFermion) and [Pyscf](https://github.com/pyscf/pyscf) and interfaces with [PubChem](https://pubchem.ncbi.nlm.nih.gov/) to download the corresponding molecular data. 
 
-You can read our paper at [T-Fermion: A non-Clifford gate cost assessment library of quantum phase estimation algorithms for quantum chemistry](https://arxiv.org/abs/2110.05899).
+You can read our paper at [TFermion: A non-Clifford gate cost assessment library of quantum phase estimation algorithms for quantum chemistry](https://arxiv.org/abs/2110.05899).
 
 The current implemented methods (we list the arxiv papers) are:
 - `qdrift`, the qDRIFT method from [https://arxiv.org/abs/1811.08017](https://arxiv.org/abs/1811.08017).
@@ -50,16 +50,19 @@ pip install pandas numpy h5py scipy sympy matplotlib
 python main.py [molecule name] [method name]
 ```
 
+## Examples
+You can find some snippet examples in the folder [snippets](/snippets)
+
 ## Contributing
-We would love T-Fermion to become an useful tool for reseachers. If you want to join this mission, drop us a line at pabloamo@ucm.es.
-Things that can be done include implementing new methods, or counting qubits. Also, some adaptation for periodic systems might be useful.
+We would love TFermion to become an useful tool for reseachers. If you want to join this mission, drop us a line at pabloamo@ucm.es.
+Things that can be done include implementing new methods (see the snippet in the [snippet folder](/snippets)), or counting qubits. Also, some adaptation for periodic systems might be useful.
 
 
 ## Authorship
 ### Citation   
 ```
 @article{casares2021t,
-  title={T-Fermion: A non-Clifford gate cost assessment library of quantum phase estimation algorithms for quantum chemistry},
+  title={TFermion: A non-Clifford gate cost assessment library of quantum phase estimation algorithms for quantum chemistry},
   author={Casares, PAM and Campos, Roberto and Martin-Delgado, MA},
   journal={arXiv preprint arXiv:2110.05899},
   year={2021}

@@ -9,8 +9,10 @@ How to execute
 
 Command
 -------------
+Create a folder inside TFermion folder named '/integrals' and put 'eri_reiher.h5' and 'eri_reiher_cholesky.h5' in it. Similarly for 'eri_li.h5 and 'eri_li_cholesky.h5'.
+
 ```
-python main.py ./femoco/integrals/ qdrift
+python main.py 'integrals/eri_reiher' sparsity_low_rank
 ```
 
 `FeMoco hamiltonian is in files eri_reiher.h5 and eri_reiher_cholesky.h5, which are inside integrals`
@@ -26,11 +28,11 @@ Output
 ##            estimation algorithms for quantum chemistry          ##
 #####################################################################
 
-<i> RESULT => The cost to calculate the energy of ./FEMOCO/INTEGRALS/ with method QDRIFT is 1.84e+23 T gates
+Backend MacOSX is interactive backend. Turning interactive mode on.
+<i> RESULT => The cost to calculate the energy of INTEGRALS/ERI_REIHER with method SPARSITY_LOW_RANK is 8.11e+12 T gates
 
 ** -------------------------------------------------- **
 **                                                    **
-** Execution time     => 0:00:04.454174  in hh:mm:ss  **
+** Execution time     => 0:00:14.631222  in hh:mm:ss  **
 ********************************************************
-
 ```
