@@ -155,7 +155,7 @@ class Utils():
         return eval_r
 
     def sum_constraint(self, x):
-        return sum(x)
+        return sum(x) if self.config_variables['errors_norma'] == 1 else math.sqrt(sum(e**self.config_variables['errors_norma'] for e in x))
 
     def arbitrary_state_synthesis(self, n):
         '''
