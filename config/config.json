@@ -7,7 +7,7 @@
     "xmax_mult_factor_taylor": 1,
     "accuracy": 0.0016,
     "p_fail": 0.25,
-    "errors_norma": 1,
+    "error_norm": 1,
     "molecules": ["h2", "hydrofluoric acid", "water", "ammonia", "methane", "O2", "CO2", "NaCl"]
 }
 
