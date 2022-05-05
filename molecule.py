@@ -1,38 +1,31 @@
 #from msilib.schema import Error
-import openfermion
-import copy
 import json
-import ast
-import importlib
-import sys
-from openfermion.transforms.opconversions.term_reordering import normal_ordered
+import numpy as np
+import h5py
+import scipy 
 
 #from openfermionpsi4 import run_psi4
 from openfermionpyscf import run_pyscf
-from openfermionpyscf._run_pyscf import prepare_pyscf_molecule, compute_integrals, compute_scf
+from openfermionpyscf._run_pyscf import compute_integrals
 
 from openfermion.utils import Grid
 import openfermion.ops.representations as reps
 from openfermion.chem import geometry_from_pubchem, MolecularData
 from openfermion.chem.molecular_data import spinorb_from_spatial
-from openfermion.hamiltonians import plane_wave_hamiltonian, jordan_wigner_dual_basis_hamiltonian 
-from openfermion.hamiltonians import dual_basis_external_potential, plane_wave_external_potential
-from openfermion.hamiltonians import dual_basis_potential, plane_wave_potential
-from openfermion.hamiltonians import dual_basis_kinetic, plane_wave_kinetic
-from openfermion.transforms  import  get_fermion_operator, get_majorana_operator, get_interaction_operator, normal_ordered, get_molecular_data, jordan_wigner
+from openfermion.hamiltonians import jordan_wigner_dual_basis_hamiltonian 
+from openfermion.hamiltonians import dual_basis_external_potential
+from openfermion.hamiltonians import dual_basis_potential
+from openfermion.hamiltonians import plane_wave_kinetic
+from openfermion.transforms  import  get_majorana_operator
 from openfermion.circuits import low_rank_two_body_decomposition
-from openfermion.ops.operators import fermion_operator
 
 
-from pyscf import gto, scf, mcscf, fci, ao2mo
+from pyscf import gto, scf, mcscf
 from pyscf.mcscf import avas
 from pyscf.lib.parameters import BOHR
+from sympy import false, true
 
 
-import numpy as np
-import copy
-import time
-import scipy 
 
 '''
 The active space selection method avas is not supported with periodic boundary conditions.
@@ -74,22 +67,28 @@ class Molecule:
             with open(molecule_info) as json_file: 
                 molecule_geometry = json.load(json_file)['atoms']
 
-        [self.molecule_geometry, self.molecule_data] = self.calculate_geometry_params(molecule_geometry, charge)
+        if molecule_geometry == None:
+            print("<!> WARNING: It was not possible to get the geometry of the molecule. The geometry is empty, parameters will be load from file (if it exists)")
+            self.has_data = false
+        else:
+            self.has_data = true
 
-        #Add possibility of boundary conditions https://sunqm.github.io/pyscf/tutorial.html#initializing-a-crystal -> Seems quite complicated and not straightforward
-        if program == 'psi4':
-            raise Warning('Psi4 is not supported, try pyscf')
-            self.molecule_psi4 = run_psi4(self.molecule_data,run_scf=True, run_mp2=True, run_fci=False)
+            [self.molecule_geometry, self.molecule_data] = self.calculate_geometry_params(molecule_geometry, charge)
 
-        elif program == 'pyscf':
-            self.molecule_pyscf = run_pyscf(self.molecule_data,run_scf=True, run_mp2=True, run_ccsd=True)
-            print('<i> HF energy, MP2 energy, CCSD energy', self.molecule_pyscf.hf_energy, self.molecule_pyscf.mp2_energy, self.molecule_pyscf.ccsd_energy)
+            #Add possibility of boundary conditions https://sunqm.github.io/pyscf/tutorial.html#initializing-a-crystal -> Seems quite complicated and not straightforward
+            if program == 'psi4':
+                raise Warning('Psi4 is not supported, try pyscf')
+                self.molecule_psi4 = run_psi4(self.molecule_data,run_scf=True, run_mp2=True, run_fci=False)
 
-        self.occupied_indices = None
-        self.active_indices = None #range(self.molecule_data.n_orbitals) # This is the default
-        self.virtual_indices = []
+            elif program == 'pyscf':
+                self.molecule_pyscf = run_pyscf(self.molecule_data,run_scf=True, run_mp2=True, run_ccsd=True)
+                print('<i> HF energy, MP2 energy, CCSD energy', self.molecule_pyscf.hf_energy, self.molecule_pyscf.mp2_energy, self.molecule_pyscf.ccsd_energy)
 
-        self.N  = self.molecule_data.n_orbitals * 2 # The 2 is due to orbitals -> spin orbitals
+            self.occupied_indices = None
+            self.active_indices = None #range(self.molecule_data.n_orbitals) # This is the default
+            self.virtual_indices = []
+
+            self.N  = self.molecule_data.n_orbitals * 2 # The 2 is due to orbitals -> spin orbitals
 
         #self.build_grid()
         #self.get_basic_parameters()
@@ -189,7 +188,6 @@ class Molecule:
         These indices can be used in self.get_basic_parameters(). 
         Also modifies self.molecule_data and self.molecule_pyscf in place.
         '''
-        ao_labels = ast.literal_eval(ao_labels)
 
         # Selecting the active space
         pyscf_scf = self.molecule_pyscf._pyscf_data['scf'] #similar to https://github.com/quantumlib/OpenFermion-PySCF/blob/8b8de945db41db2b39d588ff0396a93566855247/openfermionpyscf/_pyscf_molecular_data.py#L47
@@ -775,10 +773,6 @@ class Molecule:
         two_body_integrals = 1/4*two_body_tensor.reshape(n_spatial_orbitals,2,n_spatial_orbitals,2,n_spatial_orbitals,2,n_spatial_orbitals,2).sum(axis = (1,3,5,7))
 
         return one_body_integrals, two_body_integrals
-
-import numpy
-import h5py
-from itertools import combinations
 class Molecule_Hamiltonian:
 
     def __init__(self, molecule_info, tools):
@@ -812,31 +806,31 @@ class Molecule_Hamiltonian:
         nchol_max = gval.shape[0]
         thresh = 3.5e-5 # set threshold
 
-        L = numpy.einsum("ij,j->ij",gvec,numpy.sqrt(gval))
+        L = np.einsum("ij,j->ij",gvec,np.sqrt(gval))
         L = L.T.copy()
         L = L.reshape(nchol_max, norb, norb)
 
-        T = h0 - 0.5 * numpy.einsum("pqqs->ps", eri, optimize=True) + numpy.einsum("pqrr->pq", eri, optimize = True)
+        T = h0 - 0.5 * np.einsum("pqqs->ps", eri, optimize=True) + np.einsum("pqrr->pq", eri, optimize = True)
 
-        lambda_T = numpy.sum(numpy.abs(T))
+        lambda_T = np.sum(np.abs(T))
 
         LR = L[:self.final_rank,:,:].copy()
 
-        lambda_W = 0.25 * numpy.einsum("xij,xkl->",numpy.abs(LR), numpy.abs(LR), optimize=True)
+        lambda_W = 0.25 * np.einsum("xij,xkl->",np.abs(LR), np.abs(LR), optimize=True)
 
         # save parameters to cost_methods
-        self.lambda_value = 4*(lambda_T + lambda_W) #
+        self.lambda_value = 4*(lambda_T + lambda_W) # The 4 is to convert to spin orbitals
         self.lambda_value_low_rank = self.lambda_value
 
         # Lambda_value is the max of all summed coefficients of T and LR
-        V = 0.25 * numpy.einsum("xij,xkl->ijkl",numpy.abs(LR), numpy.abs(LR), optimize=True) 
-        max_LR = max(numpy.abs(V).flatten())
-        max_T = max(numpy.abs(T).flatten())
+        V = 0.25 * np.einsum("xij,xkl->ijkl",np.abs(LR), np.abs(LR), optimize=True) 
+        max_LR = max(np.abs(V).flatten())
+        max_T = max(np.abs(T).flatten())
 
         self.Lambda_value = max(max_LR, max_T)
 
         # Gamma is the number of values over the threshold
-        self.Gamma = np.count_nonzero( numpy.abs(T).flatten() >= thresh) + np.count_nonzero( numpy.abs(V).flatten() >= thresh)
+        self.Gamma = np.count_nonzero( np.abs(T).flatten() >= thresh) + np.count_nonzero( np.abs(V).flatten() >= thresh)
 
         # number orbitals
         self.N = 2*norb

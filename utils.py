@@ -9,9 +9,24 @@ from scipy.optimize import NonlinearConstraint, LinearConstraint
 from itertools import groupby
 import os
 
+METHODS = [
+        'qdrift', 
+        'rand_ham', 
+        'taylor_naive', 
+        'taylor_on_the_fly', 
+        'configuration_interaction',
+        'low_depth_trotter', 
+        'shc_trotter', 
+        'low_depth_taylor', 
+        'low_depth_taylor_on_the_fly', 
+        'linear_t', 
+        'sparsity_low_rank', 
+        'interaction_picture']
 class Utils():
 
     def __init__(self, config_path=''):
+
+        self.methods = METHODS
 
         if config_path != '':
             try:
@@ -140,7 +155,7 @@ class Utils():
         return eval_r
 
     def sum_constraint(self, x):
-        return sum(x)
+        return sum(x) if self.config_variables['error_norm'] == 1 else math.sqrt(sum(e**self.config_variables['error_norm'] for e in x))
 
     def arbitrary_state_synthesis(self, n):
         '''

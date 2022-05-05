@@ -1,64 +1,64 @@
 
-###################################################################
-##                             QPHASE                            ##
-##                                                               ##
-##      We will see what it is that (Not Google paper copy)      ##
-###################################################################
+#####################################################################
+##                             TFermion                            ##
+##                                                                 ##
+##  A non-Clifford gate cost assessment library of quantum phase   ##
+##            estimation algorithms for quantum chemistry          ##
+#####################################################################
 
-The cost to calculate the energy of ./hamiltonian/ with method qdrift is 3.50e+27 T gates
-With the specified parameters, synthesising that many T gates should take 7.70e+19 seconds
+<i> RESULT => The cost to calculate the energy of INTEGRALS/ERI_LI with method QDRIFT is 8.76e+22 T gates
 
 ** -------------------------------------------------- **
 **                                                    **
-** Execution time     => 0:00:12.076242  in hh:mm:ss  **
+** Execution time     => 0:00:36.186432  in hh:mm:ss  **
 ********************************************************
 
 
 
-###################################################################
-##                             QPHASE                            ##
-##                                                               ##
-##      We will see what it is that (Not Google paper copy)      ##
-###################################################################
+#####################################################################
+##                             TFermion                            ##
+##                                                                 ##
+##  A non-Clifford gate cost assessment library of quantum phase   ##
+##            estimation algorithms for quantum chemistry          ##
+#####################################################################
 
-The cost to calculate the energy of ./hamiltonian/ with method rand_ham is 4.31e+29 T gates
-With the specified parameters, synthesising that many T gates should take 9.49e+21 seconds
+<i> RESULT => The cost to calculate the energy of INTEGRALS/ERI_LI with method RAND_HAM is 1.07e+28 T gates
 
 ** -------------------------------------------------- **
 **                                                    **
-** Execution time     => 0:00:12.181713  in hh:mm:ss  **
+** Execution time     => 0:00:38.473898  in hh:mm:ss  **
 ********************************************************
 
 
 
-###################################################################
-##                             QPHASE                            ##
-##                                                               ##
-##      We will see what it is that (Not Google paper copy)      ##
-###################################################################
+#####################################################################
+##                             TFermion                            ##
+##                                                                 ##
+##  A non-Clifford gate cost assessment library of quantum phase   ##
+##            estimation algorithms for quantum chemistry          ##
+#####################################################################
 
-The cost to calculate the energy of ./hamiltonian/ with method taylor_naive is 6.37e+20 T gates
-With the specified parameters, synthesising that many T gates should take 1.40e+13 seconds
+<i> RESULT => The cost to calculate the energy of INTEGRALS/ERI_LI with method TAYLOR_NAIVE is 8.98e+22 T gates
 
 ** -------------------------------------------------- **
 **                                                    **
-** Execution time     => 0:00:11.643893  in hh:mm:ss  **
+** Execution time     => 0:00:36.424429  in hh:mm:ss  **
 ********************************************************
 
 
 
-###################################################################
-##                             QPHASE                            ##
-##                                                               ##
-##      We will see what it is that (Not Google paper copy)      ##
-###################################################################
+#####################################################################
+##                             TFermion                            ##
+##                                                                 ##
+##  A non-Clifford gate cost assessment library of quantum phase   ##
+##            estimation algorithms for quantum chemistry          ##
+#####################################################################
 
-The cost to calculate the energy of ./hamiltonian/ with method sparsity_low_rank is 2.55e+13 T gates
-With the specified parameters, synthesising that many T gates should take 5.61e+05 seconds
+<i> RESULT => The cost to calculate the energy of INTEGRALS/ERI_LI with method SPARSITY_LOW_RANK is 7.23e+12 T gates
 
 ** -------------------------------------------------- **
 **                                                    **
-** Execution time     => 0:00:12.283663  in hh:mm:ss  **
+** Execution time     => 0:00:17.235698  in hh:mm:ss  **
 ********************************************************
 
 

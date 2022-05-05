@@ -1,6 +1,5 @@
 import h5py
 import numpy
-from itertools import combinations
 
 hfdump = h5py.File('integrals/eri_li.h5','r')
 #hfdump = h5py.File('integrals/eri_reiher.h5','r') #alternative

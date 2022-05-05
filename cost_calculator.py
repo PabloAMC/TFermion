@@ -1,11 +1,11 @@
-from scipy import optimize
+import numpy as np
+from scipy.optimize import minimize, NonlinearConstraint
+
 import trotter_based_methods
 import taylor_based_methods
 import plane_waves_methods
 import qrom_methods
 import interaction_picture
-import numpy as np
-from scipy.optimize import minimize, NonlinearConstraint
 
 class Cost_calculator:
 
@@ -198,7 +198,7 @@ class Cost_calculator:
 
                 # generate values for errors epsilon_PEA, epsilon_HS, epsilon_S
                 for _ in range(self.runs):
-                    optimized_errors = self.calculate_optimized_errors(3, methods_plane_waves.shc_trotter, arguments)
+                    optimized_errors = self.calculate_optimized_errors(3, methods_plane_waves.low_depth_trotter, arguments)
 
                     self.costs['low_depth_trotter'] += [methods_plane_waves.low_depth_trotter(
                         optimized_errors.x,
@@ -221,7 +221,7 @@ class Cost_calculator:
 
                 # generate values for errors epsilon_PEA, epsilon_HS, epsilon_S
                 for _ in range(self.runs):
-                    optimized_errors = self.calculate_optimized_errors(3, methods_plane_waves.low_depth_trotter, arguments)
+                    optimized_errors = self.calculate_optimized_errors(3, methods_plane_waves.shc_trotter, arguments)
 
                     self.costs['shc_trotter'] += [methods_plane_waves.shc_trotter(
                         optimized_errors.x,
@@ -410,7 +410,7 @@ class Cost_calculator:
         else:
             print('<*> ERROR: method', method, 'not implemented or not existing')
 
-        if self.molecule_info_type == 'name':
+        if self.molecule_info_type == 'name' and self.molecule.has_data:
             json_name = str(self.molecule.molecule_info)+ '_' +  str(self.basis)
             self.molecule.save(json_name = 'parameters/'+json_name+'_'+str(self.tools.config_variables['gauss2plane_overhead']))
 
