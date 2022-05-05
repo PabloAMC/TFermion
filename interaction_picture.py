@@ -32,8 +32,8 @@ class Interaction_picture:
             > N Multiplications
         '''
 
-        t = np.pi/epsilon_QPE*(1/2+1/(2*p_fail))
-        r = np.ceil(lambd_T*t/np.log(2)) # lambd_T is necessary to take tau = 1
+        t = np.pi/(2*epsilon_QPE)*(1/2+1/(2*p_fail))
+        r = np.ceil(lambd_T*t*np.e) # lambd_T is necessary to take tau = 1
         
         K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1)) 
         M = np.max([16*t*np.log(2)/epsilon_HS * (2*lambd_U_V + lambd_T), K**2])
@@ -94,8 +94,8 @@ class Interaction_picture:
         # TDS
         COEF = rot_COEF*self.tools.pauli_rotation_synthesis(epsilon_SS)
         TDS_2 = 2*COEF + DYS_K
-        R = self.tools.multi_controlled_not(N+np.ceil(np.log2(Gamma)) + 2 + np.ceil(np.log2(K+1)) + np.ceil(np.log2(M)))
-        TDS = 2*R + 3*TDS_2
+        #R = self.tools.multi_controlled_not(N+np.ceil(np.log2(Gamma)) + 2 + np.ceil(np.log2(K+1)) + np.ceil(np.log2(M)))
+        TDS = TDS_2
 
         cost = r*(exp_U_V + TDS)
         return cost
