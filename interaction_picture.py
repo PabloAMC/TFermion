@@ -13,7 +13,7 @@ class Interaction_picture:
 
         epsilon_S = epsilons[0]
         epsilon_HS = epsilons[1]
-        epsilon_PEA = epsilons[2]
+        epsilon_QPE = epsilons[2]
 
         '''
         The number of rotations is very large here:
@@ -36,7 +36,7 @@ class Interaction_picture:
             > N Multiplications
         '''
 
-        t = np.pi/epsilon_PEA
+        t = np.pi/epsilon_QPE
         r = np.ceil(lambd_T*t/(2*np.log(2))) # lambd_T is necessary to take tau = 1
         
         K = np.ceil( -1  + 2* np.log(2*r/epsilon_HS)/np.log(np.log(2*r/epsilon_HS)+1)) 
@@ -123,7 +123,7 @@ class Interaction_picture:
         else:
             vec_b = np.array([1,1,1])
 
-        epsilon_PEA = optimized_parameters[0]
+        epsilon_QPE = optimized_parameters[0]
         epsilon_S = optimized_parameters[3]
         br = int(np.round(optimized_parameters[5]))
 
@@ -132,14 +132,14 @@ class Interaction_picture:
 
         n_p, n_eta, n_eta_zeta, n_M, n_R, n_T, lambda_value = self.calculate_number_bits_parameters(optimized_parameters, N, eta, lambda_zeta, Omega, amplitude_amplification)
 
-        r = np.ceil(np.pi*lambda_value/(2*epsilon_PEA))
+        r = np.ceil(np.pi*lambda_value/(2*epsilon_QPE))
 
         epsilon_S_HF = 1e-2 # This parameter indicates the decrease in overlap with ground state due to imperfect rotations.
         epsilon_SS_HF = epsilon_S_HF / (2*eta*(N_small-eta))
 
         '''cost = (2*(n_T + 4*n_eta_zeta + 2*br-12) + 14*n_eta +8*br -36+a*(3*n_p**2+15*n_p-7+4*n_M*(n_p+1))
         +lambda_zeta+self.Er(lambda_zeta) + 2*(2*n_p + 2*br-7) + 12*eta*n_p+5*(n_p-1) + 2 + 24*n_p+6*n_p*n_R +18
-        +n_eta_zeta +2*n_eta + 6*n_p + n_M+16)*np.ceil(np.pi*lambda_value/(2*epsilon_PEA))
+        +n_eta_zeta +2*n_eta + 6*n_p + n_M+16)*np.ceil(np.pi*lambda_value/(2*epsilon_QPE))
         return cost'''
 
         def calculate_HF_cost():
@@ -303,7 +303,7 @@ class Interaction_picture:
         
         epsilon_S = epsilons[0]
         epsilon_HS = epsilons[1]
-        epsilon_PEA = epsilons[2]
+        epsilon_QPE = epsilons[2]
         epsilon_mu = epsilons[3]
         epsilon_M0 = epsilons[4]
         epsilon_R = epsilons[5]
@@ -329,7 +329,7 @@ class Interaction_picture:
 
         ### Main algorithm
 
-        t = np.pi/epsilon_PEA
+        t = np.pi/epsilon_QPE
         r = np.ceil(np.e*lambd_U_V*t/2) #Alternatively 2*lambd_U_V*t/np.log(2); lambd_T is necessary to take tau = 1
         
         # Notice that K is a bit different than in other articles 

@@ -10,11 +10,11 @@ class Trotter_based_methods:
 
     def calc_qdrift_resources(self, epsilons, lambd):
 
-        epsilon_PEA = epsilons[0]
+        epsilon_QPE = epsilons[0]
         epsilon_HS = epsilons[1]
         epsilon_S = epsilons[2]
 
-        deltaE = epsilon_PEA
+        deltaE = epsilon_QPE
         eps_tot = epsilon_HS
 
         P_failure = 6*eps_tot
@@ -29,11 +29,11 @@ class Trotter_based_methods:
 
     def calc_rand_ham_resources(self, epsilons, Lambd, Gamma):
 
-        epsilon_PEA = epsilons[0]
+        epsilon_QPE = epsilons[0]
         epsilon_HS = epsilons[1]
         epsilon_S = epsilons[2]
 
-        deltaE = epsilon_PEA
+        deltaE = epsilon_QPE
         eps_tot = epsilon_HS
 
         P_failure = 8*eps_tot

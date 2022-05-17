@@ -405,32 +405,34 @@ class Cost_calculator:
                 # these N values should be selected in a way that n_p is an integer
                 MIN_N_GRID = 1e2
                 MAX_N_GRID = 1e9
-                values = self.calculate_range_values(MIN_N_GRID, MAX_N_GRID)
+                N_values = self.calculate_range_values(MIN_N_GRID, MAX_N_GRID)
 
                 vec_a = np.array([5.02, 5.40,  6.26])
 
                 # it indicates if the cost returned is the sum of HF, antisymmetrization and QPE or each value separetly
                 cost_module = 'optimization'
 
-                number_samples = len(values)*4
+                accuracy_multiples = [1/3, 1, 3, 9]
+
+                number_samples = len(N_values)*len(accuracy_multiples)
                 with alive_bar(number_samples) as bar:
 
                     all_costs = []
                     # execute the cost calculation for different chemical accuracy
-                    for chemical_acc in [1/3, 1, 3, 9]:
+                    for chemical_acc in accuracy_multiples:
 
                         print('chemical_acc', chemical_acc)
 
                         costs_for_chem_acc = []
 
-                        for val in values:
-                            n_p = np.log2(val**(1/3)+1)
+                        for N in N_values:
+                            n_p = np.log2(N**(1/3)+1)
                             print('n_p',n_p)
 
                             # since cost module is modified to calculate the errors detailed, it is necessary to set again to optimization mode
                             cost_module = 'optimization'
                             cost_unit_optimization = 'optimization'
-                            arguments = (val, 1.5e4, eta, lambda_zeta, Omega, cost_unit_optimization, cost_module, vec_a, amplitude_amplification)
+                            arguments = (N, N, eta, lambda_zeta, Omega, cost_unit_optimization, cost_module, vec_a, amplitude_amplification)
 
                             # generate value for errors epsilon_PEA, epsilon_M, epsilon_R, epsilon_S, epsilon_T, br
                             parameters_to_optimize = ['epsilon_PEA', 'epsilon_M', 'epsilon_R', 'epsilon_S', 'epsilon_T', 'br']
@@ -444,8 +446,8 @@ class Cost_calculator:
                                 cost_module = 'detail'
                                 cost_values += [methods_interaction_picture.first_quantization_qubitization(
                                     optimized_parameters.x,
-                                    val,
-                                    val,
+                                    N,
+                                    N,
                                     eta, 
                                     lambda_zeta, 
                                     Omega,
@@ -456,7 +458,7 @@ class Cost_calculator:
 
                             bar()
 
-                            costs_for_chem_acc.append([val, cost_values])
+                            costs_for_chem_acc.append([N, cost_values])
 
                         all_costs.append(costs_for_chem_acc)
 
