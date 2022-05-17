@@ -10,7 +10,7 @@ Command
 ```
 python main.py h2 all 'H 1s'
 ```
-`'H 1s'` is an optional parameter. If not included, the method will be executed with the active space being the whole space.
+`'H 1s'` is an optional parameter only used in `sparsity_low_rank'. If not included, the method will be executed with the active space being the whole space.
 
 Output
 ---------
