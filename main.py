@@ -63,7 +63,7 @@ if not molecule_info_type:
             c_calculator.calculate_cost(method)
             c_calculator.costs[method] = [x for x in c_calculator.costs[method] if (not np.isnan(x) and not np.isinf(x))]
             print(method, molecule_info, len(c_calculator.costs[method]))
-            median = np.nanmedian(c_calculator.costs[method])
+            median = np.nanpercentile(c_calculator.costs[method],q=10)
             dictionary[molecule_info][method] = "{:0.2e}".format(median)
 
     pd.DataFrame(dictionary).to_csv('./results/results.csv')
@@ -95,7 +95,7 @@ else:
 
     #print('The cost to calculate the energy of', args.molecule_info,'with method', args.method, 'is', "{:0.2e}".format(median), 'T gates')
 
-    #median = tools.generate_plot(c_calculator.costs[args.method], 'QPE', cost_unit, 1e2, 1e9, 1e10, 1e16)
+    median = tools.generate_plot(c_calculator.costs[args.method], 'QPE', cost_unit, 1e2, 1e9, 1e10, 1e16)
 
     #print('The cost to calculate the energy of', args.molecule_info,'with method', args.method, 'is', "{:0.2e}".format(median), 'T gates')
 

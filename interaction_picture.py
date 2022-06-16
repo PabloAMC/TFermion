@@ -104,7 +104,7 @@ class Interaction_picture:
         cost = r*(exp_U_V + TDS)
         return cost
 
-    def first_quantization_qubitization(self, optimized_parameters, N, N_small, eta, lambda_zeta, Omega, cost_unit, cost_module, vec_a, amplitude_amplification = True):
+    def first_quantization_qubitization(self, optimized_parameters, N, N_small, eta, lambda_zeta, Omega, cost_unit, cost_module, vec_a):
         '''
         Based on the qubitization method from Fault-Tolerant Quantum Simulations of Chemistry in First Quantization
 
@@ -126,11 +126,14 @@ class Interaction_picture:
         epsilon_QPE = optimized_parameters[0]
         epsilon_S = optimized_parameters[3]
         br = int(np.round(optimized_parameters[5]))
+        amplitude_amplification = int(np.round(optimized_parameters[6]))
+        amplitude_amplification = max(0, amplitude_amplification)
+        amplitude_amplification = min(amplitude_amplification, 2)
 
         # calculate parameters
-        a = 3 if amplitude_amplification else 1
+        a = 2*amplitude_amplification + 1
 
-        n_p, n_eta, n_eta_zeta, n_M, n_R, n_T, lambda_value = self.calculate_number_bits_parameters(optimized_parameters, N, eta, lambda_zeta, Omega, amplitude_amplification)
+        n_p, n_eta, n_eta_zeta, n_M, n_R, n_T, lambda_value = self.calculate_number_bits_parameters(optimized_parameters, N, eta, lambda_zeta, Omega)
 
         r = np.ceil(np.pi*lambda_value/(2*epsilon_QPE))
 
@@ -460,9 +463,12 @@ class Interaction_picture:
 
         return lambda_U_prime, lambda_V_prime, lambda_prime_T
 
-    def calculate_number_bits_parameters(self, optimized_parameters, N, eta, lambda_zeta, Omega, amplitude_amplification):
+    def calculate_number_bits_parameters(self, optimized_parameters, N, eta, lambda_zeta, Omega):
 
-        _, epsilon_M, epsilon_R, _, epsilon_T, br = optimized_parameters
+        _, epsilon_M, epsilon_R, _, epsilon_T, br, amplitude_amplification = optimized_parameters
+        amplitude_amplification = int(np.round(amplitude_amplification))
+        amplitude_amplification = max(0, amplitude_amplification)
+        amplitude_amplification = min(amplitude_amplification, 2)
 
         # n_p
         n_p = int(np.ceil(np.log2(N**(1/3) + 1)))
@@ -519,11 +525,13 @@ class Interaction_picture:
         # and also eq 126 and 127
         lambda_U_prime, lambda_V_prime, lambda_prime_T = self.calculate_lambdas(N, eta, lambda_zeta, Omega, n_p, M)
 
-        if amplitude_amplification:
+        if amplitude_amplification == 1:
             p_nu_amp = (np.sin(3*np.arcsin(np.sqrt(p_nu))))**2
             lambda_value = max(lambda_prime_T+lambda_U_prime+lambda_V_prime, (lambda_U_prime+lambda_V_prime/(1-1/eta))/p_nu_amp)/Peq
-        else:
+        elif amplitude_amplification == 0:
             lambda_value = max(lambda_prime_T+lambda_U_prime+lambda_V_prime, (lambda_U_prime+lambda_V_prime/(1-1/eta))/p_nu)/Peq
+        elif amplitude_amplification == 2:
+            lambda_value = max(lambda_prime_T+lambda_U_prime+lambda_V_prime, (lambda_U_prime+lambda_V_prime/(1-1/eta)))/Peq
         n_T = np.ceil(np.log2( np.pi*lambda_value/epsilon_T ))
 
 

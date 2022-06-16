@@ -432,10 +432,10 @@ class Cost_calculator:
                             # since cost module is modified to calculate the errors detailed, it is necessary to set again to optimization mode
                             cost_module = 'optimization'
                             cost_unit_optimization = 'optimization'
-                            arguments = (N, N, eta, lambda_zeta, Omega, cost_unit_optimization, cost_module, vec_a, amplitude_amplification)
+                            arguments = (N, N, eta, lambda_zeta, Omega, cost_unit_optimization, cost_module, vec_a)
 
                             # generate value for errors epsilon_PEA, epsilon_M, epsilon_R, epsilon_S, epsilon_T, br
-                            parameters_to_optimize = ['epsilon_PEA', 'epsilon_M', 'epsilon_R', 'epsilon_S', 'epsilon_T', 'br']
+                            parameters_to_optimize = ['epsilon_PEA', 'epsilon_M', 'epsilon_R', 'epsilon_S', 'epsilon_T', 'br', 'amplitude_amplification']
 
                             cost_values = []
                             for _ in range(self.runs):
@@ -453,9 +453,7 @@ class Cost_calculator:
                                     Omega,
                                     cost_unit,
                                     cost_module,
-                                    vec_a,
-                                    amplitude_amplification)]
-
+                                    vec_a)]
                             bar()
 
                             costs_for_chem_acc.append([N, cost_values])

@@ -237,6 +237,10 @@ class Utils():
             elif 'br' == param:
                 min_values_linear_constraint.append(BR_INITIAL_VALUE/2)
                 max_values_linear_constraint.append(BR_INITIAL_VALUE*2)
+                
+            elif 'amplitude_amplification' == param:
+                min_values_linear_constraint.append(-0.49)
+                max_values_linear_constraint.append(2.49)
 
         return LinearConstraint(A=shape_constraint, lb=min_values_linear_constraint, ub=max_values_linear_constraint)
 
@@ -260,7 +264,12 @@ class Utils():
         number_errors = len([s for s in parameters_to_optimize if "epsilon" in s])
 
         for param in parameters_to_optimize:
-            initial_values += [rnd.uniform((CHEMICAL_ACCURACY*chemical_acc_modifier/number_errors)/2, CHEMICAL_ACCURACY*chemical_acc_modifier/number_errors)] if 'epsilon' in param else [rnd.uniform(BR_INITIAL_VALUE/2, BR_INITIAL_VALUE*2)]
+            if 'epsilon' in param:
+                initial_values += [rnd.uniform((CHEMICAL_ACCURACY*chemical_acc_modifier/number_errors)/2, CHEMICAL_ACCURACY*chemical_acc_modifier/number_errors)]
+            elif 'br' == param:
+                initial_values += [rnd.uniform(BR_INITIAL_VALUE/2, BR_INITIAL_VALUE*2)]
+            elif 'amplitude_amplification' == param:
+                initial_values += [rnd.uniform(-0.49, 2.49)]
 
         return initial_values
 
