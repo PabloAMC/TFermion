@@ -11,6 +11,8 @@ Command
 python main.py h2 sparsity_low_rank 'H 1s'
 ```
 
+`'H 1s'` is an optional parameter. If not included, the method will be executed with the active space being the whole space.
+
 Output
 ---------
 
