@@ -1,0 +1,5 @@
+Methods,h2,hydrofluoric acid,water,ammonia,methane,O2
+taylor_naive,4.13e+13,1.82e+17,1.99e+17,2.69e+17,6.18e+18,7.11e+18
+taylor_on_the_fly,5.51e+27,1.70e+29,1.33e+30,6.60e+29,4.18e+31,7.09e+29
+low_depth_taylor,9.86e+15,1.71e+17,1.68e+17,1.56e+17,2.49e+17,3.78e+17
+low_depth_taylor_on_the_fly,6.03e+23,7.14e+25,1.13e+26,1.69e+26,3.06e+26,4.32e+26
