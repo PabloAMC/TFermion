@@ -333,40 +333,39 @@ class Utils():
                     if counter == 0:
 
                         # add a line renderer
-                        ax.scatter(x_value, median, marker="h", c="blue", alpha=0.5, s=100, label=r'$\varepsilon=0.014eV$')
+                        ax.scatter(x_value, median, marker="h", c="blue", alpha=0.5, s=100, label=r'$\varepsilon=0.0027eV$')
 
                     elif counter == 1:
 
                         # add a line renderer
-                        ax.scatter(x_value, median, marker="s", c="green", alpha=0.5, s=100, label=r'$\varepsilon=0.043eV$')
+                        ax.scatter(x_value, median, marker="s", c="green", alpha=0.5, s=100, label=r'$\varepsilon=0.01eV$')
 
                     elif counter == 2:
 
                         # add a line renderer
-                        ax.scatter(x_value, median, marker="*", c="orange", alpha=0.5, s=100, label=r'$\varepsilon=0.129eV$')
+                        ax.scatter(x_value, median, marker="*", c="orange", alpha=0.5, s=100, label=r'$\varepsilon=0.043eV$')
 
                     elif counter == 3:
 
                         # add a line renderer
-                        ax.scatter(x_value, median, marker="d", c="red", alpha=0.5, s=100, label=r'$\varepsilon=0.387eV$')
+                        ax.scatter(x_value, median, marker="d", c="red", alpha=0.5, s=100, label=r'$\varepsilon=0.1eV$')
 
 
 
                 if cost_unit == 'detail':
-                    if counter > 0:
-                        break
-                    if plot_module == 'HF': 
-                        median_T = np.nanmedian([element[0]['T'] for element in cost_object[1]])
-                        median_toffoli = np.nanmedian([element[0]['Toffoli'] for element in cost_object[1]])
-                    if plot_module == 'QPE': 
-                        median_T = np.nanmedian([element[1]['T'] for element in cost_object[1]])
-                        median_toffoli = np.nanmedian([element[1]['Toffoli'] for element in cost_object[1]])
-                    if plot_module == 'total': 
-                        median_T = np.nanmedian([element[0]['T'] for element in cost_object[1]]) + np.nanmedian([element[1]['T'] for element in cost_object[1]])
-                        median_toffoli = np.nanmedian([element[0]['Toffoli'] for element in cost_object[1]]) + np.nanmedian([element[1]['Toffoli'] for element in cost_object[1]])
+                    if counter == 2:
+                        if plot_module == 'HF': 
+                            median_T = np.nanpercentile([element[0]['T'] for element in cost_object[1]], 10)
+                            median_toffoli = np.nanpercentile([element[0]['Toffoli'] for element in cost_object[1]], 10)
+                        if plot_module == 'QPE': 
+                            median_T = np.nanmedian([element[1]['T'] for element in cost_object[1]])
+                            median_toffoli = np.nanmedian([element[1]['Toffoli'] for element in cost_object[1]])
+                        if plot_module == 'total': 
+                            median_T = np.nanmedian([element[0]['T'] for element in cost_object[1]]) + np.nanmedian([element[1]['T'] for element in cost_object[1]])
+                            median_toffoli = np.nanmedian([element[0]['Toffoli'] for element in cost_object[1]]) + np.nanmedian([element[1]['Toffoli'] for element in cost_object[1]])
 
-                    ax.scatter(x_value, median_T, marker="h", c="blue", alpha=0.5, s=100, label=r'T gates')
-                    ax.scatter(x_value, median_toffoli, marker="s", c="green", alpha=0.5, s=100, label=r'Toffoli gates')
+                        ax.scatter(x_value, median_T, marker="h", c="blue", alpha=0.5, s=100, label=r'T gates')
+                        ax.scatter(x_value, median_toffoli, marker="s", c="green", alpha=0.5, s=100, label=r'Toffoli gates')
 
 
         ax.set_xlim([min_x_lim, max_x_lim])
@@ -400,13 +399,13 @@ class Utils():
             # and using a generic handler map (which would be used for any additional
             # tuples of handles like (p1, p3)).
 
-            ax.text(3e2, 8e14, '(b)', horizontalalignment = 'left', verticalalignment = 'top', fontsize=18)
+            ax.text(3e2, 8e15, '(b)', horizontalalignment = 'left', verticalalignment = 'top', fontsize=18)
 
 
-            l = ax.legend([p1, p2, p3, p4], [r'$\varepsilon=0.014eV$', r'$\varepsilon=0.043eV$', r'$\varepsilon=0.129eV$', r'$\varepsilon=0.387eV$'], scatterpoints=1,
-                        numpoints=1, handler_map={tuple: HandlerTuple(ndivide=None)}, loc='lower right', borderpad=1, prop={'size': 12}, labelspacing=1)
+            l = ax.legend([p1, p2, p3, p4], [r'$\varepsilon=0.0027eV$', r'$\varepsilon=0.01eV$', r'$\varepsilon=0.043eV$', r'$\varepsilon=0.1eV$'], scatterpoints=1,
+                        numpoints=1, handler_map={tuple: HandlerTuple(ndivide=None)}, loc='lower right', borderpad=1, prop={'size': 14}, labelspacing=1, frameon=False)
             #l = ax.legend([p1], [r'$\varepsilon_{'+plot_module+'}=0.014eV$'], scatterpoints=1,
-            #            numpoints=1, handler_map={tuple: HandlerTuple(ndivide=None)}, loc='upper left', borderpad=1, prop={'size': 12}, labelspacing=1)
+            #            numpoints=1, handler_map={tuple: HandlerTuple(ndivide=None)}, loc='upper left', borderpad=1, prop={'size': 14}, labelspacing=1)
 
             plt.savefig(plot_module+'.pdf')
 
@@ -433,7 +432,7 @@ class Utils():
             plt.xticks(fontsize=18)
 
             l = ax.legend([p1, p2], [r'T gates', r'Toffoli gates'], scatterpoints=1,
-                        numpoints=1, handler_map={tuple: HandlerTuple(ndivide=None)}, loc='lower right', borderpad=1, prop={'size': 12}, labelspacing=1)
+                        numpoints=1, handler_map={tuple: HandlerTuple(ndivide=None)}, loc='lower right', borderpad=1, prop={'size': 14}, labelspacing=1, frameon = False)
 
 
             plt.savefig(plot_module+'.pdf')
@@ -464,7 +463,7 @@ class Utils():
                 if plot_module == 'total': median = np.nanmedian([element[0]+element[1] for element in cost_object[1]])
                 median_qubits = np.nanmedian([element[2] for element in cost_object[1]])
 
-                if counter == 1:
+                if counter == 2:
 
                     A, B = 0.5 , 1.6
 
@@ -509,6 +508,6 @@ class Utils():
         # To eliminate duplicates in the legend
         handles, labels = plt.gca().get_legend_handles_labels()
         by_label = dict(zip(labels, handles))
-        plt.legend(by_label.values(), by_label.keys()) 
+        plt.legend(by_label.values(), by_label.keys(), frameon=False, prop={'size': 14}) 
 
         plt.savefig('time.pdf')

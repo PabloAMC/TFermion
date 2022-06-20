@@ -412,7 +412,7 @@ class Cost_calculator:
                 # it indicates if the cost returned is the sum of HF, antisymmetrization and QPE or each value separetly
                 cost_module = 'optimization'
 
-                accuracy_multiples = [1/3, 1, 3, 9]
+                accuracy_multiples = [0.063,1/4.3,1,2.32558]
 
                 number_samples = len(N_values)*len(accuracy_multiples)
                 with alive_bar(number_samples) as bar:
