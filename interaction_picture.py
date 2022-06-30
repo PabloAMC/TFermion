@@ -449,6 +449,9 @@ class Interaction_picture:
 
         # for lambda_nu see eq F6 in Low-depth article and D18 in T-Fermion
         lambda_nu = 4*np.pi*(np.sqrt(3)*N**(1/3)/2 - 1) + 3 - 3/N**(1/3) + 3*self.tools.I(N**(1/3))
+
+        # Here we are using eq 25 from https://journals.aps.org/prxquantum/abstract/10.1103/PRXQuantum.2.040332
+        # WARNING: this is not completely correct as the cell is orthogonal, not orthonormal. However, this error is small compared to the accuracy of lambda_nu above
         lambda_U = eta*lambda_zeta*lambda_nu/(np.pi*Omega**(1/3))
         lambda_V = eta*(eta-1)*lambda_nu/(2*np.pi*Omega**(1/3))
         
