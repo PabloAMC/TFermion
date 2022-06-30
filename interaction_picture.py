@@ -512,7 +512,7 @@ class Interaction_picture:
             p_nu = 0
             for j in range(2, n_p+4):
                 B_mus[j] = []
-            for nu in itertools.product(range(-2**(n_p), 2**(n_p)+1), repeat = 3):
+            for nu in itertools.product(range(-2**(n_p-1)+1, 2**(n_p-1)-1), repeat = 3):
                 nu = np.array(nu)
                 if list(nu) != [0,0,0]:
                     mu = int(np.floor(np.log2(np.max(abs(nu)))))+2
