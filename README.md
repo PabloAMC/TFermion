@@ -77,7 +77,7 @@ Things that can be done include implementing new methods (see the snippet in the
 }
 ```   
 ### Contributors  
-[P. A. M. Casares](https://github.com/PabloAMC) (Universidad Complutense de Madrid) and [R Campos](https://github.com/roberCo) (Universidad Complutense de Madrid).
+[Pablo A. M. Casares](https://github.com/PabloAMC) (Universidad Complutense de Madrid) and [R Campos](https://github.com/roberCo) (Universidad Complutense de Madrid).
 
 ### License
 Apache 2.0 license.
