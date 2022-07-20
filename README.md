@@ -2,6 +2,7 @@
  <img width="500" alt="TFermion" src="https://user-images.githubusercontent.com/20182937/139062847-e45efa4c-b45c-4de4-9a0e-73bffbc2ff76.png">   
  
  [![Paper](http://img.shields.io/badge/arxiv-quant.ph:2110.05899-B31B1B.svg)](https://arxiv.org/abs/2110.05899)
+ [![Paper](http://img.shields.io/badge/2022-Quantum-purple.svg)](https://quantum-journal.org/papers/q-2022-07-20-768/)
 </div>
  
 ## Description   
@@ -61,11 +62,18 @@ Things that can be done include implementing new methods (see the snippet in the
 ## Authorship
 ### Citation   
 ```
-@article{casares2021t,
-  title={TFermion: A non-Clifford gate cost assessment library of quantum phase estimation algorithms for quantum chemistry},
-  author={Casares, PAM and Campos, Roberto and Martin-Delgado, MA},
-  journal={arXiv preprint arXiv:2110.05899},
-  year={2021}
+@article{casares2022tfermion,
+  doi = {10.22331/q-2022-07-20-768},
+  url = {https://doi.org/10.22331/q-2022-07-20-768},
+  title = {{TF}ermion: {A} non-{C}lifford gate cost assessment library of quantum phase estimation algorithms for quantum chemistry},
+  author = {Casares, Pablo A. M. and Campos, Roberto and Martin-Delgado, M. A.},
+  journal = {{Quantum}},
+  issn = {2521-327X},
+  publisher = {{Verein zur F{\"{o}}rderung des Open Access Publizierens in den Quantenwissenschaften}},
+  volume = {6},
+  pages = {768},
+  month = jul,
+  year = {2022}
 }
 ```   
 ### Contributors  
